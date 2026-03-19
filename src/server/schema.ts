@@ -323,6 +323,126 @@ export const documents = pgTable(
 );
 
 // ---------------------------------------------------------------------------
+// Social Accounts (Instagram, Facebook tokens from Meta Developer Dashboard)
+// ---------------------------------------------------------------------------
+
+export const socialPlatformEnum = pgEnum("social_platform", [
+  "instagram",
+  "facebook",
+]);
+
+export const socialAccounts = pgTable("social_accounts", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  platform: socialPlatformEnum("platform").notNull(),
+  /** Long-lived access token from Meta Developer Dashboard */
+  accessToken: text("access_token").notNull(),
+  /** For token refresh */
+  refreshToken: text("refresh_token"),
+  /** Instagram Business Account ID or Facebook Page ID */
+  platformAccountId: varchar("platform_account_id", { length: 255 }).notNull(),
+  /** Display name (e.g. @propi_realestate) */
+  accountName: varchar("account_name", { length: 255 }),
+  /** When the token expires (long-lived = 60 days) */
+  tokenExpiresAt: timestamp("token_expires_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow()
+    .$onUpdate(() => new Date()),
+});
+
+// ---------------------------------------------------------------------------
+// Email Campaigns
+// ---------------------------------------------------------------------------
+
+export const campaignStatusEnum = pgEnum("campaign_status", [
+  "draft",
+  "scheduled",
+  "sending",
+  "sent",
+  "failed",
+]);
+
+export const emailCampaigns = pgTable(
+  "email_campaigns",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    subject: varchar("subject", { length: 500 }).notNull(),
+    htmlBody: text("html_body").notNull(),
+    /** Send to contacts with this tag (segment) */
+    tagId: uuid("tag_id").references(() => tags.id),
+    status: campaignStatusEnum("status").notNull().default("draft"),
+    sentCount: integer("sent_count").default(0),
+    failedCount: integer("failed_count").default(0),
+    scheduledAt: timestamp("scheduled_at", { withTimezone: true }),
+    sentAt: timestamp("sent_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [index("email_campaigns_status_idx").on(table.status)],
+);
+
+export const campaignRecipients = pgTable(
+  "campaign_recipients",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    campaignId: uuid("campaign_id")
+      .notNull()
+      .references(() => emailCampaigns.id, { onDelete: "cascade" }),
+    contactId: uuid("contact_id")
+      .notNull()
+      .references(() => contacts.id, { onDelete: "cascade" }),
+    /** delivered, bounced, opened, etc. */
+    status: varchar("status", { length: 50 }).default("pending"),
+    sentAt: timestamp("sent_at", { withTimezone: true }),
+  },
+  (table) => [
+    index("campaign_recipients_campaign_idx").on(table.campaignId),
+    index("campaign_recipients_contact_idx").on(table.contactId),
+  ],
+);
+
+// ---------------------------------------------------------------------------
+// WhatsApp Messages (via Twilio)
+// ---------------------------------------------------------------------------
+
+export const whatsappMessageStatusEnum = pgEnum("wa_message_status", [
+  "queued",
+  "sent",
+  "delivered",
+  "read",
+  "failed",
+]);
+
+export const whatsappMessages = pgTable(
+  "whatsapp_messages",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    contactId: uuid("contact_id")
+      .notNull()
+      .references(() => contacts.id, { onDelete: "cascade" }),
+    /** Template name or free-form body */
+    template: varchar("template", { length: 500 }),
+    body: text("body"),
+    /** Twilio message SID for tracking */
+    twilioSid: varchar("twilio_sid", { length: 255 }),
+    status: whatsappMessageStatusEnum("status").notNull().default("queued"),
+    direction: varchar("direction", { length: 10 }).default("outbound"),
+    sentAt: timestamp("sent_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("wa_messages_contact_idx").on(table.contactId),
+    index("wa_messages_status_idx").on(table.status),
+  ],
+);
+
+// ---------------------------------------------------------------------------
 // Relations (for Drizzle query builder)
 // ---------------------------------------------------------------------------
 
@@ -341,6 +461,8 @@ export const contactsRelations = relations(contacts, ({ one, many }) => ({
   contactTags: many(contactTags),
   appointments: many(appointments),
   documents: many(documents),
+  whatsappMessages: many(whatsappMessages),
+  campaignRecipients: many(campaignRecipients),
 }));
 
 export const contactTagsRelations = relations(contactTags, ({ one }) => ({
@@ -416,4 +538,40 @@ export const documentsRelations = relations(documents, ({ one }) => ({
 export const tagsRelations = relations(tags, ({ many }) => ({
   contactTags: many(contactTags),
   propertyTags: many(propertyTags),
+  emailCampaigns: many(emailCampaigns),
 }));
+
+export const emailCampaignsRelations = relations(
+  emailCampaigns,
+  ({ one, many }) => ({
+    tag: one(tags, {
+      fields: [emailCampaigns.tagId],
+      references: [tags.id],
+    }),
+    recipients: many(campaignRecipients),
+  }),
+);
+
+export const campaignRecipientsRelations = relations(
+  campaignRecipients,
+  ({ one }) => ({
+    campaign: one(emailCampaigns, {
+      fields: [campaignRecipients.campaignId],
+      references: [emailCampaigns.id],
+    }),
+    contact: one(contacts, {
+      fields: [campaignRecipients.contactId],
+      references: [contacts.id],
+    }),
+  }),
+);
+
+export const whatsappMessagesRelations = relations(
+  whatsappMessages,
+  ({ one }) => ({
+    contact: one(contacts, {
+      fields: [whatsappMessages.contactId],
+      references: [contacts.id],
+    }),
+  }),
+);

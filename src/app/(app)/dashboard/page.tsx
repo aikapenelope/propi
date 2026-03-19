@@ -4,45 +4,39 @@ import {
   Users,
   Calendar,
   TrendingUp,
+  Instagram,
+  Facebook,
+  MessageCircle,
+  Mail,
 } from "lucide-react";
 import { getDashboardStats } from "@/server/actions/dashboard";
 import { getUpcomingAppointments } from "@/server/actions/appointments";
+import { getAllSocialAccounts } from "@/server/actions/social-accounts";
+import { getWhatsAppMessages } from "@/server/actions/whatsapp";
+import { getEmailCampaigns } from "@/server/actions/email-campaigns";
 import { formatDate, formatCurrency } from "@/lib/utils";
 import { CommissionCalculator } from "@/components/dashboard/commission-calculator";
 
-const statusLabels: Record<string, string> = {
-  draft: "Borrador",
-  active: "Activa",
-  reserved: "Reservada",
-  sold: "Vendida",
-  rented: "Arrendada",
-  inactive: "Inactiva",
-};
-
-const sourceLabels: Record<string, string> = {
-  website: "Web",
-  referral: "Referido",
-  instagram: "Instagram",
-  facebook: "Facebook",
-  whatsapp: "WhatsApp",
-  portal: "Portal",
-  walk_in: "Visita",
-  phone: "Telefono",
-  other: "Otro",
-};
-
 export default async function DashboardPage() {
-  const [stats, upcoming] = await Promise.all([
-    getDashboardStats(),
-    getUpcomingAppointments(5),
-  ]);
+  const [stats, upcoming, socialAccounts, waMessages, emailCampaigns] =
+    await Promise.all([
+      getDashboardStats(),
+      getUpcomingAppointments(5),
+      getAllSocialAccounts().catch(() => []),
+      getWhatsAppMessages(5).catch(() => []),
+      getEmailCampaigns().catch(() => []),
+    ]);
+
+  const igConnected = socialAccounts.some((a) => a.platform === "instagram");
+  const fbConnected = socialAccounts.some((a) => a.platform === "facebook");
+  const lastCampaign = emailCampaigns[0];
 
   return (
     <div className="p-4 md:p-6">
       <h1 className="mb-6 text-2xl font-bold text-foreground">Dashboard</h1>
 
       {/* KPI Cards */}
-      <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div className="rounded-lg border border-border p-4">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-500/10">
@@ -56,7 +50,6 @@ export default async function DashboardPage() {
             </div>
           </div>
         </div>
-
         <div className="rounded-lg border border-border p-4">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-500/10">
@@ -70,7 +63,6 @@ export default async function DashboardPage() {
             </div>
           </div>
         </div>
-
         <div className="rounded-lg border border-border p-4">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-500/10">
@@ -84,7 +76,6 @@ export default async function DashboardPage() {
             </div>
           </div>
         </div>
-
         <div className="rounded-lg border border-border p-4">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-500/10">
@@ -101,59 +92,70 @@ export default async function DashboardPage() {
         </div>
       </div>
 
+      {/* Marketing channels */}
+      <h2 className="mb-3 text-sm font-semibold text-foreground">
+        Canales de Marketing
+      </h2>
+      <div className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <Link
+          href="/marketing/instagram"
+          className="rounded-lg border border-border p-3 transition-colors hover:bg-muted"
+        >
+          <div className="flex items-center gap-2">
+            <Instagram className="h-4 w-4 text-pink-500" />
+            <span className="text-sm font-medium text-foreground">
+              Instagram
+            </span>
+          </div>
+          <p className="mt-1 text-xs text-muted-foreground">
+            {igConnected ? "Conectado" : "No conectado"}
+          </p>
+        </Link>
+        <Link
+          href="/marketing/facebook"
+          className="rounded-lg border border-border p-3 transition-colors hover:bg-muted"
+        >
+          <div className="flex items-center gap-2">
+            <Facebook className="h-4 w-4 text-blue-600" />
+            <span className="text-sm font-medium text-foreground">
+              Facebook
+            </span>
+          </div>
+          <p className="mt-1 text-xs text-muted-foreground">
+            {fbConnected ? "Conectado" : "No conectado"}
+          </p>
+        </Link>
+        <Link
+          href="/marketing/whatsapp"
+          className="rounded-lg border border-border p-3 transition-colors hover:bg-muted"
+        >
+          <div className="flex items-center gap-2">
+            <MessageCircle className="h-4 w-4 text-green-500" />
+            <span className="text-sm font-medium text-foreground">
+              WhatsApp
+            </span>
+          </div>
+          <p className="mt-1 text-xs text-muted-foreground">
+            {waMessages.length} mensajes recientes
+          </p>
+        </Link>
+        <Link
+          href="/marketing/email"
+          className="rounded-lg border border-border p-3 transition-colors hover:bg-muted"
+        >
+          <div className="flex items-center gap-2">
+            <Mail className="h-4 w-4 text-amber-500" />
+            <span className="text-sm font-medium text-foreground">Email</span>
+          </div>
+          <p className="mt-1 text-xs text-muted-foreground">
+            {lastCampaign
+              ? `Ultima: ${lastCampaign.subject.slice(0, 30)}`
+              : "Sin campanas"}
+          </p>
+        </Link>
+      </div>
+
       <div className="grid gap-6 lg:grid-cols-2">
-        {/* Properties by status */}
-        <div className="rounded-lg border border-border p-4">
-          <h2 className="mb-3 text-sm font-semibold text-foreground">
-            Propiedades por Estado
-          </h2>
-          {stats.propertiesByStatus.length > 0 ? (
-            <div className="space-y-2">
-              {stats.propertiesByStatus.map((item) => (
-                <div
-                  key={item.status}
-                  className="flex items-center justify-between text-sm"
-                >
-                  <span className="text-foreground">
-                    {statusLabels[item.status] ?? item.status}
-                  </span>
-                  <span className="font-medium text-foreground">
-                    {item.count}
-                  </span>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-sm text-muted-foreground">Sin datos</p>
-          )}
-        </div>
-
-        {/* Contacts by source */}
-        <div className="rounded-lg border border-border p-4">
-          <h2 className="mb-3 text-sm font-semibold text-foreground">
-            Contactos por Fuente
-          </h2>
-          {stats.contactsBySource.length > 0 ? (
-            <div className="space-y-2">
-              {stats.contactsBySource.map((item) => (
-                <div
-                  key={item.source}
-                  className="flex items-center justify-between text-sm"
-                >
-                  <span className="text-foreground">
-                    {sourceLabels[item.source ?? "other"] ?? item.source}
-                  </span>
-                  <span className="font-medium text-foreground">
-                    {item.count}
-                  </span>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-sm text-muted-foreground">Sin datos</p>
-          )}
-        </div>
-
         {/* Upcoming appointments */}
         <div className="rounded-lg border border-border p-4">
           <div className="mb-3 flex items-center justify-between">
@@ -201,7 +203,6 @@ export default async function DashboardPage() {
 
       {/* Recent activity */}
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
-        {/* Recent contacts */}
         <div className="rounded-lg border border-border p-4">
           <div className="mb-3 flex items-center justify-between">
             <h2 className="text-sm font-semibold text-foreground">
@@ -236,7 +237,6 @@ export default async function DashboardPage() {
           )}
         </div>
 
-        {/* Recent properties */}
         <div className="rounded-lg border border-border p-4">
           <div className="mb-3 flex items-center justify-between">
             <h2 className="text-sm font-semibold text-foreground">
