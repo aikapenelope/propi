@@ -2,6 +2,7 @@ import { FileText, User, Building2 } from "lucide-react";
 import { getDocuments } from "@/server/actions/documents";
 import { formatDate } from "@/lib/utils";
 import { UploadDocumentButton } from "@/components/documents/upload-document-button";
+import { DocumentActions } from "@/components/documents/document-actions";
 
 const typeLabels: Record<string, string> = {
   contract: "Contrato",
@@ -83,6 +84,9 @@ export default async function DocumentsPage() {
                   )}
                 </div>
               </div>
+
+              {/* Actions */}
+              <DocumentActions id={doc.id} docKey={doc.key} />
 
               {/* Date */}
               <span className="hidden text-xs text-muted-foreground md:block">

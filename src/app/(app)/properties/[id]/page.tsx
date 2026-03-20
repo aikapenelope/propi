@@ -10,9 +10,10 @@ import {
   Pencil,
   Calendar,
 } from "lucide-react";
-import { getProperty } from "@/server/actions/properties";
+import { getProperty, getImageUrl } from "@/server/actions/properties";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { DeletePropertyButton } from "@/components/properties/delete-property-button";
+import { PropertyImageUpload } from "@/components/properties/property-image-upload";
 
 const typeLabels: Record<string, string> = {
   apartment: "Apartamento",
@@ -61,6 +62,18 @@ export default async function PropertyDetailPage({
   if (!property) {
     notFound();
   }
+
+  // Resolve presigned URLs for images
+  const imagesWithUrls = await Promise.all(
+    property.images.map(async (img) => {
+      try {
+        const url = await getImageUrl(img.key);
+        return { ...img, url };
+      } catch {
+        return { ...img, url: undefined };
+      }
+    }),
+  );
 
   return (
     <div className="p-4 md:p-6">
@@ -119,23 +132,18 @@ export default async function PropertyDetailPage({
         </div>
       </div>
 
-      {/* Image gallery */}
-      {property.images.length > 0 ? (
-        <div className="mb-6 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-          {property.images.map((img) => (
-            <div
-              key={img.id}
-              className="flex aspect-[4/3] items-center justify-center rounded-lg bg-muted text-xs text-muted-foreground"
-            >
-              {img.filename ?? img.key}
-            </div>
-          ))}
-        </div>
-      ) : (
-        <div className="mb-6 flex aspect-[16/6] items-center justify-center rounded-lg bg-muted text-muted-foreground">
-          <MapPin className="h-12 w-12" />
-        </div>
-      )}
+      {/* Image gallery with upload */}
+      <div className="mb-6">
+        <PropertyImageUpload
+          propertyId={id}
+          images={imagesWithUrls.map((img) => ({
+            id: img.id,
+            key: img.key,
+            filename: img.filename,
+            url: img.url,
+          }))}
+        />
+      </div>
 
       {/* Details grid */}
       <div className="grid gap-6 md:grid-cols-2">

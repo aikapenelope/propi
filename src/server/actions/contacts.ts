@@ -16,6 +16,7 @@ export type ContactFormData = {
   company?: string;
   notes?: string;
   source?: string;
+  assignedAgentId?: string;
   tagIds?: string[];
 };
 
@@ -84,6 +85,7 @@ export async function createContact(data: ContactFormData) {
       company: data.company || null,
       notes: data.notes || null,
       source: (data.source as typeof contacts.$inferInsert.source) || "other",
+      assignedAgentId: data.assignedAgentId || null,
     })
     .returning();
 
@@ -111,6 +113,7 @@ export async function updateContact(id: string, data: ContactFormData) {
       company: data.company || null,
       notes: data.notes || null,
       source: (data.source as typeof contacts.$inferInsert.source) || "other",
+      assignedAgentId: data.assignedAgentId || null,
     })
     .where(eq(contacts.id, id))
     .returning();

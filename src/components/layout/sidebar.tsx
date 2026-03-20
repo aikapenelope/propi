@@ -8,6 +8,7 @@ import {
   Building2,
   Calendar,
   FileText,
+  UserCog,
   Instagram,
   Facebook,
   MessageCircle,
@@ -25,6 +26,7 @@ const navItems = [
   { href: "/properties", label: "Propiedades", icon: Building2 },
   { href: "/calendar", label: "Calendario", icon: Calendar },
   { href: "/documents", label: "Documentos", icon: FileText },
+  { href: "/agents", label: "Agentes", icon: UserCog },
 ];
 
 const marketingItems = [

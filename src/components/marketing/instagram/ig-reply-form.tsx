@@ -2,11 +2,12 @@
 
 import { useState } from "react";
 import { Send } from "lucide-react";
-import { sendIgMessage, replyToIgComment } from "@/server/actions/instagram";
+import { sendIgMessage, replyToIgComment, commentOnIgMedia } from "@/server/actions/instagram";
 
 interface IgReplyFormProps {
-  type: "dm" | "comment";
-  /** For DM: recipient user ID. For comment: media ID (to load comments) or comment ID */
+  /** dm = send DM, comment = new comment on post, reply = reply to existing comment */
+  type: "dm" | "comment" | "reply";
+  /** For DM: recipient user ID. For comment: media ID. For reply: comment ID */
   targetId: string;
 }
 
@@ -21,8 +22,10 @@ export function IgReplyForm({ type, targetId }: IgReplyFormProps) {
     try {
       if (type === "dm") {
         await sendIgMessage(targetId, message);
-      } else {
+      } else if (type === "reply") {
         await replyToIgComment(targetId, message);
+      } else {
+        await commentOnIgMedia(targetId, message);
       }
       setMessage("");
       setSent(true);

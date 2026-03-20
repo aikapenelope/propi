@@ -1,8 +1,9 @@
 import Link from "next/link";
-import { Plus, MapPin, User, Building2 } from "lucide-react";
+import { Plus, MapPin, User, Building2, Pencil } from "lucide-react";
 import { getAppointments } from "@/server/actions/appointments";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { DeleteAppointmentButton } from "@/components/calendar/delete-appointment-button";
 
 const statusLabels: Record<string, string> = {
   scheduled: "Programada",
@@ -143,16 +144,26 @@ export default async function CalendarPage({
                       </div>
                     </div>
 
-                    {/* Status badge */}
-                    <span
-                      className="shrink-0 rounded-full px-2 py-0.5 text-xs font-medium"
-                      style={{
-                        backgroundColor: `${statusColors[apt.status] ?? "#94a3b8"}20`,
-                        color: statusColors[apt.status] ?? "#94a3b8",
-                      }}
-                    >
-                      {statusLabels[apt.status] ?? apt.status}
-                    </span>
+                    {/* Status badge + actions */}
+                    <div className="flex shrink-0 items-center gap-1">
+                      <span
+                        className="rounded-full px-2 py-0.5 text-xs font-medium"
+                        style={{
+                          backgroundColor: `${statusColors[apt.status] ?? "#94a3b8"}20`,
+                          color: statusColors[apt.status] ?? "#94a3b8",
+                        }}
+                      >
+                        {statusLabels[apt.status] ?? apt.status}
+                      </span>
+                      <Link
+                        href={`/calendar/${apt.id}/edit`}
+                        className="flex h-7 w-7 items-center justify-center rounded text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                        title="Editar cita"
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </Link>
+                      <DeleteAppointmentButton id={apt.id} />
+                    </div>
                   </div>
                 ))}
               </div>

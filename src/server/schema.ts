@@ -9,6 +9,7 @@ import {
   boolean,
   pgEnum,
   index,
+  primaryKey,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
@@ -154,6 +155,7 @@ export const contactTags = pgTable(
       .references(() => tags.id, { onDelete: "cascade" }),
   },
   (table) => [
+    primaryKey({ columns: [table.contactId, table.tagId] }),
     index("contact_tags_contact_idx").on(table.contactId),
     index("contact_tags_tag_idx").on(table.tagId),
   ],
@@ -244,6 +246,7 @@ export const propertyTags = pgTable(
       .references(() => tags.id, { onDelete: "cascade" }),
   },
   (table) => [
+    primaryKey({ columns: [table.propertyId, table.tagId] }),
     index("property_tags_property_idx").on(table.propertyId),
     index("property_tags_tag_idx").on(table.tagId),
   ],
