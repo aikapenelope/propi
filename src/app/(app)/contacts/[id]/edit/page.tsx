@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { getContact, getTags } from "@/server/actions/contacts";
+import { getAgents } from "@/server/actions/agents";
 import { ContactForm } from "@/components/contacts/contact-form";
 
 interface EditContactPageProps {
@@ -12,9 +13,10 @@ export default async function EditContactPage({
   params,
 }: EditContactPageProps) {
   const { id } = await params;
-  const [contact, availableTags] = await Promise.all([
+  const [contact, availableTags, agents] = await Promise.all([
     getContact(id),
     getTags(),
+    getAgents(),
   ]);
 
   if (!contact) {
@@ -39,6 +41,7 @@ export default async function EditContactPage({
           contact={contact}
           selectedTagIds={contact.contactTags.map((ct) => ct.tag.id)}
           availableTags={availableTags}
+          agents={agents.map((a) => ({ id: a.id, name: a.name }))}
         />
       </div>
     </div>

@@ -7,6 +7,7 @@ import {
   updateProperty,
   type PropertyFormData,
 } from "@/server/actions/properties";
+import { TagSelector } from "@/components/ui/tag-selector";
 
 const typeOptions = [
   { value: "apartment", label: "Apartamento" },
@@ -267,28 +268,11 @@ export function PropertyForm({
       </div>
 
       {/* Tags */}
-      {availableTags.length > 0 && (
-        <div>
-          <label className="block text-sm font-medium text-foreground">Etiquetas</label>
-          <div className="mt-2 flex flex-wrap gap-2">
-            {availableTags.map((tag) => (
-              <button
-                key={tag.id}
-                type="button"
-                onClick={() => toggleTag(tag.id)}
-                className="rounded-full border px-3 py-1 text-xs font-medium transition-colors"
-                style={{
-                  backgroundColor: tagIds.includes(tag.id) ? `${tag.color}30` : "transparent",
-                  borderColor: tag.color ?? "#6366f1",
-                  color: tag.color ?? "#6366f1",
-                }}
-              >
-                {tag.name}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
+      <TagSelector
+        availableTags={availableTags}
+        selectedIds={tagIds}
+        onToggle={toggleTag}
+      />
 
       {/* Actions */}
       <div className="flex gap-3">

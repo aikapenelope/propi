@@ -118,6 +118,19 @@ export async function replyToIgComment(commentId: string, message: string) {
   );
 }
 
+/** Post a new comment on a media object (not a reply to an existing comment) */
+export async function commentOnIgMedia(mediaId: string, message: string) {
+  const { token } = await getIgToken();
+  return graphApiFetch<{ id: string }>(
+    `/${mediaId}/comments`,
+    token,
+    {
+      method: "POST",
+      body: { message },
+    },
+  );
+}
+
 // ---------------------------------------------------------------------------
 // DMs (Instagram Messaging API)
 // ---------------------------------------------------------------------------

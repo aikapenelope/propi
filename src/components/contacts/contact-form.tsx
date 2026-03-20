@@ -7,6 +7,7 @@ import {
   updateContact,
   type ContactFormData,
 } from "@/server/actions/contacts";
+import { TagSelector } from "@/components/ui/tag-selector";
 
 const sourceOptions = [
   { value: "website", label: "Sitio Web" },
@@ -26,6 +27,11 @@ interface Tag {
   color: string | null;
 }
 
+interface Agent {
+  id: string;
+  name: string;
+}
+
 interface ContactFormProps {
   contact?: {
     id: string;
@@ -35,15 +41,18 @@ interface ContactFormProps {
     company: string | null;
     notes: string | null;
     source: string | null;
+    assignedAgentId: string | null;
   };
   selectedTagIds?: string[];
   availableTags: Tag[];
+  agents?: Agent[];
 }
 
 export function ContactForm({
   contact,
   selectedTagIds = [],
   availableTags,
+  agents = [],
 }: ContactFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -63,6 +72,7 @@ export function ContactForm({
       company: (formData.get("company") as string) || undefined,
       notes: (formData.get("notes") as string) || undefined,
       source: (formData.get("source") as string) || undefined,
+      assignedAgentId: (formData.get("assignedAgentId") as string) || undefined,
       tagIds,
     };
 
@@ -180,33 +190,37 @@ export function ContactForm({
         </select>
       </div>
 
-      {/* Tags */}
-      {availableTags.length > 0 && (
+      {/* Agent */}
+      {agents.length > 0 && (
         <div>
-          <label className="block text-sm font-medium text-foreground">
-            Etiquetas
+          <label
+            htmlFor="assignedAgentId"
+            className="block text-sm font-medium text-foreground"
+          >
+            Agente Asignado
           </label>
-          <div className="mt-2 flex flex-wrap gap-2">
-            {availableTags.map((tag) => (
-              <button
-                key={tag.id}
-                type="button"
-                onClick={() => toggleTag(tag.id)}
-                className="rounded-full border px-3 py-1 text-xs font-medium transition-colors"
-                style={{
-                  backgroundColor: tagIds.includes(tag.id)
-                    ? `${tag.color}30`
-                    : "transparent",
-                  borderColor: tag.color ?? "#6366f1",
-                  color: tag.color ?? "#6366f1",
-                }}
-              >
-                {tag.name}
-              </button>
+          <select
+            id="assignedAgentId"
+            name="assignedAgentId"
+            defaultValue={contact?.assignedAgentId ?? ""}
+            className="mt-1 h-10 w-full rounded-lg border border-border bg-background px-3 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+          >
+            <option value="">Sin agente</option>
+            {agents.map((a) => (
+              <option key={a.id} value={a.id}>
+                {a.name}
+              </option>
             ))}
-          </div>
+          </select>
         </div>
       )}
+
+      {/* Tags */}
+      <TagSelector
+        availableTags={availableTags}
+        selectedIds={tagIds}
+        onToggle={toggleTag}
+      />
 
       {/* Notes */}
       <div>

@@ -101,6 +101,16 @@ export async function replyToFbComment(commentId: string, message: string) {
   );
 }
 
+/** Post a new comment on a post (not a reply to an existing comment) */
+export async function commentOnFbPost(postId: string, message: string) {
+  const { token } = await getFbToken();
+  return graphApiFetch<{ id: string }>(
+    `/${postId}/comments`,
+    token,
+    { method: "POST", body: { message } },
+  );
+}
+
 // ---------------------------------------------------------------------------
 // Page Insights
 // ---------------------------------------------------------------------------

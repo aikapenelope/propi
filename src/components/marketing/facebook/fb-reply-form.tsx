@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Send } from "lucide-react";
-import { replyToFbComment } from "@/server/actions/facebook";
+import { commentOnFbPost } from "@/server/actions/facebook";
 
 export function FbReplyForm({ postId }: { postId: string }) {
   const [message, setMessage] = useState("");
@@ -13,7 +13,7 @@ export function FbReplyForm({ postId }: { postId: string }) {
     if (!message.trim()) return;
     setSending(true);
     try {
-      await replyToFbComment(postId, message);
+      await commentOnFbPost(postId, message);
       setMessage("");
       setSent(true);
       setTimeout(() => setSent(false), 2000);

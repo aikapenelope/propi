@@ -4,7 +4,7 @@ import { db } from "@/lib/db";
 import { properties, propertyTags, propertyImages } from "@/server/schema";
 import { eq, ilike, or, desc, and, gte, lte, type SQL } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
-import { PutObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
+import { PutObjectCommand, DeleteObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { s3, MEDIA_BUCKET } from "@/lib/s3";
 
@@ -278,4 +278,12 @@ export async function deletePropertyImage(imageId: string, key: string) {
 
   // Delete from DB
   await db.delete(propertyImages).where(eq(propertyImages.id, imageId));
+}
+
+export async function getImageUrl(key: string) {
+  const command = new GetObjectCommand({
+    Bucket: MEDIA_BUCKET,
+    Key: key,
+  });
+  return getSignedUrl(s3, command, { expiresIn: 3600 });
 }
