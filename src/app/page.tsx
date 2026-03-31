@@ -5,14 +5,6 @@ import Link from "next/link";
 import {
   Building2,
   Users,
-  CheckCircle2,
-  ChevronDown,
-  ChevronLeft,
-  ChevronRight,
-  Search,
-  Minus,
-  Plus,
-  ArrowUpRight,
   MessageCircle,
   Calendar,
   FileText,
@@ -20,42 +12,118 @@ import {
   Facebook,
   Mail,
   BarChart3,
+  Smartphone,
+  Wifi,
+  WifiOff,
+  Download,
+  Zap,
+  Shield,
+  Globe,
+  ChevronRight,
+  Minus,
+  Plus,
+  ArrowUpRight,
+  Star,
+  CheckCircle2,
 } from "lucide-react";
 
 // ---------------------------------------------------------------------------
-// FAQ Data
+// Data
 // ---------------------------------------------------------------------------
+
+const features = [
+  {
+    icon: Users,
+    title: "Contactos & Leads",
+    desc: "Segmenta por tags, trackea fuente (WhatsApp, Instagram, referido), busqueda global instantanea.",
+    color: "#10b981",
+  },
+  {
+    icon: Building2,
+    title: "Inventario de Propiedades",
+    desc: "7 tipos de inmueble, multi-moneda, galeria de fotos, filtros combinables, GPS integrado.",
+    color: "#3b82f6",
+  },
+  {
+    icon: MessageCircle,
+    title: "Inbox Unificado",
+    desc: "WhatsApp, Instagram DMs y Facebook Messenger en una sola pantalla. Responde sin cambiar de app.",
+    color: "#8b5cf6",
+  },
+  {
+    icon: Calendar,
+    title: "Calendario & Citas",
+    desc: "Agenda visitas, vincula a contacto y propiedad. Notificaciones y estados de seguimiento.",
+    color: "#f59e0b",
+  },
+  {
+    icon: FileText,
+    title: "Documentos & Contratos",
+    desc: "Sube contratos, escrituras, avaluos. Vinculados al contacto y propiedad. Descarga segura.",
+    color: "#ef4444",
+  },
+  {
+    icon: BarChart3,
+    title: "Dashboard & KPIs",
+    desc: "Metricas en tiempo real: propiedades, contactos, citas, comisiones. Todo en un vistazo.",
+    color: "#0ea5e9",
+  },
+];
+
+const pwaFeatures = [
+  {
+    icon: Download,
+    title: "Instala desde el navegador",
+    desc: "Sin App Store, sin Google Play. Un tap y esta en tu pantalla de inicio.",
+  },
+  {
+    icon: WifiOff,
+    title: "Funciona sin internet",
+    desc: "Consulta contactos, propiedades y citas incluso sin conexion. Se sincroniza al volver.",
+  },
+  {
+    icon: Zap,
+    title: "Rapida en cualquier telefono",
+    desc: "Optimizada para gama media. Carga en menos de 2 segundos despues de la primera visita.",
+  },
+  {
+    icon: Shield,
+    title: "Segura como app nativa",
+    desc: "HTTPS, autenticacion con Clerk, datos encriptados. Sin riesgos de apps de terceros.",
+  },
+];
+
+const marketingFeatures = [
+  { icon: Instagram, label: "Instagram", desc: "Publica fotos, responde DMs, ve metricas" },
+  { icon: Facebook, label: "Facebook", desc: "Posts en tu pagina, comentarios, insights" },
+  { icon: MessageCircle, label: "WhatsApp", desc: "Mensajes y templates via Meta Cloud API" },
+  { icon: Mail, label: "Email", desc: "Campanas HTML a segmentos por tag" },
+];
 
 const faqItems = [
   {
-    question: "¿Como busco y filtro contactos eficientemente?",
-    answer:
-      "Puedes realizar busquedas globales por nombre, email, telefono o empresa. Ademas, nuestro sistema permite la segmentacion avanzada utilizando tags de colores personalizados, y filtrado por fuente (Web, Referido, Instagram, WhatsApp, etc.).",
+    q: "¿Necesito descargar algo del App Store?",
+    a: "No. Propi es una PWA que se instala directamente desde el navegador. Abre propi.app en Chrome o Safari, toca 'Agregar a pantalla de inicio' y listo. Sin tiendas, sin esperas, sin actualizaciones manuales.",
   },
   {
-    question: "¿Se integra con WhatsApp, Instagram y Facebook?",
-    answer:
-      "Si. Propi tiene un Inbox Unificado que conecta los tres canales usando la Meta Graph API. Recibes y respondes mensajes de WhatsApp, Instagram DMs y Facebook Messenger desde una sola pantalla, sin cambiar de app.",
+    q: "¿Funciona en mi telefono?",
+    a: "Si. Propi esta optimizada para telefonos gama media en adelante. Funciona en Android 8+ y iOS 14+. Solo necesitas un navegador moderno (Chrome, Safari, Edge).",
   },
   {
-    question: "¿El inventario soporta multiples monedas?",
-    answer:
-      "Si. Cada propiedad puede tener su precio en USD, COP o EUR. Los filtros de precio funcionan por moneda y la calculadora de comisiones se adapta automaticamente.",
+    q: "¿Como se conecta con WhatsApp e Instagram?",
+    a: "Usamos la Meta Graph API oficial. Conectas tu cuenta Business de Instagram, tu pagina de Facebook y tu numero de WhatsApp Business desde la configuracion. Un solo token para los tres canales.",
   },
   {
-    question: "¿Como funciona la gestion de documentos y contratos?",
-    answer:
-      "Subes archivos directamente desde el navegador (PDF, DOC, imagenes). Cada documento se vincula a un contacto y/o propiedad. Puedes clasificarlos por tipo: contrato, escritura, avaluo, plano, factura. La descarga usa URLs firmadas con expiracion de 1 hora.",
+    q: "¿Mis datos estan seguros?",
+    a: "Si. Autenticacion con Clerk (MFA, social login), conexiones HTTPS, archivos en storage privado con URLs firmadas que expiran. Tu datos nunca se comparten con terceros.",
   },
   {
-    question: "¿Puedo gestionar citas y vincularlas a propiedades?",
-    answer:
-      "Si. El calendario te permite crear citas con hora inicio/fin, ubicacion (fisica o virtual), y vincularlas a un contacto y una propiedad. Puedes ver las proximas citas desde el dashboard y desde el detalle de cada contacto.",
+    q: "¿Cuanto cuesta?",
+    a: "Modelo por seat: pagas por usuario. Cada persona de tu equipo que necesite acceso es un seat. Sin costos ocultos, sin limites de contactos o propiedades.",
   },
   {
-    question: "¿Funciona como app en el telefono?",
-    answer:
-      "Si. Propi es una PWA (Progressive Web App) que se instala desde el navegador sin app stores. Funciona offline, tiene notificaciones, y esta optimizada para telefonos gama media. Se ve y se siente como una app nativa.",
+    q: "¿Puedo publicar en portales como Wasi o MercadoLibre?",
+    a: "Estamos trabajando en integraciones con portales inmobiliarios. La publicacion en Wasi y MercadoLibre estara disponible desde la version web del CRM.",
   },
 ];
 
@@ -70,537 +138,332 @@ export default function LandingPage() {
     <div
       className="min-h-screen relative overflow-x-hidden"
       style={{
-        background: "#FAF9F6",
+        background: "#FAFAF8",
         color: "#111827",
         fontFamily: "var(--font-jakarta), sans-serif",
       }}
     >
-      {/* Background Gradients */}
-      <div className="absolute top-0 left-0 w-full h-[800px] overflow-hidden -z-10 pointer-events-none">
-        <div
-          className="absolute rounded-full"
-          style={{
-            top: "-10%",
-            left: "10%",
-            width: 600,
-            height: 600,
-            background: "rgba(255,237,213,0.6)",
-            filter: "blur(120px)",
-            mixBlendMode: "multiply",
-          }}
-        />
-        <div
-          className="absolute rounded-full"
-          style={{
-            top: "10%",
-            right: "10%",
-            width: 700,
-            height: 700,
-            background: "rgba(233,213,255,0.5)",
-            filter: "blur(120px)",
-            mixBlendMode: "multiply",
-          }}
-        />
+      {/* Background */}
+      <div className="absolute top-0 left-0 w-full h-[900px] overflow-hidden -z-10 pointer-events-none">
+        <div className="absolute rounded-full" style={{ top: "-15%", left: "5%", width: 700, height: 700, background: "rgba(16,185,129,0.08)", filter: "blur(140px)" }} />
+        <div className="absolute rounded-full" style={{ top: "5%", right: "0%", width: 800, height: 800, background: "rgba(139,92,246,0.06)", filter: "blur(140px)" }} />
       </div>
 
-      {/* Navigation */}
-      <header className="w-full max-w-[1440px] mx-auto px-8 md:px-16 py-8 flex items-center justify-between relative z-50">
-        <nav className="hidden md:flex items-center gap-10 text-sm font-medium" style={{ color: "#6B7280" }}>
-          <Link href="/" className="font-bold" style={{ color: "#1A1D20" }}>
-            Inicio
-          </Link>
-          <Link href="/sign-up" className="hover:opacity-80 transition-opacity">
-            Contactos
-          </Link>
-          <Link href="/sign-up" className="hover:opacity-80 transition-opacity">
-            Inventario
-          </Link>
-          <Link href="/sign-up" className="hover:opacity-80 transition-opacity">
-            Calendario
-          </Link>
-        </nav>
-
-        <div
-          className="flex items-center gap-2 font-bold text-2xl tracking-tight"
-          style={{ color: "#1A1D20" }}
-        >
-          <Building2 className="h-7 w-7" />
+      {/* Nav */}
+      <header className="w-full max-w-[1440px] mx-auto px-6 md:px-16 py-6 flex items-center justify-between relative z-50">
+        <div className="flex items-center gap-2 font-bold text-xl tracking-tight" style={{ color: "#0A2B1D" }}>
+          <Building2 className="h-6 w-6" />
           Propi
         </div>
-
-        <Link
-          href="/sign-in"
-          className="text-white px-8 py-3.5 rounded-full text-sm font-semibold hover:opacity-90 transition-all shadow-md hover:shadow-lg"
-          style={{ background: "#1A1D20" }}
-        >
-          Ingresar
-        </Link>
-      </header>
-
-      {/* Hero Section */}
-      <main className="w-full max-w-[1440px] mx-auto px-8 md:px-16 pt-12 pb-24 relative">
-        <div className="text-center max-w-3xl mx-auto mb-16">
-          <h1
-            className="text-4xl md:text-[64px] leading-[1.1] font-extrabold tracking-tight mb-6"
-            style={{ color: "#111827" }}
-          >
-            Tu CRM Inmo
-            <span className="relative inline-block">
-              <span
-                className="w-12 h-12 rounded-full absolute -left-2 top-2 -z-10 overflow-hidden inline-block"
-                style={{ background: "#e5e7eb" }}
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src="https://images.unsplash.com/photo-1564013799919-ab600027ffc6?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80"
-                  className="w-full h-full object-cover opacity-80"
-                  alt=""
-                />
-              </span>
-              biliario
-            </span>
-            , <br />
-            A un Solo Clic.
-          </h1>
-          <p className="text-lg font-medium" style={{ color: "#6B7280" }}>
-            Centraliza contactos, inventario, inbox unificado y marketing.
-            <br />
-            La plataforma definitiva para el profesional de bienes raices.
-          </p>
-        </div>
-
-        {/* Hero Image & Badges */}
-        <div className="relative max-w-4xl mx-auto mb-20 z-10">
-          <div className="rounded-[40px] overflow-hidden shadow-2xl relative bg-white aspect-[21/9]">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?ixlib=rb-4.0.3&auto=format&fit=crop&w=2000&q=80"
-              alt="Propiedad Moderna"
-              className="w-full h-full object-cover"
-            />
-          </div>
-
-          {/* Left Badge */}
-          <div
-            className="absolute top-[45%] -left-[5%] hidden md:flex bg-white/90 backdrop-blur-md px-6 py-4 rounded-3xl items-center gap-4 border border-white/50"
-            style={{
-              boxShadow: "0 20px 40px -15px rgba(0,0,0,0.1)",
-              transform: "rotate(-4deg)",
-            }}
-          >
-            <div className="bg-gray-100 p-2 rounded-2xl">
-              <Users className="h-5 w-5" style={{ color: "#1A1D20" }} />
-            </div>
-            <div>
-              <div className="font-bold text-xl leading-none mb-1">+5K</div>
-              <div className="text-xs font-medium" style={{ color: "#6B7280" }}>
-                Contactos
-              </div>
-            </div>
-          </div>
-
-          {/* Right Badge */}
-          <div
-            className="absolute top-[15%] -right-[5%] hidden md:flex bg-white/90 backdrop-blur-md px-6 py-4 rounded-3xl items-center gap-4 border border-white/50"
-            style={{
-              boxShadow: "0 20px 40px -15px rgba(0,0,0,0.1)",
-              transform: "rotate(2deg)",
-            }}
-          >
-            <div className="bg-gray-100 p-2 rounded-2xl">
-              <CheckCircle2 className="h-5 w-5" style={{ color: "#1A1D20" }} />
-            </div>
-            <div>
-              <div className="font-bold text-xl leading-none mb-1">+1K</div>
-              <div className="text-xs font-medium" style={{ color: "#6B7280" }}>
-                Cierres Exitosos
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Filter Bar */}
-        <div
-          className="bg-white rounded-[40px] p-3 hidden md:flex items-center justify-between max-w-4xl mx-auto border border-gray-100 relative -mt-32 z-20"
-          style={{ boxShadow: "0 20px 50px -12px rgba(0,0,0,0.06)" }}
-        >
-          <div className="flex-1 flex items-center divide-x divide-gray-100">
-            {["Venta/Arriendo", "Tipo Inmueble", "Ubicacion", "Estado CRM"].map(
-              (label) => (
-                <div
-                  key={label}
-                  className="px-8 py-3 cursor-pointer flex items-center justify-between w-full hover:bg-gray-50 rounded-2xl transition-colors"
-                >
-                  <span className="text-sm font-semibold">{label}</span>
-                  <ChevronDown className="h-4 w-4 text-gray-400" />
-                </div>
-              ),
-            )}
-          </div>
-          <Link
-            href="/sign-up"
-            className="text-white px-8 py-4 rounded-full text-sm font-semibold flex items-center gap-2 hover:opacity-90 transition-all ml-2"
-            style={{ background: "#1A1D20" }}
-          >
-            <Search className="h-4 w-4" />
-            Buscar
+        <nav className="hidden md:flex items-center gap-8 text-sm font-medium" style={{ color: "#6B7280" }}>
+          <a href="#features" className="hover:text-gray-900 transition-colors">Funciones</a>
+          <a href="#pwa" className="hover:text-gray-900 transition-colors">App Movil</a>
+          <a href="#marketing" className="hover:text-gray-900 transition-colors">Marketing</a>
+          <a href="#faq" className="hover:text-gray-900 transition-colors">FAQ</a>
+        </nav>
+        <div className="flex items-center gap-3">
+          <Link href="/sign-in" className="text-sm font-semibold hover:text-gray-900 transition-colors hidden md:block" style={{ color: "#6B7280" }}>
+            Ingresar
+          </Link>
+          <Link href="/sign-up" className="text-white px-6 py-2.5 rounded-full text-sm font-semibold hover:opacity-90 transition-all shadow-md" style={{ background: "#0A2B1D" }}>
+            Empezar Gratis
           </Link>
         </div>
-      </main>
+      </header>
 
-      {/* Stats Section */}
-      <section className="w-full max-w-[1440px] mx-auto px-8 md:px-16 py-16">
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
-          {[
-            {
-              value: "1,250+",
-              title: "Contactos Activos",
-              desc: "Gestiona eficientemente toda tu cartera de clientes potenciales, prospectos y referidos.",
-            },
-            {
-              value: "85%",
-              title: "Tasa de Respuesta",
-              desc: "Mejora tu engagement y tiempos de respuesta usando nuestro Inbox Unificado multicanal.",
-            },
-            {
-              value: "320+",
-              title: "Propiedades Activas",
-              desc: "Control total sobre tu inventario: estados, galerias y filtros dinamicos integrados.",
-            },
-            {
-              value: "$2.5M+",
-              title: "En Comisiones",
-              desc: "Proyecta ingresos y monitorea metas financieras con la calculadora de comisiones interactiva.",
-            },
-          ].map((stat) => (
-            <div
-              key={stat.title}
-              className="bg-white rounded-3xl p-8 border border-gray-100/60"
-              style={{ boxShadow: "0 10px 30px -15px rgba(0,0,0,0.03)" }}
-            >
-              <div
-                className="text-3xl font-bold mb-2"
-                style={{ color: "#1A1D20" }}
-              >
-                {stat.value}
-              </div>
-              <div className="text-sm font-bold mb-3" style={{ color: "#111827" }}>
-                {stat.title}
-              </div>
-              <p
-                className="text-xs leading-relaxed"
-                style={{ color: "#6B7280" }}
-              >
-                {stat.desc}
-              </p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Explore Section */}
-      <section className="w-full max-w-[1440px] mx-auto py-20 overflow-hidden">
-        <div className="text-center mb-16">
-          <h2 className="text-4xl font-bold mb-4 flex items-center justify-center gap-3">
-            Explora tu Inventario
-          </h2>
-          <p style={{ color: "#6B7280" }}>
-            Acceso rapido a propiedades destacadas vinculadas a contactos o
-            listas para mostrar.
-            <br />
-            Gestion visual completa desde el panel principal.
-          </p>
-          <div className="mx-auto mt-6 w-16 h-8 rounded-full overflow-hidden inline-block">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="https://images.unsplash.com/photo-1512917774080-9991f1c4c750?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80"
-              className="w-full h-full object-cover"
-              alt=""
-            />
+      {/* Hero */}
+      <section className="w-full max-w-[1440px] mx-auto px-6 md:px-16 pt-16 md:pt-24 pb-20">
+        <div className="max-w-4xl mx-auto text-center">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold mb-8" style={{ background: "#E2F2E9", color: "#0A2B1D" }}>
+            <Smartphone className="h-3.5 w-3.5" />
+            CRM que se instala como app en tu telefono
           </div>
-        </div>
 
-        {/* Gallery Slider */}
-        <div className="relative px-4 md:px-16">
-          <button className="absolute left-1 md:left-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-white rounded-full flex items-center justify-center z-10 hover:scale-105 transition-transform shadow-[0_10px_20px_rgba(0,0,0,0.08)]">
-            <ChevronLeft className="h-5 w-5" />
-          </button>
-          <button className="absolute right-1 md:right-4 top-1/2 -translate-y-1/2 w-12 h-12 bg-white rounded-full flex items-center justify-center z-10 hover:scale-105 transition-transform shadow-[0_10px_20px_rgba(0,0,0,0.08)]">
-            <ChevronRight className="h-5 w-5" />
-          </button>
+          <h1 className="text-4xl md:text-[72px] leading-[1.05] font-extrabold tracking-tight mb-6" style={{ color: "#0A2B1D" }}>
+            Tu negocio inmobiliario,
+            <br />
+            <span style={{ background: "linear-gradient(135deg, #10b981, #3b82f6)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+              en tu bolsillo.
+            </span>
+          </h1>
 
-          <div className="flex gap-6 overflow-x-auto hide-scrollbar snap-x pb-8 px-4">
-            {[
-              { img: "photo-1600607687939-ce8a6c25118c", badge: "Activa", badgeClass: "bg-white/90 text-black" },
-              { img: "photo-1600585154340-be6161a56a0c", badge: "Reservada", badgeClass: "bg-yellow-400/90 text-black" },
-              { img: "photo-1600566753086-00f18efc2291", badge: "Borrador", badgeClass: "bg-white/90 text-black" },
-              { img: "photo-1600047509807-ba8f99d2cdde", badge: "Vendida", badgeClass: "bg-green-500/90 text-white" },
-              { img: "photo-1512917774080-9991f1c4c750", badge: "Activa", badgeClass: "bg-white/90 text-black" },
-            ].map((card, i) => (
-              <div
-                key={i}
-                className="min-w-[280px] h-[400px] rounded-[32px] overflow-hidden snap-center relative shadow-md flex-shrink-0"
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={`https://images.unsplash.com/${card.img}?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80`}
-                  className="w-full h-full object-cover"
-                  alt=""
-                />
-                <div
-                  className={`absolute top-4 right-4 px-3 py-1.5 rounded-full text-xs font-bold ${card.badgeClass}`}
-                >
-                  {card.badge}
+          <p className="text-lg md:text-xl font-medium max-w-2xl mx-auto mb-10" style={{ color: "#6B7280" }}>
+            Contactos, propiedades, citas, documentos e inbox unificado de WhatsApp, Instagram y Facebook. Todo desde una app que funciona hasta sin internet.
+          </p>
+
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
+            <Link href="/sign-up" className="text-white px-8 py-4 rounded-full text-base font-semibold hover:opacity-90 transition-all shadow-lg flex items-center gap-2" style={{ background: "#0A2B1D" }}>
+              Empezar Gratis
+              <ArrowUpRight className="h-4 w-4" />
+            </Link>
+            <Link href="/preview" className="px-8 py-4 rounded-full text-base font-semibold border-2 flex items-center gap-2 hover:bg-gray-50 transition-colors" style={{ borderColor: "#d1d5db", color: "#374151" }}>
+              Ver Demo
+              <ChevronRight className="h-4 w-4" />
+            </Link>
+          </div>
+
+          {/* Phone mockup */}
+          <div className="relative max-w-sm mx-auto">
+            <div className="rounded-[40px] border-[8px] overflow-hidden shadow-2xl relative" style={{ borderColor: "#1a1a1a", background: "#E4E7E1" }}>
+              {/* Status bar */}
+              <div className="h-8 flex items-center justify-between px-6 text-[10px] font-bold" style={{ background: "#0A2B1D", color: "#fff" }}>
+                <span>9:41</span>
+                <span className="flex items-center gap-1">
+                  <Wifi className="h-3 w-3" />
+                  100%
+                </span>
+              </div>
+              {/* App content mock */}
+              <div className="p-4 space-y-3" style={{ background: "#E4E7E1" }}>
+                {/* Mini dashboard */}
+                <div className="bg-white rounded-2xl p-4 shadow-sm">
+                  <div className="text-[10px] font-medium mb-1" style={{ color: "#8BA398" }}>Contactos Activos</div>
+                  <div className="text-2xl font-extrabold" style={{ color: "#0A2B1D" }}>1,250</div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="rounded-2xl p-3" style={{ background: "#E2F2E9" }}>
+                    <div className="flex items-center gap-1 text-[9px] font-bold text-green-700 mb-1">
+                      <CheckCircle2 className="h-3 w-3" /> Activas
+                    </div>
+                    <div className="text-lg font-extrabold" style={{ color: "#0A2B1D" }}>320</div>
+                  </div>
+                  <div className="rounded-2xl p-3" style={{ background: "#E2F3F9" }}>
+                    <div className="flex items-center gap-1 text-[9px] font-bold text-blue-700 mb-1">
+                      <Calendar className="h-3 w-3" /> Citas
+                    </div>
+                    <div className="text-lg font-extrabold" style={{ color: "#0A2B1D" }}>8</div>
+                  </div>
+                </div>
+                {/* Mini inbox */}
+                <div className="bg-white rounded-2xl p-3 shadow-sm">
+                  <div className="text-[10px] font-bold mb-2" style={{ color: "#0A2B1D" }}>Inbox</div>
+                  {[
+                    { name: "Maria L.", msg: "Hola, me interesa el apto...", platform: "whatsapp", color: "#25D366" },
+                    { name: "Carlos R.", msg: "Cuando podemos agendar?", platform: "instagram", color: "#E1306C" },
+                  ].map((m, i) => (
+                    <div key={i} className="flex items-center gap-2 py-1.5">
+                      <div className="w-6 h-6 rounded-full flex items-center justify-center" style={{ background: `${m.color}15` }}>
+                        {m.platform === "whatsapp" ? <MessageCircle className="h-3 w-3" style={{ color: m.color }} /> : <Instagram className="h-3 w-3" style={{ color: m.color }} />}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-[10px] font-bold truncate" style={{ color: "#0A2B1D" }}>{m.name}</div>
+                        <div className="text-[9px] truncate" style={{ color: "#8BA398" }}>{m.msg}</div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
-            ))}
+              {/* Bottom nav */}
+              <div className="flex items-center justify-around py-2 border-t" style={{ background: "#fff", borderColor: "#e5e7eb" }}>
+                {[
+                  { icon: BarChart3, label: "Inicio", active: true },
+                  { icon: Users, label: "Contactos", active: false },
+                  { icon: Building2, label: "Inmuebles", active: false },
+                  { icon: Calendar, label: "Agenda", active: false },
+                  { icon: MessageCircle, label: "Inbox", active: false },
+                ].map((n, i) => (
+                  <div key={i} className="flex flex-col items-center gap-0.5" style={{ color: n.active ? "#0A2B1D" : "#9ca3af" }}>
+                    <n.icon className="h-4 w-4" />
+                    <span className="text-[8px] font-semibold">{n.label}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            {/* Floating badges */}
+            <div className="absolute -left-4 md:-left-16 top-[20%] bg-white/95 backdrop-blur-md px-4 py-3 rounded-2xl shadow-lg border border-white/50 flex items-center gap-3" style={{ transform: "rotate(-3deg)" }}>
+              <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: "#E2F2E9" }}>
+                <Wifi className="h-4 w-4 text-green-600" />
+              </div>
+              <div>
+                <div className="text-xs font-bold">Offline Ready</div>
+                <div className="text-[10px]" style={{ color: "#6B7280" }}>Funciona sin internet</div>
+              </div>
+            </div>
+            <div className="absolute -right-4 md:-right-16 top-[55%] bg-white/95 backdrop-blur-md px-4 py-3 rounded-2xl shadow-lg border border-white/50 flex items-center gap-3" style={{ transform: "rotate(2deg)" }}>
+              <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: "#EDE9FE" }}>
+                <Globe className="h-4 w-4 text-purple-600" />
+              </div>
+              <div>
+                <div className="text-xs font-bold">3 Canales</div>
+                <div className="text-[10px]" style={{ color: "#6B7280" }}>IG + FB + WA</div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Features Collage Section */}
-      <section className="w-full max-w-[1440px] mx-auto px-8 md:px-16 py-24 bg-white/40">
+      {/* Features */}
+      <section id="features" className="w-full max-w-[1440px] mx-auto px-6 md:px-16 py-20">
         <div className="text-center mb-16">
-          <h2 className="text-[28px] md:text-[38px] font-bold mb-4">
-            Gestion 360° —
-            <br />
-            Control Total de tus Procesos
+          <h2 className="text-3xl md:text-[44px] font-extrabold mb-4" style={{ color: "#0A2B1D" }}>
+            Todo lo que necesitas,<br />nada que no.
           </h2>
-          <p
-            className="max-w-2xl mx-auto text-sm"
-            style={{ color: "#6B7280" }}
-          >
-            Encuentra todo lo que necesitas bajo un mismo techo: desde captar el
-            primer prospecto, agendar citas en el calendario, hasta firmar
-            contratos digitales con confianza.
+          <p className="text-base max-w-xl mx-auto" style={{ color: "#6B7280" }}>
+            Cada modulo diseñado para usarse con el pulgar. Rapido, directo, sin menus infinitos.
           </p>
         </div>
 
-        {/* Feature Cards instead of collage (better for mobile) */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
-          {[
-            { icon: Users, title: "Contactos & Tags", desc: "Segmenta leads por fuente, asigna tags de colores, busca globalmente." },
-            { icon: Building2, title: "Inventario Completo", desc: "7 tipos de inmueble, 3 operaciones, 6 estados, galeria de fotos, GPS." },
-            { icon: MessageCircle, title: "Inbox Unificado", desc: "WhatsApp, Instagram y Facebook en una sola pantalla con chatscope." },
-            { icon: Calendar, title: "Calendario & Citas", desc: "Agenda visitas, vincula a contacto y propiedad, 5 estados de cita." },
-            { icon: FileText, title: "Documentos", desc: "Contratos, escrituras, avaluos. Upload directo, vinculado al CRM." },
-            { icon: Mail, title: "Email Marketing", desc: "Campanas HTML a segmentos por tag. Envio masivo con Nodemailer." },
-            { icon: Instagram, title: "Instagram & Facebook", desc: "Publica, comenta, ve metricas. Todo desde el mismo panel." },
-            { icon: BarChart3, title: "Dashboard & KPIs", desc: "Propiedades, contactos, citas, comisiones. Todo en tiempo real." },
-            { icon: Facebook, title: "PWA Instalable", desc: "Se instala desde el navegador. Funciona offline. Gama media friendly." },
-          ].map((feature) => (
-            <div
-              key={feature.title}
-              className="bg-white rounded-3xl p-6 border border-gray-100/60 hover:shadow-lg transition-shadow"
-              style={{ boxShadow: "0 10px 30px -15px rgba(0,0,0,0.03)" }}
-            >
-              <div className="bg-gray-100 w-10 h-10 rounded-2xl flex items-center justify-center mb-4">
-                <feature.icon className="h-5 w-5" style={{ color: "#1A1D20" }} />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 max-w-5xl mx-auto">
+          {features.map((f) => (
+            <div key={f.title} className="bg-white rounded-[24px] p-6 border border-gray-100/80 hover:shadow-xl hover:-translate-y-1 transition-all duration-200 cursor-default">
+              <div className="w-11 h-11 rounded-2xl flex items-center justify-center mb-4" style={{ background: `${f.color}12` }}>
+                <f.icon className="h-5 w-5" style={{ color: f.color }} />
               </div>
-              <div className="text-sm font-bold mb-2" style={{ color: "#111827" }}>
-                {feature.title}
-              </div>
-              <p className="text-xs leading-relaxed" style={{ color: "#6B7280" }}>
-                {feature.desc}
-              </p>
+              <div className="text-base font-bold mb-2" style={{ color: "#0A2B1D" }}>{f.title}</div>
+              <p className="text-sm leading-relaxed" style={{ color: "#6B7280" }}>{f.desc}</p>
             </div>
           ))}
         </div>
       </section>
 
-      {/* Collage Section (desktop only) */}
-      <section className="w-full max-w-[1440px] mx-auto px-8 md:px-16 py-24 hidden md:block">
-        <div className="relative w-full max-w-4xl mx-auto h-[600px]">
-          <div className="absolute top-0 left-0 w-[45%] h-[65%] rounded-[32px] overflow-hidden shadow-xl z-10 border-4 border-white">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" className="w-full h-full object-cover" alt="" />
+      {/* PWA Section */}
+      <section id="pwa" className="w-full max-w-[1440px] mx-auto px-6 md:px-16 py-20">
+        <div className="rounded-[40px] p-8 md:p-16 relative overflow-hidden" style={{ background: "#0A2B1D" }}>
+          <div className="relative z-10">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold mb-6" style={{ background: "rgba(255,255,255,0.1)", color: "#4ade80" }}>
+              <Smartphone className="h-3.5 w-3.5" />
+              Progressive Web App
+            </div>
+
+            <h2 className="text-3xl md:text-[44px] font-extrabold mb-4 text-white leading-tight">
+              Una app real.<br />Sin app stores.
+            </h2>
+            <p className="text-base mb-12 max-w-lg" style={{ color: "rgba(255,255,255,0.6)" }}>
+              Propi se instala en tu telefono como cualquier app. Pero no necesitas descargar nada de una tienda. Abre, instala, usa.
+            </p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 max-w-2xl">
+              {pwaFeatures.map((f) => (
+                <div key={f.title} className="rounded-2xl p-5" style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)" }}>
+                  <f.icon className="h-5 w-5 mb-3" style={{ color: "#4ade80" }} />
+                  <div className="text-sm font-bold text-white mb-1">{f.title}</div>
+                  <p className="text-xs leading-relaxed" style={{ color: "rgba(255,255,255,0.5)" }}>{f.desc}</p>
+                </div>
+              ))}
+            </div>
           </div>
-          <div className="absolute top-8 right-[5%] w-[42%] h-[55%] rounded-[32px] overflow-hidden shadow-xl z-20 border-4 border-white">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" className="w-full h-full object-cover" alt="" />
-          </div>
-          <div className="absolute bottom-[10%] left-[-8%] w-[50%] h-[38%] rounded-[32px] overflow-hidden shadow-2xl z-30 border-4 border-white">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="https://images.unsplash.com/photo-1600607686527-6fb886090705?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" className="w-full h-full object-cover" alt="" />
-          </div>
-          <div className="absolute bottom-[5%] right-[12%] w-[45%] h-[40%] rounded-[32px] overflow-hidden shadow-xl z-10 border-4 border-white">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" className="w-full h-full object-cover" alt="" />
-          </div>
-          <div className="absolute top-[40%] right-[40%] w-[18%] h-[18%] rounded-2xl overflow-hidden shadow-lg z-40 border-[6px] border-white bg-white flex items-center justify-center p-2">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?ixlib=rb-4.0.3&auto=format&fit=crop&w=200&q=80" className="w-full h-full object-cover rounded-xl" alt="" />
+
+          {/* Decorative circles */}
+          <div className="absolute top-[-20%] right-[-10%] w-[500px] h-[500px] rounded-full pointer-events-none" style={{ border: "1px solid rgba(74,222,128,0.1)" }} />
+          <div className="absolute bottom-[-30%] right-[5%] w-[400px] h-[400px] rounded-full pointer-events-none" style={{ border: "1px solid rgba(74,222,128,0.06)" }} />
+        </div>
+      </section>
+
+      {/* Marketing */}
+      <section id="marketing" className="w-full max-w-[1440px] mx-auto px-6 md:px-16 py-20">
+        <div className="text-center mb-12">
+          <h2 className="text-3xl md:text-[44px] font-extrabold mb-4" style={{ color: "#0A2B1D" }}>
+            Marketing integrado
+          </h2>
+          <p className="text-base max-w-xl mx-auto" style={{ color: "#6B7280" }}>
+            Publica contenido, responde mensajes y mide resultados. Todo desde el mismo lugar donde gestionas tus contactos.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-3xl mx-auto">
+          {marketingFeatures.map((m) => (
+            <div key={m.label} className="bg-white rounded-[20px] p-5 border border-gray-100/80 text-center hover:shadow-lg hover:-translate-y-1 transition-all duration-200">
+              <m.icon className="h-6 w-6 mx-auto mb-3" style={{ color: "#0A2B1D" }} />
+              <div className="text-sm font-bold mb-1" style={{ color: "#0A2B1D" }}>{m.label}</div>
+              <p className="text-[11px] leading-relaxed" style={{ color: "#6B7280" }}>{m.desc}</p>
+            </div>
+          ))}
+        </div>
+
+        <div className="text-center mt-8">
+          <p className="text-xs" style={{ color: "#9ca3af" }}>
+            Metricas detalladas, publicacion en portales (Wasi, MercadoLibre) y email marketing disponibles en la version web.
+          </p>
+        </div>
+      </section>
+
+      {/* Social proof */}
+      <section className="w-full max-w-[1440px] mx-auto px-6 md:px-16 py-16">
+        <div className="bg-white rounded-[32px] p-8 md:p-12 border border-gray-100/60 shadow-sm">
+          <div className="flex flex-col md:flex-row items-center gap-8">
+            <div className="flex -space-x-3">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <div key={i} className="w-10 h-10 rounded-full border-2 border-white flex items-center justify-center text-xs font-bold text-white" style={{ background: ["#10b981", "#3b82f6", "#8b5cf6", "#f59e0b", "#ef4444"][i - 1] }}>
+                  {["ML", "CR", "AG", "PS", "JD"][i - 1]}
+                </div>
+              ))}
+            </div>
+            <div className="text-center md:text-left">
+              <div className="flex items-center justify-center md:justify-start gap-1 mb-1">
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <Star key={i} className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                ))}
+              </div>
+              <p className="text-sm" style={{ color: "#6B7280" }}>
+                <span className="font-bold" style={{ color: "#0A2B1D" }}>&ldquo;Propi conecto nuestro WhatsApp al CRM y el equipo es mucho mas productivo.&rdquo;</span>
+                {" "} — Carlos R., Broker Inmobiliario
+              </p>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* FAQ Section */}
-      <section className="w-full max-w-[800px] mx-auto px-8 py-24">
-        <div className="text-center mb-16">
-          <h2 className="text-[32px] font-bold mb-4">
-            FAQ — Dudas Comunes
+      {/* FAQ */}
+      <section id="faq" className="w-full max-w-[800px] mx-auto px-6 py-20">
+        <div className="text-center mb-12">
+          <h2 className="text-3xl md:text-[36px] font-extrabold mb-4" style={{ color: "#0A2B1D" }}>
+            Preguntas frecuentes
           </h2>
-          <p className="text-sm" style={{ color: "#6B7280" }}>
-            Resolvemos tus preguntas sobre la gestion de contactos, propiedades
-            y la configuracion de nuestra plataforma inmobiliaria integral.
-          </p>
         </div>
-
-        <div className="space-y-0">
+        <div>
           {faqItems.map((item, idx) => (
-            <div key={idx} className="border-b border-gray-200 py-6">
-              <button
-                className="w-full flex justify-between items-center text-left group"
-                onClick={() => setOpenFaq(openFaq === idx ? -1 : idx)}
-              >
-                <span className="font-bold text-lg" style={{ color: "#111827" }}>
-                  {item.question}
-                </span>
+            <div key={idx} className="border-b border-gray-200 py-5">
+              <button className="w-full flex justify-between items-center text-left group" onClick={() => setOpenFaq(openFaq === idx ? -1 : idx)}>
+                <span className="font-bold text-base pr-4" style={{ color: "#0A2B1D" }}>{item.q}</span>
                 {openFaq === idx ? (
-                  <span
-                    className="w-8 h-8 rounded-full text-white flex items-center justify-center flex-shrink-0 ml-4"
-                    style={{ background: "#1A1D20" }}
-                  >
-                    <Minus className="h-4 w-4" />
+                  <span className="w-7 h-7 rounded-full text-white flex items-center justify-center flex-shrink-0" style={{ background: "#0A2B1D" }}>
+                    <Minus className="h-3.5 w-3.5" />
                   </span>
                 ) : (
-                  <span className="w-6 h-6 flex items-center justify-center flex-shrink-0 ml-4 text-gray-400 group-hover:text-gray-800 transition-colors">
-                    <Plus className="h-5 w-5" />
+                  <span className="w-7 h-7 flex items-center justify-center flex-shrink-0 text-gray-400 group-hover:text-gray-800 transition-colors">
+                    <Plus className="h-4 w-4" />
                   </span>
                 )}
               </button>
               {openFaq === idx && (
-                <div
-                  className="mt-4 text-sm leading-relaxed pr-12"
-                  style={{ color: "#6B7280" }}
-                >
-                  {item.answer}
-                </div>
+                <p className="mt-3 text-sm leading-relaxed pr-12" style={{ color: "#6B7280" }}>{item.a}</p>
               )}
             </div>
           ))}
         </div>
       </section>
 
+      {/* CTA */}
+      <section className="w-full max-w-[1440px] mx-auto px-6 md:px-16 py-16">
+        <div className="rounded-[40px] p-10 md:p-16 text-center" style={{ background: "#0A2B1D" }}>
+          <h2 className="text-3xl md:text-[44px] font-extrabold text-white mb-4 leading-tight">
+            Empieza hoy.<br />Tu CRM en tu bolsillo.
+          </h2>
+          <p className="text-base mb-8 max-w-lg mx-auto" style={{ color: "rgba(255,255,255,0.6)" }}>
+            Sin tarjeta de credito. Sin instalaciones complicadas. Abre, registrate y empieza a gestionar.
+          </p>
+          <Link href="/sign-up" className="inline-flex items-center gap-2 text-base font-semibold px-8 py-4 rounded-full shadow-lg hover:opacity-90 transition-all" style={{ background: "#fff", color: "#0A2B1D" }}>
+            Crear Cuenta Gratis
+            <ArrowUpRight className="h-4 w-4" />
+          </Link>
+        </div>
+      </section>
+
       {/* Footer */}
-      <footer className="w-full max-w-[1440px] mx-auto px-8 md:px-16 py-16">
-        <div
-          className="grid grid-cols-1 md:grid-cols-12 gap-12 bg-white rounded-[40px] p-8 md:p-12 border border-gray-100/50"
-          style={{ boxShadow: "0 20px 50px -15px rgba(0,0,0,0.02)" }}
-        >
-          {/* Testimonial Area */}
-          <div className="md:col-span-5 relative">
-            <h3 className="text-2xl font-bold mb-4">
-              Agencias que Confian en Nosotros
-            </h3>
-            <p
-              className="text-sm mb-12 max-w-sm"
-              style={{ color: "#6B7280" }}
-            >
-              No te quedes solo con nuestras palabras — descubre como otras
-              inmobiliarias estan escalando sus ventas y gestionando sus leads
-              con Propi.
-            </p>
-
-            {/* Testimonial Card */}
-            <div className="bg-[#F9F9FB] rounded-3xl p-6 relative ml-0 md:ml-8 shadow-sm border border-gray-100">
-              <div className="font-bold text-sm mb-2">
-                &ldquo;Control Total y Eficiencia&rdquo;
-              </div>
-              <p
-                className="text-xs leading-relaxed mb-4"
-                style={{ color: "#6B7280" }}
-              >
-                &ldquo;Como director de agencia, organizar las visitas y el
-                inventario era un caos. Propi conecto nuestro WhatsApp directo
-                al CRM y automatizo el seguimiento. El equipo es mucho mas
-                productivo ahora.&rdquo;
-              </p>
-              <div className="flex items-center gap-3">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80"
-                  className="w-10 h-10 rounded-full object-cover"
-                  alt="Carlos Rivera"
-                />
-                <div>
-                  <div className="text-sm font-bold">Carlos Rivera</div>
-                  <div
-                    className="text-[10px] uppercase tracking-wider"
-                    style={{ color: "#6B7280" }}
-                  >
-                    Broker Inmobiliario, COL
-                  </div>
-                </div>
-              </div>
-
-              <div className="absolute -bottom-4 right-6 flex gap-2">
-                <button className="w-8 h-8 rounded-full bg-white shadow-md border border-gray-100 flex items-center justify-center hover:bg-gray-50">
-                  <ChevronLeft className="h-3.5 w-3.5" />
-                </button>
-                <button className="w-8 h-8 rounded-full bg-white shadow-md border border-gray-100 flex items-center justify-center hover:bg-gray-50">
-                  <ChevronRight className="h-3.5 w-3.5" />
-                </button>
-              </div>
-            </div>
+      <footer className="w-full max-w-[1440px] mx-auto px-6 md:px-16 py-12">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="flex items-center gap-2 font-bold text-lg" style={{ color: "#0A2B1D" }}>
+            <Building2 className="h-5 w-5" />
+            Propi
           </div>
-
-          {/* Footer Links & Newsletter */}
-          <div className="md:col-span-7 flex flex-col justify-between">
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-8 mb-12 pt-8">
-              <div>
-                <h4 className="font-bold text-sm mb-6 uppercase tracking-wider">
-                  Plataforma
-                </h4>
-                <ul className="space-y-4 text-sm" style={{ color: "#6B7280" }}>
-                  <li><Link href="/sign-up" className="hover:opacity-80 transition-opacity">Dashboard</Link></li>
-                  <li><Link href="/sign-up" className="hover:opacity-80 transition-opacity">Inventario Multi-moneda</Link></li>
-                  <li><Link href="/sign-up" className="hover:opacity-80 transition-opacity">Inbox Unificado</Link></li>
-                  <li><Link href="/sign-up" className="hover:opacity-80 transition-opacity">Calculadora de Comisiones</Link></li>
-                </ul>
-              </div>
-              <div>
-                <h4 className="font-bold text-sm mb-6 uppercase tracking-wider">
-                  Recursos
-                </h4>
-                <ul className="space-y-4 text-sm" style={{ color: "#6B7280" }}>
-                  <li><Link href="/sign-up" className="hover:opacity-80 transition-opacity">Centro de Ayuda</Link></li>
-                  <li><Link href="/sign-up" className="hover:opacity-80 transition-opacity">Blog Inmobiliario</Link></li>
-                  <li><Link href="/sign-up" className="hover:opacity-80 transition-opacity">Guia de WhatsApp API</Link></li>
-                  <li><Link href="/sign-up" className="hover:opacity-80 transition-opacity">Webhooks</Link></li>
-                </ul>
-              </div>
-              <div>
-                <h4 className="font-bold text-sm mb-6 uppercase tracking-wider">
-                  Social Media
-                </h4>
-                <ul className="space-y-4 text-sm" style={{ color: "#6B7280" }}>
-                  <li><a href="#" className="hover:opacity-80 transition-opacity">Facebook</a></li>
-                  <li><a href="#" className="hover:opacity-80 transition-opacity">Instagram</a></li>
-                  <li><a href="#" className="hover:opacity-80 transition-opacity">X / Twitter</a></li>
-                  <li><a href="#" className="hover:opacity-80 transition-opacity">LinkedIn</a></li>
-                </ul>
-              </div>
-            </div>
-
-            {/* Bottom CTA */}
-            <div className="border-t border-gray-100 pt-8 mt-auto">
-              <p className="text-xs mb-3" style={{ color: "#6B7280" }}>
-                Unete a nuestro newsletter y no te pierdas las ultimas
-                tendencias en marketing inmobiliario.
-              </p>
-              <div className="flex items-center justify-between">
-                <div className="font-bold text-sm">Actualizaciones de Propi</div>
-                <Link
-                  href="/sign-up"
-                  className="text-white px-6 py-2 rounded-full text-xs font-semibold flex items-center gap-2 hover:opacity-90 transition-colors"
-                  style={{ background: "#1A1D20" }}
-                >
-                  Suscribirse
-                  <ArrowUpRight className="h-3.5 w-3.5" />
-                </Link>
-              </div>
-            </div>
+          <div className="flex items-center gap-6 text-sm" style={{ color: "#6B7280" }}>
+            <a href="#features" className="hover:text-gray-900 transition-colors">Funciones</a>
+            <a href="#pwa" className="hover:text-gray-900 transition-colors">App Movil</a>
+            <a href="#marketing" className="hover:text-gray-900 transition-colors">Marketing</a>
+            <a href="#faq" className="hover:text-gray-900 transition-colors">FAQ</a>
+          </div>
+          <div className="text-xs" style={{ color: "#9ca3af" }}>
+            2026 Propi. Todos los derechos reservados.
           </div>
         </div>
       </footer>
