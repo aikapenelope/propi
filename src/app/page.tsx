@@ -19,6 +19,7 @@ import {
   Zap,
   Shield,
   Globe,
+  Search,
   ChevronRight,
   Minus,
   Plus,
@@ -180,7 +181,7 @@ export default function LandingPage() {
           </div>
 
           <h1 className="text-4xl md:text-[72px] leading-[1.05] font-extrabold tracking-tight mb-6" style={{ color: "#0A2B1D" }}>
-            Tu negocio inmobiliario,
+            Tu CRM y dashboard,
             <br />
             <span style={{ background: "linear-gradient(135deg, #10b981, #3b82f6)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
               en tu bolsillo.
@@ -188,7 +189,7 @@ export default function LandingPage() {
           </h1>
 
           <p className="text-lg md:text-xl font-medium max-w-2xl mx-auto mb-10" style={{ color: "#6B7280" }}>
-            Contactos, propiedades, citas, documentos e inbox unificado de WhatsApp, Instagram y Facebook. Todo desde una app que funciona hasta sin internet.
+            Dashboard, contactos, propiedades, citas, documentos e inbox unificado de WhatsApp, Instagram y Facebook. Todo desde una app que funciona hasta sin internet.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
@@ -202,90 +203,164 @@ export default function LandingPage() {
             </Link>
           </div>
 
-          {/* Phone mockup */}
-          <div className="relative max-w-sm mx-auto">
-            <div className="rounded-[40px] border-[8px] overflow-hidden shadow-2xl relative" style={{ borderColor: "#1a1a1a", background: "#E4E7E1" }}>
-              {/* Status bar */}
-              <div className="h-8 flex items-center justify-between px-6 text-[10px] font-bold" style={{ background: "#0A2B1D", color: "#fff" }}>
-                <span>9:41</span>
-                <span className="flex items-center gap-1">
-                  <Wifi className="h-3 w-3" />
-                  100%
-                </span>
-              </div>
-              {/* App content mock */}
-              <div className="p-4 space-y-3" style={{ background: "#E4E7E1" }}>
-                {/* Mini dashboard */}
-                <div className="bg-white rounded-2xl p-4 shadow-sm">
-                  <div className="text-[10px] font-medium mb-1" style={{ color: "#8BA398" }}>Contactos Activos</div>
-                  <div className="text-2xl font-extrabold" style={{ color: "#0A2B1D" }}>1,250</div>
+          {/* Phone mockup - realistic iPhone style */}
+          <div className="relative max-w-[320px] mx-auto">
+            {/* Phone frame */}
+            <div className="relative rounded-[48px] p-[10px] shadow-[0_40px_80px_-20px_rgba(0,0,0,0.25)]" style={{ background: "#1a1a1a" }}>
+              {/* Notch / Dynamic Island */}
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[120px] h-[32px] rounded-b-[20px] z-20" style={{ background: "#1a1a1a" }} />
+
+              {/* Screen */}
+              <div className="rounded-[38px] overflow-hidden relative" style={{ background: "#E4E7E1" }}>
+                {/* Status bar */}
+                <div className="h-12 flex items-end justify-between px-8 pb-1 text-[11px] font-semibold relative z-10" style={{ background: "#0A2B1D", color: "#fff" }}>
+                  <span>9:41</span>
+                  <span className="flex items-center gap-1.5">
+                    <Wifi className="h-3 w-3" />
+                    <svg className="h-3 w-5" viewBox="0 0 25 12" fill="white"><rect x="0" y="1" width="21" height="10" rx="2" stroke="white" strokeWidth="1" fill="none"/><rect x="2" y="3" width="15" height="6" rx="1" fill="white"/><rect x="22" y="4" width="3" height="4" rx="1" fill="white" opacity="0.4"/></svg>
+                  </span>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="rounded-2xl p-3" style={{ background: "#E2F2E9" }}>
-                    <div className="flex items-center gap-1 text-[9px] font-bold text-green-700 mb-1">
-                      <CheckCircle2 className="h-3 w-3" /> Activas
+
+                {/* Dashboard header */}
+                <div className="px-5 pt-3 pb-4" style={{ background: "#0A2B1D" }}>
+                  <div className="flex items-center justify-between mb-3">
+                    <div>
+                      <div className="text-[10px] font-medium" style={{ color: "rgba(255,255,255,0.5)" }}>Buenos dias</div>
+                      <div className="text-sm font-bold text-white">Dashboard</div>
                     </div>
-                    <div className="text-lg font-extrabold" style={{ color: "#0A2B1D" }}>320</div>
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold text-white" style={{ background: "rgba(255,255,255,0.15)" }}>CR</div>
                   </div>
-                  <div className="rounded-2xl p-3" style={{ background: "#E2F3F9" }}>
-                    <div className="flex items-center gap-1 text-[9px] font-bold text-blue-700 mb-1">
-                      <Calendar className="h-3 w-3" /> Citas
-                    </div>
-                    <div className="text-lg font-extrabold" style={{ color: "#0A2B1D" }}>8</div>
+                  {/* Search bar */}
+                  <div className="flex items-center gap-2 px-3 py-2 rounded-xl" style={{ background: "rgba(255,255,255,0.1)" }}>
+                    <Search className="h-3 w-3" style={{ color: "rgba(255,255,255,0.4)" }} />
+                    <span className="text-[10px]" style={{ color: "rgba(255,255,255,0.3)" }}>Buscar contactos, propiedades...</span>
                   </div>
                 </div>
-                {/* Mini inbox */}
-                <div className="bg-white rounded-2xl p-3 shadow-sm">
-                  <div className="text-[10px] font-bold mb-2" style={{ color: "#0A2B1D" }}>Inbox</div>
+
+                {/* Dashboard content */}
+                <div className="px-4 py-3 space-y-3">
+                  {/* KPI row */}
+                  <div className="grid grid-cols-3 gap-2">
+                    <div className="bg-white rounded-xl p-2.5 shadow-sm">
+                      <div className="text-[8px] font-medium mb-0.5" style={{ color: "#8BA398" }}>Contactos</div>
+                      <div className="text-base font-extrabold" style={{ color: "#0A2B1D" }}>1,250</div>
+                    </div>
+                    <div className="rounded-xl p-2.5" style={{ background: "#E2F2E9" }}>
+                      <div className="text-[8px] font-medium mb-0.5 text-green-700">Activas</div>
+                      <div className="text-base font-extrabold" style={{ color: "#0A2B1D" }}>320</div>
+                    </div>
+                    <div className="rounded-xl p-2.5" style={{ background: "#E2F3F9" }}>
+                      <div className="text-[8px] font-medium mb-0.5 text-blue-700">Citas</div>
+                      <div className="text-base font-extrabold" style={{ color: "#0A2B1D" }}>8</div>
+                    </div>
+                  </div>
+
+                  {/* Channels */}
+                  <div className="bg-white rounded-xl p-3 shadow-sm">
+                    <div className="text-[9px] font-bold mb-2" style={{ color: "#0A2B1D" }}>Canales</div>
+                    <div className="flex gap-2">
+                      {[
+                        { icon: Instagram, color: "#E1306C", label: "IG" },
+                        { icon: Facebook, color: "#1877F2", label: "FB" },
+                        { icon: MessageCircle, color: "#25D366", label: "WA" },
+                        { icon: Mail, color: "#F59E0B", label: "Email" },
+                      ].map((ch) => (
+                        <div key={ch.label} className="flex-1 rounded-lg py-1.5 flex flex-col items-center gap-0.5" style={{ background: `${ch.color}10` }}>
+                          <ch.icon className="h-3 w-3" style={{ color: ch.color }} />
+                          <span className="text-[7px] font-bold" style={{ color: ch.color }}>{ch.label}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Inbox preview */}
+                  <div className="bg-white rounded-xl p-3 shadow-sm">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="text-[9px] font-bold" style={{ color: "#0A2B1D" }}>Inbox Reciente</div>
+                      <div className="text-[8px] font-bold px-1.5 py-0.5 rounded-full" style={{ background: "#EF4444", color: "#fff" }}>3</div>
+                    </div>
+                    {[
+                      { name: "Maria Lopez", msg: "Me interesa el apto del centro", color: "#25D366", icon: MessageCircle, time: "2m" },
+                      { name: "Carlos Rivera", msg: "Cuando podemos agendar visita?", color: "#E1306C", icon: Instagram, time: "15m" },
+                      { name: "Ana Gutierrez", msg: "Necesito los documentos del...", color: "#1877F2", icon: Facebook, time: "1h" },
+                    ].map((m, i) => (
+                      <div key={i} className="flex items-center gap-2 py-1.5" style={{ borderTop: i > 0 ? "1px solid #f3f4f6" : "none" }}>
+                        <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: `${m.color}12` }}>
+                          <m.icon className="h-3 w-3" style={{ color: m.color }} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[9px] font-bold truncate" style={{ color: "#0A2B1D" }}>{m.name}</span>
+                            <span className="text-[8px] flex-shrink-0 ml-1" style={{ color: "#9ca3af" }}>{m.time}</span>
+                          </div>
+                          <div className="text-[8px] truncate" style={{ color: "#8BA398" }}>{m.msg}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Next appointment */}
+                  <div className="bg-white rounded-xl p-3 shadow-sm">
+                    <div className="text-[9px] font-bold mb-1.5" style={{ color: "#0A2B1D" }}>Proxima Cita</div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-9 h-9 rounded-lg flex items-center justify-center text-[11px] font-bold" style={{ background: "#E2F2E9", color: "#0A2B1D" }}>15</div>
+                      <div>
+                        <div className="text-[9px] font-bold" style={{ color: "#0A2B1D" }}>Visita Apto 302</div>
+                        <div className="text-[8px]" style={{ color: "#8BA398" }}>10:00 - Maria Lopez</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Bottom nav */}
+                <div className="flex items-center justify-around py-2.5 border-t" style={{ background: "#fff", borderColor: "#e5e7eb" }}>
                   {[
-                    { name: "Maria L.", msg: "Hola, me interesa el apto...", platform: "whatsapp", color: "#25D366" },
-                    { name: "Carlos R.", msg: "Cuando podemos agendar?", platform: "instagram", color: "#E1306C" },
-                  ].map((m, i) => (
-                    <div key={i} className="flex items-center gap-2 py-1.5">
-                      <div className="w-6 h-6 rounded-full flex items-center justify-center" style={{ background: `${m.color}15` }}>
-                        {m.platform === "whatsapp" ? <MessageCircle className="h-3 w-3" style={{ color: m.color }} /> : <Instagram className="h-3 w-3" style={{ color: m.color }} />}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="text-[10px] font-bold truncate" style={{ color: "#0A2B1D" }}>{m.name}</div>
-                        <div className="text-[9px] truncate" style={{ color: "#8BA398" }}>{m.msg}</div>
-                      </div>
+                    { icon: BarChart3, label: "Inicio", active: true },
+                    { icon: Users, label: "Contactos", active: false },
+                    { icon: Building2, label: "Inmuebles", active: false },
+                    { icon: Calendar, label: "Agenda", active: false },
+                    { icon: MessageCircle, label: "Inbox", active: false },
+                  ].map((n, i) => (
+                    <div key={i} className="flex flex-col items-center gap-0.5" style={{ color: n.active ? "#0A2B1D" : "#9ca3af" }}>
+                      <n.icon className="h-4 w-4" />
+                      <span className="text-[7px] font-semibold">{n.label}</span>
                     </div>
                   ))}
                 </div>
-              </div>
-              {/* Bottom nav */}
-              <div className="flex items-center justify-around py-2 border-t" style={{ background: "#fff", borderColor: "#e5e7eb" }}>
-                {[
-                  { icon: BarChart3, label: "Inicio", active: true },
-                  { icon: Users, label: "Contactos", active: false },
-                  { icon: Building2, label: "Inmuebles", active: false },
-                  { icon: Calendar, label: "Agenda", active: false },
-                  { icon: MessageCircle, label: "Inbox", active: false },
-                ].map((n, i) => (
-                  <div key={i} className="flex flex-col items-center gap-0.5" style={{ color: n.active ? "#0A2B1D" : "#9ca3af" }}>
-                    <n.icon className="h-4 w-4" />
-                    <span className="text-[8px] font-semibold">{n.label}</span>
-                  </div>
-                ))}
+
+                {/* Home indicator bar */}
+                <div className="flex justify-center py-2" style={{ background: "#fff" }}>
+                  <div className="w-[100px] h-[4px] rounded-full" style={{ background: "#d1d5db" }} />
+                </div>
               </div>
             </div>
+
             {/* Floating badges */}
-            <div className="absolute -left-4 md:-left-16 top-[20%] bg-white/95 backdrop-blur-md px-4 py-3 rounded-2xl shadow-lg border border-white/50 flex items-center gap-3" style={{ transform: "rotate(-3deg)" }}>
-              <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: "#E2F2E9" }}>
+            <div className="absolute -left-4 md:-left-20 top-[18%] bg-white/95 backdrop-blur-md px-4 py-3 rounded-2xl shadow-lg border border-white/50 flex items-center gap-3" style={{ transform: "rotate(-3deg)" }}>
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: "#E2F2E9" }}>
                 <Wifi className="h-4 w-4 text-green-600" />
               </div>
               <div>
-                <div className="text-xs font-bold">Offline Ready</div>
+                <div className="text-xs font-bold" style={{ color: "#0A2B1D" }}>Offline Ready</div>
                 <div className="text-[10px]" style={{ color: "#6B7280" }}>Funciona sin internet</div>
               </div>
             </div>
-            <div className="absolute -right-4 md:-right-16 top-[55%] bg-white/95 backdrop-blur-md px-4 py-3 rounded-2xl shadow-lg border border-white/50 flex items-center gap-3" style={{ transform: "rotate(2deg)" }}>
-              <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: "#EDE9FE" }}>
+            <div className="absolute -right-4 md:-right-20 top-[45%] bg-white/95 backdrop-blur-md px-4 py-3 rounded-2xl shadow-lg border border-white/50 flex items-center gap-3" style={{ transform: "rotate(2deg)" }}>
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: "#EDE9FE" }}>
                 <Globe className="h-4 w-4 text-purple-600" />
               </div>
               <div>
-                <div className="text-xs font-bold">3 Canales</div>
+                <div className="text-xs font-bold" style={{ color: "#0A2B1D" }}>3 Canales</div>
                 <div className="text-[10px]" style={{ color: "#6B7280" }}>IG + FB + WA</div>
+              </div>
+            </div>
+            <div className="absolute -right-2 md:-right-16 top-[78%] bg-white/95 backdrop-blur-md px-4 py-3 rounded-2xl shadow-lg border border-white/50 flex items-center gap-3" style={{ transform: "rotate(-1deg)" }}>
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: "#FEF3C7" }}>
+                <Zap className="h-4 w-4 text-amber-600" />
+              </div>
+              <div>
+                <div className="text-xs font-bold" style={{ color: "#0A2B1D" }}>Gama Media</div>
+                <div className="text-[10px]" style={{ color: "#6B7280" }}>Carga en &lt;2s</div>
               </div>
             </div>
           </div>
