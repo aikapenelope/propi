@@ -110,12 +110,20 @@ Los tokens de Meta (Instagram, Facebook, WhatsApp) se configuran desde la UI en 
 
 ### Mensajeria (Inbox Unificado)
 
-- **Inbox** - Conversaciones de Instagram, Facebook y WhatsApp en una sola vista
-- **Webhook** - `/api/webhooks/meta` recibe mensajes entrantes de los 3 canales
+- **Inbox** - UI completa con chatscope: ConversationList sidebar + ChatContainer con burbujas de chat
+- **Multi-canal** - Instagram DMs, Facebook Messenger, WhatsApp en una sola vista
+- **Filtros** - Filtrar por plataforma (IG/FB/WA) o ver todos
 - **Envio** - `sendMessage()` enruta al canal correcto segun la conversacion
+- **Recepcion** - Webhook `/api/webhooks/meta` recibe mensajes de los 3 canales
+- **Unread badges** - Conteo de no leidos por conversacion y total
+- **Mark as read** - Al abrir una conversacion se marca como leida
+- **Date separators** - Mensajes agrupados por dia (Hoy, Ayer, fecha)
+- **Deep-linking** - `/marketing/inbox/[id]` abre directamente una conversacion
+- **Auto-refresh** - Conversaciones se actualizan cada 30 segundos
+- **Responsive** - Sidebar se oculta en mobile al seleccionar conversacion
+- **Dark mode** - CSS overrides para chatscope que respetan el tema del sistema
+- **Retencion 90 dias** - `cleanupOldMessages()` elimina mensajes antiguos
 - **WhatsApp Cloud API** - Mensajes de texto y templates via Meta Graph API
-- **Instagram** - DMs, comentarios, publicar fotos, metricas por post
-- **Facebook** - Posts, comentarios, publicar en pagina, insights
 
 ### Marketing
 
