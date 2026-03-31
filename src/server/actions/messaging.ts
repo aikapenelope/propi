@@ -2,7 +2,7 @@
 
 import { db } from "@/lib/db";
 import { conversations, messages } from "@/server/schema";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, lt, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { sendIgMessage } from "./instagram";
 import { sendWhatsAppText } from "./whatsapp";
@@ -171,10 +171,69 @@ export async function storeInboundMessage(
     })
     .returning();
 
+  // Update lastMessageAt and increment unread count
   await db
     .update(conversations)
-    .set({ lastMessageAt: new Date() })
+    .set({
+      lastMessageAt: new Date(),
+      unreadCount: sql`${conversations.unreadCount} + 1`,
+    })
     .where(eq(conversations.id, conversationId));
 
   return msg;
+}
+
+// ---------------------------------------------------------------------------
+// Mark conversation as read (reset unread count)
+// ---------------------------------------------------------------------------
+
+export async function markConversationRead(conversationId: string) {
+  await db
+    .update(conversations)
+    .set({ unreadCount: 0 })
+    .where(eq(conversations.id, conversationId));
+
+  revalidatePath("/marketing/inbox");
+}
+
+// ---------------------------------------------------------------------------
+// Cleanup: delete messages older than 90 days
+// ---------------------------------------------------------------------------
+
+export async function cleanupOldMessages() {
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - 90);
+
+  // Delete old messages
+  const deleted = await db
+    .delete(messages)
+    .where(lt(messages.createdAt, cutoff))
+    .returning({ id: messages.id });
+
+  // Delete conversations that have no messages left
+  const emptyConvos = await db.execute(sql`
+    DELETE FROM conversations
+    WHERE id NOT IN (
+      SELECT DISTINCT conversation_id FROM messages
+    )
+  `);
+
+  return {
+    messagesDeleted: deleted.length,
+    conversationsDeleted: emptyConvos,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Get total unread count across all conversations
+// ---------------------------------------------------------------------------
+
+export async function getTotalUnreadCount() {
+  const result = await db
+    .select({
+      total: sql<number>`COALESCE(SUM(${conversations.unreadCount}), 0)::int`,
+    })
+    .from(conversations);
+
+  return result[0]?.total ?? 0;
 }

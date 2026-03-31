@@ -404,6 +404,8 @@ export const conversations = pgTable(
     participantName: varchar("participant_name", { length: 255 }),
     /** Platform user ID of the external participant */
     participantExternalId: varchar("participant_external_id", { length: 255 }),
+    /** Number of unread inbound messages */
+    unreadCount: integer("unread_count").notNull().default(0),
     lastMessageAt: timestamp("last_message_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
