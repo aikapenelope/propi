@@ -80,28 +80,7 @@ export async function publishFbPost(message: string, link?: string) {
 // Comments
 // ---------------------------------------------------------------------------
 
-export async function getFbPostComments(postId: string) {
-  const { token } = await getFbToken();
-  const data = await graphApiFetch<{ data: FbComment[] }>(
-    `/${postId}/comments`,
-    token,
-    {
-      params: { fields: "id,message,from,created_time", limit: "50" },
-    },
-  );
-  return data.data;
-}
-
-export async function replyToFbComment(commentId: string, message: string) {
-  const { token } = await getFbToken();
-  return graphApiFetch<{ id: string }>(
-    `/${commentId}/comments`,
-    token,
-    { method: "POST", body: { message } },
-  );
-}
-
-/** Post a new comment on a post (not a reply to an existing comment) */
+/** Post a new comment on a post */
 export async function commentOnFbPost(postId: string, message: string) {
   const { token } = await getFbToken();
   return graphApiFetch<{ id: string }>(

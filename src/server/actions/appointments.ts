@@ -118,25 +118,3 @@ export async function deleteAppointment(id: string) {
   await db.delete(appointments).where(eq(appointments.id, id));
   revalidatePath("/calendar");
 }
-
-export async function getAppointmentCounts() {
-  const now = new Date();
-  const weekStart = new Date(now);
-  weekStart.setDate(now.getDate() - now.getDay());
-  weekStart.setHours(0, 0, 0, 0);
-  const weekEnd = new Date(weekStart);
-  weekEnd.setDate(weekStart.getDate() + 7);
-
-  const thisWeek = await db.query.appointments.findMany({
-    where: and(
-      gte(appointments.startsAt, weekStart),
-      lte(appointments.startsAt, weekEnd),
-    ),
-  });
-
-  return {
-    thisWeek: thisWeek.length,
-    scheduled: thisWeek.filter((a) => a.status === "scheduled").length,
-    confirmed: thisWeek.filter((a) => a.status === "confirmed").length,
-  };
-}
