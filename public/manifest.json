@@ -2,10 +2,10 @@
   "name": "Propi - CRM Inmobiliario",
   "short_name": "Propi",
   "description": "CRM moderno para agentes y agencias inmobiliarias",
-  "start_url": "/",
+  "start_url": "/dashboard",
   "display": "standalone",
-  "background_color": "#0a0a0a",
-  "theme_color": "#2563eb",
+  "background_color": "#E4E7E1",
+  "theme_color": "#0A2B1D",
   "orientation": "portrait-primary",
   "icons": [
     {
