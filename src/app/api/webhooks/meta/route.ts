@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import {
-  findOrCreateConversation,
-  storeInboundMessage,
-} from "@/server/actions/messaging";
+
+// Force dynamic - never pre-render this route at build time
+export const dynamic = "force-dynamic";
 
 /**
  * Meta Webhook endpoint for receiving inbound messages from:
@@ -40,16 +39,21 @@ export async function GET(request: NextRequest) {
 // ---------------------------------------------------------------------------
 
 export async function POST(request: NextRequest) {
+  // Dynamic import to avoid DB initialization at build time
+  const { findOrCreateConversation, storeInboundMessage } = await import(
+    "@/server/actions/messaging"
+  );
+
   try {
     const body = await request.json();
     const object = body.object as string;
 
     if (object === "whatsapp_business_account") {
-      await handleWhatsAppWebhook(body);
+      await handleWhatsAppWebhook(body, findOrCreateConversation, storeInboundMessage);
     } else if (object === "instagram") {
-      await handleInstagramWebhook(body);
+      await handleInstagramWebhook(body, findOrCreateConversation, storeInboundMessage);
     } else if (object === "page") {
-      await handleFacebookWebhook(body);
+      await handleFacebookWebhook(body, findOrCreateConversation, storeInboundMessage);
     }
 
     return NextResponse.json({ status: "ok" });
@@ -59,6 +63,25 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ status: "error" }, { status: 200 });
   }
 }
+
+// ---------------------------------------------------------------------------
+// Types for messaging actions
+// ---------------------------------------------------------------------------
+
+type FindOrCreate = (data: {
+  platform: "instagram" | "facebook" | "whatsapp";
+  externalId?: string;
+  participantName?: string;
+  participantExternalId: string;
+  contactId?: string;
+}) => Promise<{ id: string }>;
+
+type StoreInbound = (
+  conversationId: string,
+  body: string,
+  externalId?: string,
+  metadata?: string,
+) => Promise<unknown>;
 
 // ---------------------------------------------------------------------------
 // WhatsApp Cloud API webhook handler
@@ -80,12 +103,15 @@ interface WaWebhookEntry {
   }[];
 }
 
-async function handleWhatsAppWebhook(body: { entry: WaWebhookEntry[] }) {
+async function handleWhatsAppWebhook(
+  body: { entry: WaWebhookEntry[] },
+  findOrCreateConversation: FindOrCreate,
+  storeInboundMessage: StoreInbound,
+) {
   for (const entry of body.entry) {
     for (const change of entry.changes) {
       const value = change.value;
 
-      // Handle incoming messages
       if (value.messages) {
         for (const msg of value.messages) {
           const contactName =
@@ -126,7 +152,11 @@ interface IgWebhookEntry {
   }[];
 }
 
-async function handleInstagramWebhook(body: { entry: IgWebhookEntry[] }) {
+async function handleInstagramWebhook(
+  body: { entry: IgWebhookEntry[] },
+  findOrCreateConversation: FindOrCreate,
+  storeInboundMessage: StoreInbound,
+) {
   for (const entry of body.entry) {
     if (!entry.messaging) continue;
 
@@ -160,7 +190,11 @@ interface FbWebhookEntry {
   }[];
 }
 
-async function handleFacebookWebhook(body: { entry: FbWebhookEntry[] }) {
+async function handleFacebookWebhook(
+  body: { entry: FbWebhookEntry[] },
+  findOrCreateConversation: FindOrCreate,
+  storeInboundMessage: StoreInbound,
+) {
   for (const entry of body.entry) {
     if (!entry.messaging) continue;
 
