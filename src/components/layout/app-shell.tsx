@@ -19,7 +19,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         onToggle={() => setSidebarCollapsed((prev) => !prev)}
       />
 
-      {/* Mobile sidebar overlay */}
+      {/* Mobile sidebar overlay (opened by top bar menu OR bottom nav "Mas") */}
       <MobileSidebar
         open={mobileMenuOpen}
         onClose={() => setMobileMenuOpen(false)}
@@ -42,7 +42,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </main>
 
       {/* Mobile bottom navigation */}
-      <MobileNav />
+      <MobileNav onMorePress={() => setMobileMenuOpen(true)} />
     </>
   );
 }

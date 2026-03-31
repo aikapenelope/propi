@@ -3,23 +3,26 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  LayoutDashboard,
+  MessageCircle,
   Users,
   Building2,
   Calendar,
-  FileText,
+  Menu,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
-  { href: "/dashboard", label: "Inicio", icon: LayoutDashboard },
+  { href: "/marketing/inbox", label: "Inbox", icon: MessageCircle },
   { href: "/contacts", label: "Contactos", icon: Users },
   { href: "/properties", label: "Inmuebles", icon: Building2 },
   { href: "/calendar", label: "Agenda", icon: Calendar },
-  { href: "/documents", label: "Docs", icon: FileText },
 ];
 
-export function MobileNav() {
+interface MobileNavProps {
+  onMorePress?: () => void;
+}
+
+export function MobileNav({ onMorePress }: MobileNavProps) {
   const pathname = usePathname();
 
   return (
@@ -44,6 +47,14 @@ export function MobileNav() {
             </Link>
           );
         })}
+        {/* More button opens the mobile sidebar drawer */}
+        <button
+          onClick={onMorePress}
+          className="flex flex-col items-center gap-0.5 px-2 py-2 text-xs text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <Menu className="h-5 w-5" />
+          <span>Mas</span>
+        </button>
       </div>
     </nav>
   );

@@ -4,30 +4,30 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
-  Users,
-  Building2,
-  Calendar,
   FileText,
+  Search,
   Instagram,
   Facebook,
-  MessageCircle,
   Mail,
   Video,
   Settings,
+  Building2,
   X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const navItems = [
+/**
+ * Mobile drawer opened by "Mas..." in bottom nav or hamburger in top bar.
+ * Contains everything NOT in the bottom nav: Dashboard, Docs, Search, Marketing.
+ */
+
+const quickItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/contacts", label: "Contactos", icon: Users },
-  { href: "/properties", label: "Propiedades", icon: Building2 },
-  { href: "/calendar", label: "Calendario", icon: Calendar },
   { href: "/documents", label: "Documentos", icon: FileText },
+  { href: "/search", label: "Busqueda", icon: Search },
 ];
 
 const marketingItems = [
-  { href: "/marketing/inbox", label: "Inbox", icon: MessageCircle },
   { href: "/marketing/instagram", label: "Instagram", icon: Instagram },
   { href: "/marketing/facebook", label: "Facebook", icon: Facebook },
   { href: "/marketing/email", label: "Email", icon: Mail },
@@ -73,8 +73,9 @@ export function MobileSidebar({ open, onClose }: MobileSidebarProps) {
 
         {/* Navigation */}
         <nav className="flex-1 overflow-y-auto p-2">
+          {/* Quick access */}
           <div className="space-y-1">
-            {navItems.map((item) => {
+            {quickItems.map((item) => {
               const isActive =
                 pathname === item.href || pathname.startsWith(item.href + "/");
               return (
@@ -96,6 +97,7 @@ export function MobileSidebar({ open, onClose }: MobileSidebarProps) {
             })}
           </div>
 
+          {/* Marketing section */}
           <p className="mt-4 mb-1 px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
             Marketing
           </p>
