@@ -21,7 +21,6 @@ export async function getDocuments() {
     with: {
       contact: true,
       property: true,
-      agent: true,
     },
     orderBy: [desc(documents.createdAt)],
   });

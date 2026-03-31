@@ -12,23 +12,22 @@ import {
 import { getDashboardStats } from "@/server/actions/dashboard";
 import { getUpcomingAppointments } from "@/server/actions/appointments";
 import { getAllSocialAccounts } from "@/server/actions/social-accounts";
-import { getWhatsAppMessages } from "@/server/actions/whatsapp";
 import { getEmailCampaigns } from "@/server/actions/email-campaigns";
 import { formatDate, formatCurrency } from "@/lib/utils";
 import { CommissionCalculator } from "@/components/dashboard/commission-calculator";
 
 export default async function DashboardPage() {
-  const [stats, upcoming, socialAccounts, waMessages, emailCampaigns] =
+  const [stats, upcoming, socialAccounts, emailCampaigns] =
     await Promise.all([
       getDashboardStats(),
       getUpcomingAppointments(5),
       getAllSocialAccounts().catch(() => []),
-      getWhatsAppMessages(5).catch(() => []),
       getEmailCampaigns().catch(() => []),
     ]);
 
   const igConnected = socialAccounts.some((a) => a.platform === "instagram");
   const fbConnected = socialAccounts.some((a) => a.platform === "facebook");
+  const waConnected = socialAccounts.some((a) => a.platform === "whatsapp");
   const lastCampaign = emailCampaigns[0];
 
   return (
@@ -126,7 +125,7 @@ export default async function DashboardPage() {
           </p>
         </Link>
         <Link
-          href="/marketing/whatsapp"
+          href="/marketing/settings"
           className="rounded-lg border border-border p-3 transition-colors hover:bg-muted"
         >
           <div className="flex items-center gap-2">
@@ -136,7 +135,7 @@ export default async function DashboardPage() {
             </span>
           </div>
           <p className="mt-1 text-xs text-muted-foreground">
-            {waMessages.length} mensajes recientes
+            {waConnected ? "Conectado" : "No conectado"}
           </p>
         </Link>
         <Link

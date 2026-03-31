@@ -9,7 +9,7 @@ import { revalidatePath } from "next/cache";
 // Queries
 // ---------------------------------------------------------------------------
 
-export async function getSocialAccount(platform: "instagram" | "facebook") {
+export async function getSocialAccount(platform: "instagram" | "facebook" | "whatsapp") {
   return db.query.socialAccounts.findFirst({
     where: eq(socialAccounts.platform, platform),
   });
@@ -24,7 +24,7 @@ export async function getAllSocialAccounts() {
 // ---------------------------------------------------------------------------
 
 export async function upsertSocialAccount(data: {
-  platform: "instagram" | "facebook";
+  platform: "instagram" | "facebook" | "whatsapp";
   accessToken: string;
   platformAccountId: string;
   accountName?: string;
@@ -59,7 +59,7 @@ export async function upsertSocialAccount(data: {
   revalidatePath("/marketing/settings");
 }
 
-export async function deleteSocialAccount(platform: "instagram" | "facebook") {
+export async function deleteSocialAccount(platform: "instagram" | "facebook" | "whatsapp") {
   await db
     .delete(socialAccounts)
     .where(eq(socialAccounts.platform, platform));

@@ -224,16 +224,6 @@ export default async function PropertyDetailPage({
             <p className="text-sm text-muted-foreground">Sin etiquetas</p>
           )}
 
-          {/* Agent */}
-          {property.agent && (
-            <div className="mt-4 border-t border-border pt-3">
-              <span className="text-xs text-muted-foreground">Agente</span>
-              <p className="font-medium text-foreground">
-                {property.agent.name}
-              </p>
-            </div>
-          )}
-
           {/* Dates */}
           <div className="mt-4 border-t border-border pt-3 text-xs text-muted-foreground">
             <div className="flex items-center gap-1">

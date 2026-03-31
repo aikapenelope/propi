@@ -39,7 +39,6 @@ export async function getAppointments(from?: Date, to?: Date) {
     with: {
       contact: true,
       property: true,
-      agent: true,
     },
     orderBy: [appointments.startsAt],
   });
@@ -63,7 +62,6 @@ export async function getAppointment(id: string) {
     with: {
       contact: true,
       property: true,
-      agent: true,
     },
   });
 }
