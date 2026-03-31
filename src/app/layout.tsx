@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { ClerkProvider } from "@clerk/nextjs";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Plus_Jakarta_Sans } from "next/font/google";
+import { ServiceWorkerRegister } from "@/components/sw-register";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -32,7 +33,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#2563eb",
+  themeColor: "#0A2B1D",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
@@ -50,6 +51,7 @@ export default function RootLayout({
         <body
           className={`${geistSans.variable} ${geistMono.variable} ${jakarta.variable} antialiased`}
         >
+          <ServiceWorkerRegister />
           {children}
         </body>
       </html>
