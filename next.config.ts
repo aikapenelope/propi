@@ -10,6 +10,9 @@ const withSerwist = withSerwistInit({
 const nextConfig: NextConfig = {
   // Enable standalone output for Docker/Coolify deployment
   output: "standalone",
+  // Serwist uses webpack plugin; tell Next.js 16 to use webpack for builds
+  // See: https://github.com/serwist/serwist/issues/54
+  turbopack: {},
   images: {
     // MinIO serves images from the data plane
     remotePatterns: [
