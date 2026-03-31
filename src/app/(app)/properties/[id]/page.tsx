@@ -14,6 +14,7 @@ import { getProperty, getImageUrl } from "@/server/actions/properties";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { DeletePropertyButton } from "@/components/properties/delete-property-button";
 import { PropertyImageUpload } from "@/components/properties/property-image-upload";
+import { SharePropertyButton } from "@/components/properties/share-property-button";
 
 const typeLabels: Record<string, string> = {
   apartment: "Apartamento",
@@ -120,7 +121,14 @@ export default async function PropertyDetailPage({
             </p>
           )}
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          <SharePropertyButton
+            title={property.title}
+            price={property.price ?? undefined}
+            currency={property.currency ?? undefined}
+            city={property.city ?? undefined}
+            propertyId={id}
+          />
           <Link
             href={`/properties/${id}/edit`}
             className="inline-flex items-center gap-1 rounded-lg border border-border px-3 py-2 text-sm font-medium text-foreground hover:bg-muted transition-colors"

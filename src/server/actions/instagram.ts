@@ -29,13 +29,6 @@ interface IgMedia {
   permalink?: string;
 }
 
-interface IgComment {
-  id: string;
-  text: string;
-  username: string;
-  timestamp: string;
-}
-
 interface IgConversation {
   id: string;
   participants: { data: { id: string; username: string }[] };
@@ -93,18 +86,6 @@ export async function getIgMediaInsights(mediaId: string) {
 // ---------------------------------------------------------------------------
 // Comments
 // ---------------------------------------------------------------------------
-
-export async function getIgComments(mediaId: string) {
-  const { token } = await getIgToken();
-  const data = await graphApiFetch<{ data: IgComment[] }>(
-    `/${mediaId}/comments`,
-    token,
-    {
-      params: { fields: "id,text,username,timestamp", limit: "50" },
-    },
-  );
-  return data.data;
-}
 
 export async function replyToIgComment(commentId: string, message: string) {
   const { token } = await getIgToken();
@@ -193,23 +174,4 @@ export async function publishIgPhoto(imageUrl: string, caption: string) {
   );
 
   return result;
-}
-
-// ---------------------------------------------------------------------------
-// Account Insights
-// ---------------------------------------------------------------------------
-
-export async function getIgAccountInsights() {
-  const { token, igId } = await getIgToken();
-  const data = await graphApiFetch<{ data: IgInsight[] }>(
-    `/${igId}/insights`,
-    token,
-    {
-      params: {
-        metric: "impressions,reach,profile_views",
-        period: "day",
-      },
-    },
-  );
-  return data.data;
 }

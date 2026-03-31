@@ -12,7 +12,7 @@ CRM inmobiliario moderno para agentes y agencias. PWA instalable con gestion de 
 | Auth | Clerk v7 (modelo por seat) |
 | ORM | Drizzle ORM + postgres.js |
 | Storage | MinIO (S3-compatible) via AWS SDK |
-| PWA | Serwist (service worker, offline, instalable) |
+| PWA | Service worker manual (0 dependencias, offline, instalable) |
 | Mensajeria | Meta Graph API v21.0 (Instagram DMs + Facebook Messenger + WhatsApp Cloud API) |
 | Email | Nodemailer (SMTP) |
 
@@ -96,6 +96,18 @@ Los tokens de Meta (Instagram, Facebook, WhatsApp) se configuran desde la UI en 
 | `npm run db:generate` | Generar migraciones |
 | `npm run db:migrate` | Ejecutar migraciones |
 | `npm run db:studio` | Abrir Drizzle Studio |
+
+## Arquitectura Web vs Mobile
+
+Web-first. La PWA mobile es un companion para el agente en campo.
+
+**Mobile bottom nav:** Inbox | Contactos | Inmuebles | Agenda | Mas...
+
+**Solo mobile:** Compartir propiedad por WA/IG/FB con un tap.
+
+**Solo web:** Dashboard completo, CRUD de propiedades, documentos, email marketing, publicar en IG/FB, metricas, configuracion, portales (futuro).
+
+Ver `docs/ARCHITECTURE.md` para la distribucion completa.
 
 ## Modulos
 

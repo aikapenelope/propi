@@ -143,12 +143,3 @@ export async function sendEmailCampaign(campaignId: string) {
   revalidatePath("/marketing/email");
   return { sentCount, failedCount, total: recipientContacts.length };
 }
-
-// ---------------------------------------------------------------------------
-// Delete campaign
-// ---------------------------------------------------------------------------
-
-export async function deleteEmailCampaign(id: string) {
-  await db.delete(emailCampaigns).where(eq(emailCampaigns.id, id));
-  revalidatePath("/marketing/email");
-}

@@ -26,20 +26,6 @@ export async function getDocuments() {
   });
 }
 
-export async function getDocumentsByContact(contactId: string) {
-  return db.query.documents.findMany({
-    where: eq(documents.contactId, contactId),
-    orderBy: [desc(documents.createdAt)],
-  });
-}
-
-export async function getDocumentsByProperty(propertyId: string) {
-  return db.query.documents.findMany({
-    where: eq(documents.propertyId, propertyId),
-    orderBy: [desc(documents.createdAt)],
-  });
-}
-
 // ---------------------------------------------------------------------------
 // Upload (presigned URL for client-side upload)
 // ---------------------------------------------------------------------------
@@ -102,7 +88,6 @@ export async function createDocument(data: {
 }
 
 export async function deleteDocument(id: string, key: string) {
-  // Delete from MinIO
   await s3.send(
     new DeleteObjectCommand({
       Bucket: DOCS_BUCKET,
