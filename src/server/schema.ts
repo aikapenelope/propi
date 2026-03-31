@@ -88,32 +88,6 @@ export const tags = pgTable("tags", {
 });
 
 // ---------------------------------------------------------------------------
-// Agents (Clerk user profiles extended with CRM data)
-// ---------------------------------------------------------------------------
-
-export const agents = pgTable("agents", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  /** Clerk user ID - links to auth system */
-  clerkUserId: varchar("clerk_user_id", { length: 255 }).notNull().unique(),
-  name: varchar("name", { length: 255 }).notNull(),
-  email: varchar("email", { length: 255 }).notNull(),
-  phone: varchar("phone", { length: 50 }),
-  avatarUrl: text("avatar_url"),
-  /** Commission percentage (e.g. 3.5 = 3.5%) */
-  commissionRate: numeric("commission_rate", { precision: 5, scale: 2 }).default(
-    "3.00",
-  ),
-  isActive: boolean("is_active").notNull().default(true),
-  createdAt: timestamp("created_at", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-  updatedAt: timestamp("updated_at", { withTimezone: true })
-    .notNull()
-    .defaultNow()
-    .$onUpdate(() => new Date()),
-});
-
-// ---------------------------------------------------------------------------
 // Contacts
 // ---------------------------------------------------------------------------
 
@@ -127,7 +101,6 @@ export const contacts = pgTable(
     company: varchar("company", { length: 255 }),
     notes: text("notes"),
     source: contactSourceEnum("source").default("other"),
-    assignedAgentId: uuid("assigned_agent_id").references(() => agents.id),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -139,7 +112,6 @@ export const contacts = pgTable(
   (table) => [
     index("contacts_name_idx").on(table.name),
     index("contacts_email_idx").on(table.email),
-    index("contacts_agent_idx").on(table.assignedAgentId),
   ],
 );
 
@@ -191,8 +163,6 @@ export const properties = pgTable(
     /** GPS coordinates */
     latitude: numeric("latitude", { precision: 10, scale: 7 }),
     longitude: numeric("longitude", { precision: 10, scale: 7 }),
-    /** Agent who listed this property */
-    agentId: uuid("agent_id").references(() => agents.id),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -206,7 +176,6 @@ export const properties = pgTable(
     index("properties_type_idx").on(table.type),
     index("properties_operation_idx").on(table.operation),
     index("properties_city_idx").on(table.city),
-    index("properties_agent_idx").on(table.agentId),
     index("properties_price_idx").on(table.price),
   ],
 );
@@ -273,8 +242,6 @@ export const appointments = pgTable(
     contactId: uuid("contact_id").references(() => contacts.id),
     /** Linked property (optional) */
     propertyId: uuid("property_id").references(() => properties.id),
-    /** Agent responsible */
-    agentId: uuid("agent_id").references(() => agents.id),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -285,7 +252,6 @@ export const appointments = pgTable(
   },
   (table) => [
     index("appointments_starts_at_idx").on(table.startsAt),
-    index("appointments_agent_idx").on(table.agentId),
     index("appointments_contact_idx").on(table.contactId),
     index("appointments_property_idx").on(table.propertyId),
   ],
@@ -313,8 +279,6 @@ export const documents = pgTable(
     contactId: uuid("contact_id").references(() => contacts.id),
     /** Linked property (optional) */
     propertyId: uuid("property_id").references(() => properties.id),
-    /** Who uploaded */
-    agentId: uuid("agent_id").references(() => agents.id),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -332,6 +296,7 @@ export const documents = pgTable(
 export const socialPlatformEnum = pgEnum("social_platform", [
   "instagram",
   "facebook",
+  "whatsapp",
 ]);
 
 export const socialAccounts = pgTable("social_accounts", {
@@ -409,39 +374,70 @@ export const campaignRecipients = pgTable(
 );
 
 // ---------------------------------------------------------------------------
-// WhatsApp Messages (via Twilio)
+// Unified Conversations & Messages (Instagram DMs, Facebook Messenger, WhatsApp)
 // ---------------------------------------------------------------------------
 
-export const whatsappMessageStatusEnum = pgEnum("wa_message_status", [
-  "queued",
+export const messageDirectionEnum = pgEnum("message_direction", [
+  "inbound",
+  "outbound",
+]);
+
+export const messageStatusEnum = pgEnum("message_status", [
+  "pending",
   "sent",
   "delivered",
   "read",
   "failed",
 ]);
 
-export const whatsappMessages = pgTable(
-  "whatsapp_messages",
+export const conversations = pgTable(
+  "conversations",
   {
     id: uuid("id").primaryKey().defaultRandom(),
-    contactId: uuid("contact_id")
-      .notNull()
-      .references(() => contacts.id, { onDelete: "cascade" }),
-    /** Template name or free-form body */
-    template: varchar("template", { length: 500 }),
-    body: text("body"),
-    /** Twilio message SID for tracking */
-    twilioSid: varchar("twilio_sid", { length: 255 }),
-    status: whatsappMessageStatusEnum("status").notNull().default("queued"),
-    direction: varchar("direction", { length: 10 }).default("outbound"),
-    sentAt: timestamp("sent_at", { withTimezone: true }),
+    /** Which channel: instagram, facebook, whatsapp */
+    platform: socialPlatformEnum("platform").notNull(),
+    /** Platform-specific conversation/thread ID */
+    externalId: varchar("external_id", { length: 500 }),
+    /** Linked CRM contact (optional, matched by phone/name) */
+    contactId: uuid("contact_id").references(() => contacts.id),
+    /** Name of the external participant */
+    participantName: varchar("participant_name", { length: 255 }),
+    /** Platform user ID of the external participant */
+    participantExternalId: varchar("participant_external_id", { length: 255 }),
+    lastMessageAt: timestamp("last_message_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
   },
   (table) => [
-    index("wa_messages_contact_idx").on(table.contactId),
-    index("wa_messages_status_idx").on(table.status),
+    index("conversations_platform_idx").on(table.platform),
+    index("conversations_contact_idx").on(table.contactId),
+    index("conversations_external_idx").on(table.externalId),
+    index("conversations_last_msg_idx").on(table.lastMessageAt),
+  ],
+);
+
+export const messages = pgTable(
+  "messages",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    conversationId: uuid("conversation_id")
+      .notNull()
+      .references(() => conversations.id, { onDelete: "cascade" }),
+    direction: messageDirectionEnum("direction").notNull(),
+    body: text("body"),
+    /** Platform-specific message ID */
+    externalId: varchar("external_id", { length: 500 }),
+    status: messageStatusEnum("status").notNull().default("pending"),
+    /** Extra data (media URLs, template info, etc.) stored as JSON string */
+    metadata: text("metadata"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("messages_conversation_idx").on(table.conversationId),
+    index("messages_created_idx").on(table.createdAt),
   ],
 );
 
@@ -449,23 +445,12 @@ export const whatsappMessages = pgTable(
 // Relations (for Drizzle query builder)
 // ---------------------------------------------------------------------------
 
-export const agentsRelations = relations(agents, ({ many }) => ({
-  contacts: many(contacts),
-  properties: many(properties),
-  appointments: many(appointments),
-  documents: many(documents),
-}));
-
-export const contactsRelations = relations(contacts, ({ one, many }) => ({
-  assignedAgent: one(agents, {
-    fields: [contacts.assignedAgentId],
-    references: [agents.id],
-  }),
+export const contactsRelations = relations(contacts, ({ many }) => ({
   contactTags: many(contactTags),
   appointments: many(appointments),
   documents: many(documents),
-  whatsappMessages: many(whatsappMessages),
   campaignRecipients: many(campaignRecipients),
+  conversations: many(conversations),
 }));
 
 export const contactTagsRelations = relations(contactTags, ({ one }) => ({
@@ -479,11 +464,7 @@ export const contactTagsRelations = relations(contactTags, ({ one }) => ({
   }),
 }));
 
-export const propertiesRelations = relations(properties, ({ one, many }) => ({
-  agent: one(agents, {
-    fields: [properties.agentId],
-    references: [agents.id],
-  }),
+export const propertiesRelations = relations(properties, ({ many }) => ({
   images: many(propertyImages),
   propertyTags: many(propertyTags),
   appointments: many(appointments),
@@ -517,10 +498,6 @@ export const appointmentsRelations = relations(appointments, ({ one }) => ({
     fields: [appointments.propertyId],
     references: [properties.id],
   }),
-  agent: one(agents, {
-    fields: [appointments.agentId],
-    references: [agents.id],
-  }),
 }));
 
 export const documentsRelations = relations(documents, ({ one }) => ({
@@ -531,10 +508,6 @@ export const documentsRelations = relations(documents, ({ one }) => ({
   property: one(properties, {
     fields: [documents.propertyId],
     references: [properties.id],
-  }),
-  agent: one(agents, {
-    fields: [documents.agentId],
-    references: [agents.id],
   }),
 }));
 
@@ -569,12 +542,20 @@ export const campaignRecipientsRelations = relations(
   }),
 );
 
-export const whatsappMessagesRelations = relations(
-  whatsappMessages,
-  ({ one }) => ({
+export const conversationsRelations = relations(
+  conversations,
+  ({ one, many }) => ({
     contact: one(contacts, {
-      fields: [whatsappMessages.contactId],
+      fields: [conversations.contactId],
       references: [contacts.id],
     }),
+    messages: many(messages),
   }),
 );
+
+export const messagesRelations = relations(messages, ({ one }) => ({
+  conversation: one(conversations, {
+    fields: [messages.conversationId],
+    references: [conversations.id],
+  }),
+}));

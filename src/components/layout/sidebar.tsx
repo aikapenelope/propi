@@ -8,7 +8,6 @@ import {
   Building2,
   Calendar,
   FileText,
-  UserCog,
   Instagram,
   Facebook,
   MessageCircle,
@@ -26,13 +25,12 @@ const navItems = [
   { href: "/properties", label: "Propiedades", icon: Building2 },
   { href: "/calendar", label: "Calendario", icon: Calendar },
   { href: "/documents", label: "Documentos", icon: FileText },
-  { href: "/agents", label: "Agentes", icon: UserCog },
 ];
 
 const marketingItems = [
+  { href: "/marketing/inbox", label: "Inbox", icon: MessageCircle },
   { href: "/marketing/instagram", label: "Instagram", icon: Instagram },
   { href: "/marketing/facebook", label: "Facebook", icon: Facebook },
-  { href: "/marketing/whatsapp", label: "WhatsApp", icon: MessageCircle },
   { href: "/marketing/email", label: "Email", icon: Mail },
   { href: "/marketing/tiktok", label: "TikTok", icon: Video },
   { href: "/marketing/settings", label: "Configuracion", icon: Settings },

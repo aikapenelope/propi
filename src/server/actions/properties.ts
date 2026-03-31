@@ -97,7 +97,6 @@ export async function getProperties(filters: PropertyFilters = {}) {
   return db.query.properties.findMany({
     where: conditions.length > 0 ? and(...conditions) : undefined,
     with: {
-      agent: true,
       images: {
         orderBy: [propertyImages.sortOrder],
         limit: 1,
@@ -114,7 +113,6 @@ export async function getProperty(id: string) {
   return db.query.properties.findFirst({
     where: eq(properties.id, id),
     with: {
-      agent: true,
       images: {
         orderBy: [propertyImages.sortOrder],
       },

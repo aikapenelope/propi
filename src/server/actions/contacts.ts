@@ -16,7 +16,6 @@ export type ContactFormData = {
   company?: string;
   notes?: string;
   source?: string;
-  assignedAgentId?: string;
   tagIds?: string[];
 };
 
@@ -27,7 +26,6 @@ export type ContactFormData = {
 export async function getContacts(search?: string) {
   const query = db.query.contacts.findMany({
     with: {
-      assignedAgent: true,
       contactTags: {
         with: { tag: true },
       },
@@ -52,7 +50,6 @@ export async function getContact(id: string) {
   return db.query.contacts.findFirst({
     where: eq(contacts.id, id),
     with: {
-      assignedAgent: true,
       contactTags: {
         with: { tag: true },
       },
@@ -85,7 +82,6 @@ export async function createContact(data: ContactFormData) {
       company: data.company || null,
       notes: data.notes || null,
       source: (data.source as typeof contacts.$inferInsert.source) || "other",
-      assignedAgentId: data.assignedAgentId || null,
     })
     .returning();
 
@@ -113,7 +109,6 @@ export async function updateContact(id: string, data: ContactFormData) {
       company: data.company || null,
       notes: data.notes || null,
       source: (data.source as typeof contacts.$inferInsert.source) || "other",
-      assignedAgentId: data.assignedAgentId || null,
     })
     .where(eq(contacts.id, id))
     .returning();

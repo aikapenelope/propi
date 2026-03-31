@@ -7,6 +7,7 @@ export default async function MarketingSettingsPage() {
   const accounts = await getAllSocialAccounts();
   const igAccount = accounts.find((a) => a.platform === "instagram");
   const fbAccount = accounts.find((a) => a.platform === "facebook");
+  const waAccount = accounts.find((a) => a.platform === "whatsapp");
 
   return (
     <div className="p-4 md:p-6">
@@ -89,34 +90,43 @@ export default async function MarketingSettingsPage() {
           />
         </div>
 
-        {/* WhatsApp (Twilio) */}
+        {/* WhatsApp (Meta Cloud API) */}
         <div className="rounded-lg border border-border p-4">
           <div className="mb-4 flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-500/10">
               <MessageCircle className="h-5 w-5 text-green-500" />
             </div>
             <div>
-              <h2 className="font-semibold text-foreground">
-                WhatsApp (Twilio)
-              </h2>
+              <h2 className="font-semibold text-foreground">WhatsApp</h2>
               <p className="text-xs text-muted-foreground">
-                Configurado via variables de entorno
+                {waAccount
+                  ? `Conectado: ${waAccount.accountName || waAccount.platformAccountId}`
+                  : "No conectado"}
               </p>
             </div>
+            {waAccount?.tokenExpiresAt && (
+              <span className="ml-auto text-xs text-muted-foreground">
+                Token expira: {formatDate(waAccount.tokenExpiresAt)}
+              </span>
+            )}
           </div>
-          <div className="rounded-lg bg-muted p-3 text-sm text-muted-foreground">
-            <p className="mb-2">
-              Las credenciales de Twilio se configuran en las variables de
-              entorno del servidor:
-            </p>
-            <code className="block rounded bg-background p-2 text-xs font-mono">
-              TWILIO_ACCOUNT_SID=ACxxxxxxxx
-              <br />
-              TWILIO_AUTH_TOKEN=xxxxxxxx
-              <br />
-              TWILIO_WHATSAPP_NUMBER=+14155238886
-            </code>
-          </div>
+          <SocialAccountForm
+            platform="whatsapp"
+            existing={
+              waAccount
+                ? {
+                    platformAccountId: waAccount.platformAccountId,
+                    accountName: waAccount.accountName,
+                    accessToken: waAccount.accessToken,
+                    tokenExpiresAt: waAccount.tokenExpiresAt?.toISOString(),
+                  }
+                : undefined
+            }
+          />
+          <p className="mt-3 text-xs text-muted-foreground">
+            El Platform Account ID es tu WhatsApp Business Phone Number ID.
+            Usa el mismo access token de Meta que para Instagram/Facebook.
+          </p>
         </div>
 
         {/* Email (SMTP) */}

@@ -7,7 +7,7 @@ import {
 } from "@/server/actions/social-accounts";
 
 interface SocialAccountFormProps {
-  platform: "instagram" | "facebook";
+  platform: "instagram" | "facebook" | "whatsapp";
   existing?: {
     platformAccountId: string;
     accountName: string | null;
@@ -26,7 +26,9 @@ export function SocialAccountForm({
   const idLabel =
     platform === "instagram"
       ? "Instagram Business Account ID"
-      : "Facebook Page ID";
+      : platform === "facebook"
+        ? "Facebook Page ID"
+        : "WhatsApp Phone Number ID";
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
