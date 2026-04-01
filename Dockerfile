@@ -6,9 +6,8 @@ RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
 COPY package.json package-lock.json ./
-RUN npm ci
-# Force install lightningcss native binary for Alpine (musl)
-RUN npm install --no-save lightningcss-linux-x64-musl || true
+# --include=optional ensures lightningcss-linux-x64-musl gets installed on Alpine
+RUN npm ci --include=optional
 
 # Rebuild the source code only when needed
 FROM base AS builder
