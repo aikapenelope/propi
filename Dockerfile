@@ -19,10 +19,11 @@ WORKDIR /app
 # Copy package files
 COPY package.json package-lock.json ./
 
-# Delete node_modules and reinstall from scratch to ensure native binaries
-# for the current platform (linux-x64-gnu) are properly resolved.
-# npm ci has a known bug with optional deps: https://github.com/npm/cli/issues/4828
-RUN rm -rf node_modules && npm install --no-audit --no-fund
+# Delete lockfile and reinstall from scratch so npm resolves native binaries
+# for the current platform (linux-x64-gnu). The lockfile was generated on
+# macOS/different arch and only contains darwin binaries.
+# See: https://github.com/npm/cli/issues/4828
+RUN rm -rf node_modules package-lock.json && npm install --no-audit --no-fund
 
 # Copy source
 COPY . .
