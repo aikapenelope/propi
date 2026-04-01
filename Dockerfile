@@ -1,9 +1,9 @@
 # Based on official Next.js Dockerfile:
 # https://github.com/vercel/next.js/blob/canary/examples/with-docker/Dockerfile
 #
-# Key difference: deps are installed directly in the builder stage (not copied
-# from a separate stage) to work around npm/cli#4828 where native optional
-# binaries (lightningcss, @tailwindcss/oxide) get lost during COPY --from.
+# Uses `npm install` instead of `npm ci` to work around npm/cli#4828 where
+# native optional binaries (lightningcss, @tailwindcss/oxide) are silently
+# skipped by `npm ci` in Docker builds.
 
 ARG NODE_VERSION=22-slim
 
@@ -16,12 +16,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-cert
 
 WORKDIR /app
 
-# Copy lockfiles first for layer caching
+# Copy package files
 COPY package.json package-lock.json ./
 
-# Install ALL deps (including dev + optional) in the same stage where we build.
-# This avoids the npm bug where native binaries are lost in multi-stage COPY.
-RUN npm ci --no-audit --no-fund
+# Delete node_modules and reinstall from scratch to ensure native binaries
+# for the current platform (linux-x64-gnu) are properly resolved.
+# npm ci has a known bug with optional deps: https://github.com/npm/cli/issues/4828
+RUN rm -rf node_modules && npm install --no-audit --no-fund
 
 # Copy source
 COPY . .
@@ -52,7 +53,6 @@ ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 ENV NEXT_TELEMETRY_DISABLED=1
 
-# Copy production assets from builder
 COPY --from=builder --chown=node:node /app/public ./public
 RUN mkdir .next && chown node:node .next
 COPY --from=builder --chown=node:node /app/.next/standalone ./
