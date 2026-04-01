@@ -7,6 +7,8 @@ WORKDIR /app
 
 COPY package.json package-lock.json ./
 RUN npm ci
+# Force install lightningcss native binary for Alpine (musl)
+RUN npm install --no-save lightningcss-linux-x64-musl || true
 
 # Rebuild the source code only when needed
 FROM base AS builder
