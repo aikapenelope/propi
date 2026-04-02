@@ -2,18 +2,88 @@
 
 ## Contexto
 
-Propi esta diseñado para venderse a usuarios individuales, no a agencias. Cada usuario maneja su propio CRM completo: sus contactos, propiedades, citas, documentos, inbox, tokens de Meta/ML/Wasi. Actualmente no hay aislamiento de datos entre usuarios.
+Propi esta diseñado para venderse a usuarios individuales, no a agencias. Cada usuario maneja su propio CRM completo: sus contactos, propiedades, citas, documentos, inbox, tokens de Meta/ML/Wasi. Actualmente no hay aislamiento de datos entre usuarios. No hay datos de usuarios en la DB, asi que la migracion no tiene riesgo de perdida de datos.
 
-## Stack actual
+---
 
-| Componente | Tecnologia | Multi-tenant impact |
-|-----------|-----------|-------------------|
-| Auth | Clerk v7 | Soporta `userId` via `auth()`. No usamos Organizations. |
-| DB | PostgreSQL + Drizzle ORM | Sin `userId` en ninguna tabla. 15 tablas afectadas. |
-| Storage | MinIO (S3) | Un bucket compartido, sin prefijo por usuario. |
-| Server Actions | 68 funciones | Ninguna filtra por `userId`. |
-| Webhook | Meta webhook unico | No rutea mensajes por usuario. |
-| Cron | Sync ML diario | Token compartido, no por usuario. |
+## Score: Reescribir vs Migrar
+
+### Reescribir desde cero: 3/10 (NO recomendado)
+
+Joel Spolsky lo llamo "the single worst strategic mistake that any software company can make". Razones:
+
+- **Propi tiene 15 tablas, 68 server actions, 34 componentes, 31 paginas** que funcionan. Reescribir pierde todo ese trabajo.
+- **El problema es solo de filtrado**, no de arquitectura. El codigo esta bien estructurado, tipado, con server actions separadas por dominio.
+- **El stack es correcto** (Next.js + Clerk + Drizzle + PostgreSQL). No hay que cambiar tecnologias.
+- **Reescribir toma 2-3x mas** de lo estimado (dato de la industria). Estimacion optimista: 4-6 semanas. Realista: 8-12 semanas.
+
+### Migrar incrementalmente: 9/10 (RECOMENDADO)
+
+- **El cambio es mecanico**: agregar `userId` a tablas + agregar `where eq(userId)` a queries. No hay logica de negocio que cambie.
+- **Cada PR es independiente y testeable**: migrar contacts.ts no afecta properties.ts.
+- **No hay datos que migrar**: la DB esta vacia de datos de usuarios, asi que no hay riesgo de corrupcion.
+- **El patron es estandar**: Neon + Clerk + Drizzle usan exactamente este patron (`user_id: text("user_id").notNull()` + `auth().userId`).
+- **Backward compatible**: se puede hacer gradual, tabla por tabla.
+
+---
+
+## Como lo hacen en nuestro stack (investigacion)
+
+### Patron oficial: Neon + Clerk + Drizzle
+
+Neon (el proveedor de PostgreSQL mas popular para Next.js) documenta exactamente este patron:
+
+```typescript
+// Schema
+export const UserMessages = pgTable('user_messages', {
+  user_id: text('user_id').notNull(),  // Clerk userId
+  message: text('message').notNull(),
+});
+
+// Server action
+import { auth } from '@clerk/nextjs/server';
+
+export async function getMessages() {
+  const { userId } = await auth();
+  return db.select().from(messages).where(eq(messages.userId, userId));
+}
+```
+
+Fuente: https://neon.com/blog/nextjs-authentication-using-clerk-drizzle-orm-and-neon
+
+### Clerk auth() en Server Actions
+
+Clerk v7 provee `auth()` que retorna `{ userId, isAuthenticated }` en cualquier server action o route handler:
+
+```typescript
+import { auth } from '@clerk/nextjs/server';
+
+export async function myServerAction() {
+  const { userId, isAuthenticated } = await auth();
+  if (!isAuthenticated) throw new Error("Not authenticated");
+  // userId es el Clerk user ID (ej: "user_2NNEqL2nrIRdJ194ndJqAHwEfxC")
+}
+```
+
+No necesita pasar userId como parametro. `auth()` lo lee del request context automaticamente.
+
+### Drizzle ORM: no soporta RLS automatico
+
+Drizzle soporta definir RLS policies en el schema (desde v1.0-beta), pero:
+- Requiere PostgreSQL roles por usuario
+- PgBouncer en transaction mode no puede hacer `SET role` por transaccion
+- La alternativa recomendada por Drizzle es application-level filtering
+
+### MinIO: prefix-based isolation
+
+MinIO documenta 3 opciones para multi-tenant:
+1. **Bucket por tenant** - no escala (limite de buckets)
+2. **Prefix por tenant** - recomendado para nuestro caso
+3. **Namespace isolation** - requiere Kubernetes
+
+Opcion 2 es la correcta: un bucket compartido con prefijo `{userId}/`.
+
+---
 
 ## Estrategia: Application-Level Tenancy con Clerk userId
 
@@ -24,16 +94,16 @@ Clerk Organizations es para equipos (multiples usuarios en un tenant). Propi es 
 ### Por que NO usar PostgreSQL RLS
 
 Drizzle ORM soporta RLS desde v1.0-beta, pero:
-- Requiere configurar roles de PostgreSQL por usuario (complejo con PgBouncer en transaction mode)
-- PgBouncer no puede pasar `SET` commands por transaccion en transaction mode
-- La alternativa es application-level filtering con `userId` en cada query, que es mas simple y portable
+- PgBouncer en transaction mode no puede hacer `SET role` por transaccion
+- Requiere crear un PostgreSQL role por cada usuario de Clerk (no escala)
+- La alternativa recomendada por Drizzle y Neon es application-level filtering
 
-### La forma correcta para nuestro stack
+### La forma correcta
 
 **Application-level tenancy**: agregar `userId TEXT NOT NULL` a cada tabla y filtrar en cada server action con `auth().userId`.
 
 ```typescript
-// Helper centralizado
+// src/lib/auth-helper.ts - helper centralizado
 import { auth } from "@clerk/nextjs/server";
 
 export async function requireUserId(): Promise<string> {
@@ -43,25 +113,61 @@ export async function requireUserId(): Promise<string> {
 }
 ```
 
-Cada server action:
+Cada server action usa el helper:
 ```typescript
+// SELECT: agregar where
 export async function getContacts() {
   const userId = await requireUserId();
   return db.query.contacts.findMany({
     where: eq(contacts.userId, userId),
-    orderBy: [desc(contacts.updatedAt)],
   });
 }
 
-export async function createContact(data: {...}) {
+// INSERT: agregar userId al values
+export async function createContact(data) {
   const userId = await requireUserId();
-  const [contact] = await db.insert(contacts).values({
-    ...data,
-    userId, // <-- siempre incluir
-  }).returning();
-  return contact;
+  return db.insert(contacts).values({ ...data, userId }).returning();
+}
+
+// UPDATE/DELETE: verificar ownership
+export async function deleteContact(id: string) {
+  const userId = await requireUserId();
+  await db.delete(contacts).where(
+    and(eq(contacts.id, id), eq(contacts.userId, userId))
+  );
 }
 ```
+
+### Encriptacion de tokens
+
+Los tokens de Meta/ML/Wasi se guardan en `socialAccounts.accessToken` como texto plano. En multi-tenant, si un atacante accede a la DB, tiene los tokens de TODOS los usuarios. Solucion:
+
+```typescript
+// src/lib/crypto.ts
+import crypto from "crypto";
+
+const ALGORITHM = "aes-256-gcm";
+const KEY = Buffer.from(process.env.TOKEN_ENCRYPTION_KEY!, "hex"); // 32 bytes
+
+export function encrypt(text: string): string {
+  const iv = crypto.randomBytes(16);
+  const cipher = crypto.createCipheriv(ALGORITHM, KEY, iv);
+  const encrypted = Buffer.concat([cipher.update(text, "utf8"), cipher.final()]);
+  const tag = cipher.getAuthTag();
+  return `${iv.toString("hex")}:${tag.toString("hex")}:${encrypted.toString("hex")}`;
+}
+
+export function decrypt(data: string): string {
+  const [ivHex, tagHex, encHex] = data.split(":");
+  const decipher = crypto.createDecipheriv(ALGORITHM, KEY, Buffer.from(ivHex, "hex"));
+  decipher.setAuthTag(Buffer.from(tagHex, "hex"));
+  return decipher.update(Buffer.from(encHex, "hex")) + decipher.final("utf8");
+}
+```
+
+Nueva env var: `TOKEN_ENCRYPTION_KEY` (generar con `openssl rand -hex 32`).
+
+Aplicar en `upsertSocialAccount` (encrypt al guardar) y `getWasiCredentials`, `getIgToken`, etc. (decrypt al leer).
 
 ---
 
