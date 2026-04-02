@@ -8,7 +8,7 @@ import {
 } from "@/server/schema";
 import { eq, desc } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
-import { getMailTransporter, getMailFrom } from "@/lib/mailer";
+import { sendEmail, getMailFrom } from "@/lib/mailer";
 
 // ---------------------------------------------------------------------------
 // Queries
@@ -96,14 +96,13 @@ export async function sendEmailCampaign(campaignId: string) {
     .set({ status: "sending" })
     .where(eq(emailCampaigns.id, campaignId));
 
-  const transporter = getMailTransporter();
   const from = getMailFrom();
   let sentCount = 0;
   let failedCount = 0;
 
   for (const contact of recipientContacts) {
     try {
-      await transporter.sendMail({
+      await sendEmail({
         from,
         to: contact.email!,
         subject: campaign.subject,

@@ -184,34 +184,37 @@ export default async function MarketingSettingsPage(props: {
           </p>
         </div>
 
-        {/* Email (SMTP) */}
+        {/* Email (Resend) */}
         <div className="rounded-lg border border-border p-4">
           <div className="mb-4 flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-500/10">
               <Mail className="h-5 w-5 text-amber-500" />
             </div>
             <div>
-              <h2 className="font-semibold text-foreground">Email (SMTP)</h2>
+              <h2 className="font-semibold text-foreground">Email (Resend)</h2>
               <p className="text-xs text-muted-foreground">
-                Configurado via variables de entorno
+                {process.env.RESEND_API_KEY ? "Configurado" : "No configurado"}
               </p>
             </div>
           </div>
           <div className="rounded-lg bg-muted p-3 text-sm text-muted-foreground">
             <p className="mb-2">
-              Configura tu servidor SMTP en las variables de entorno:
+              Configura Resend en las variables de entorno (1 sola key):
             </p>
             <code className="block rounded bg-background p-2 text-xs font-mono">
-              SMTP_HOST=smtp.gmail.com
-              <br />
-              SMTP_PORT=587
-              <br />
-              SMTP_USER=tu@email.com
-              <br />
-              SMTP_PASS=app-password
-              <br />
-              SMTP_FROM=&quot;Propi&quot; &lt;tu@email.com&gt;
+              RESEND_API_KEY=re_...
             </code>
+            <p className="mt-2 text-xs">
+              Gratis: 3,000 emails/mes. Obten tu key en{" "}
+              <a
+                href="https://resend.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary hover:underline"
+              >
+                resend.com
+              </a>
+            </p>
           </div>
         </div>
       </div>
