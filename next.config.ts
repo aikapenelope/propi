@@ -9,6 +9,11 @@ const nextConfig: NextConfig = {
         hostname: "10.0.1.20",
         port: "9000",
       },
+      {
+        // MercadoLibre listing thumbnails
+        protocol: "https",
+        hostname: "**.mlstatic.com",
+      },
     ],
   },
 };
