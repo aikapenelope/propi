@@ -29,7 +29,7 @@ export function TopBar({ sidebarCollapsed, onMenuToggle }: TopBarProps) {
   return (
     <header
       className={cn(
-        "fixed right-0 top-0 z-20 flex h-24 items-center gap-4 border-b border-transparent px-8 transition-all duration-200",
+        "fixed right-0 top-0 z-20 flex h-16 md:h-24 items-center gap-4 border-b border-transparent px-4 md:px-8 transition-all duration-200",
         sidebarCollapsed ? "md:left-16" : "md:left-[260px]",
         "left-0",
       )}
@@ -44,7 +44,7 @@ export function TopBar({ sidebarCollapsed, onMenuToggle }: TopBarProps) {
       </button>
 
       {/* Search */}
-      <form onSubmit={handleSearch} className="relative w-[320px]">
+      <form onSubmit={handleSearch} className="relative flex-1 max-w-[320px] hidden md:block">
         <Search className="absolute left-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-muted-foreground" />
         <input
           type="search"
