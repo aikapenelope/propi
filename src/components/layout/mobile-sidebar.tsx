@@ -6,6 +6,7 @@ import {
   LayoutDashboard,
   FileText,
   Search,
+  Sparkles,
   Instagram,
   Facebook,
   Mail,
@@ -23,6 +24,7 @@ import { cn } from "@/lib/utils";
 
 const quickItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/market-analysis", label: "Propi Magic", icon: Sparkles },
   { href: "/documents", label: "Documentos", icon: FileText },
   { href: "/search", label: "Busqueda", icon: Search },
 ];
