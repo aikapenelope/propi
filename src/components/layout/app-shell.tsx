@@ -34,11 +34,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       {/* Main content area */}
       <main
         className={cn(
-          "min-h-screen pt-14 pb-16 transition-all duration-200 md:pb-0",
-          sidebarCollapsed ? "md:pl-16" : "md:pl-64",
+          "min-h-screen pt-24 pb-16 transition-all duration-200 md:pb-0 relative",
+          sidebarCollapsed ? "md:pl-16" : "md:pl-[260px]",
         )}
       >
-        {children}
+        {/* Ambient background effects */}
+        <div className="absolute top-0 right-[20%] w-[600px] h-[300px] bg-primary/5 blur-[120px] rounded-full pointer-events-none z-0" />
+        <div className="absolute bottom-0 left-[10%] w-[400px] h-[400px] bg-purple-500/5 blur-[150px] rounded-full pointer-events-none z-0" />
+        <div className="relative z-10">
+          {children}
+        </div>
       </main>
 
       {/* Mobile bottom navigation */}

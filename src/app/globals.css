@@ -1,17 +1,39 @@
 @import "tailwindcss";
 
+/* ============================================
+   Propi Dark Theme (default)
+   ============================================ */
 :root {
-  --background: #ffffff;
-  --foreground: #0f172a;
+  --background: #090A0F;
+  --foreground: #f1f5f9;
+  --muted: #12131A;
+  --muted-foreground: #8A8A8E;
+  --border: rgba(255, 255, 255, 0.04);
+  --primary: #00FF55;
+  --primary-foreground: #000000;
+  --accent: #12131A;
+  --destructive: #FF3300;
+  --sidebar-bg: #0D0E14;
+  --card-bg: #12131A;
+  --sidebar-width: 260px;
+  --sidebar-collapsed-width: 64px;
+}
+
+/* ============================================
+   Light Theme
+   ============================================ */
+.light {
+  --background: #FAFAF8;
+  --foreground: #111827;
   --muted: #f1f5f9;
-  --muted-foreground: #64748b;
-  --border: #e2e8f0;
-  --primary: #2563eb;
+  --muted-foreground: #6B7280;
+  --border: #e5e7eb;
+  --primary: #0A2B1D;
   --primary-foreground: #ffffff;
   --accent: #f0f9ff;
   --destructive: #ef4444;
-  --sidebar-width: 256px;
-  --sidebar-collapsed-width: 64px;
+  --sidebar-bg: #ffffff;
+  --card-bg: #ffffff;
 }
 
 @theme inline {
@@ -29,24 +51,52 @@
   --font-jakarta: var(--font-jakarta);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0f172a;
-    --foreground: #f1f5f9;
-    --muted: #1e293b;
-    --muted-foreground: #94a3b8;
-    --border: #334155;
-    --primary: #3b82f6;
-    --primary-foreground: #ffffff;
-    --accent: #1e293b;
-    --destructive: #f87171;
-  }
-}
-
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-sans), system-ui, sans-serif;
+  font-family: var(--font-jakarta), var(--font-sans), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Selection */
+::selection {
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 4px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+.light ::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+/* Card shadow for dark theme */
+.card-shadow {
+  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.03), 0 8px 30px rgba(0, 0, 0, 0.3);
+}
+.light .card-shadow {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 4px 20px rgba(0, 0, 0, 0.04);
+}
+
+/* Glow text */
+.glow-text {
+  text-shadow: 0 0 30px rgba(255, 255, 255, 0.2);
+}
+.light .glow-text {
+  text-shadow: none;
 }
 
 /* Smooth scrolling for PWA feel */

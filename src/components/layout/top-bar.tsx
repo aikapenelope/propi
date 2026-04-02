@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Search, Menu } from "lucide-react";
+import { Search, Menu, Bell, Sun } from "lucide-react";
 import { UserButton } from "@clerk/nextjs";
 import { cn } from "@/lib/utils";
 
@@ -22,11 +22,15 @@ export function TopBar({ sidebarCollapsed, onMenuToggle }: TopBarProps) {
     }
   }
 
+  function toggleTheme() {
+    document.documentElement.classList.toggle("light");
+  }
+
   return (
     <header
       className={cn(
-        "fixed right-0 top-0 z-20 flex h-14 items-center gap-4 border-b border-border bg-background px-4 transition-all duration-200",
-        sidebarCollapsed ? "md:left-16" : "md:left-64",
+        "fixed right-0 top-0 z-20 flex h-24 items-center gap-4 border-b border-transparent px-8 transition-all duration-200",
+        sidebarCollapsed ? "md:left-16" : "md:left-[260px]",
         "left-0",
       )}
     >
@@ -39,29 +43,46 @@ export function TopBar({ sidebarCollapsed, onMenuToggle }: TopBarProps) {
         <Menu className="h-5 w-5" />
       </button>
 
-      {/* Global search */}
-      <form onSubmit={handleSearch} className="relative flex-1 max-w-md">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+      {/* Search */}
+      <form onSubmit={handleSearch} className="relative w-[320px]">
+        <Search className="absolute left-4 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-muted-foreground" />
         <input
           type="search"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Buscar contactos, propiedades..."
-          className="h-9 w-full rounded-lg border border-border bg-muted pl-9 pr-4 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+          placeholder="Search properties, leads..."
+          className="w-full rounded-full border border-border bg-muted py-2.5 pl-11 pr-4 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-white/20 transition-colors shadow-inner"
         />
       </form>
 
       {/* Spacer */}
       <div className="flex-1" />
 
-      {/* User menu (Clerk) */}
-      <UserButton
-        appearance={{
-          elements: {
-            avatarBox: "h-8 w-8",
-          },
-        }}
-      />
+      {/* Action Icons */}
+      <div className="flex items-center gap-3">
+        {/* Theme toggle */}
+        <button
+          onClick={toggleTheme}
+          className="w-10 h-10 rounded-full border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-white/10 transition-all bg-background"
+        >
+          <Sun className="h-[18px] w-[18px]" />
+        </button>
+
+        {/* Notifications */}
+        <button className="w-10 h-10 rounded-full border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-white/10 transition-all relative bg-background">
+          <Bell className="h-[18px] w-[18px]" />
+          <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-destructive border-2 border-background rounded-full" />
+        </button>
+
+        {/* User */}
+        <UserButton
+          appearance={{
+            elements: {
+              avatarBox: "h-10 w-10 border border-white/10",
+            },
+          }}
+        />
+      </div>
     </header>
   );
 }
