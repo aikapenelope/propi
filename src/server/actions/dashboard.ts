@@ -14,6 +14,16 @@ export async function getDashboardStats() {
     .from(properties)
     .groupBy(properties.status);
 
+  // Properties by type (for bar chart)
+  const propertiesByType = await db
+    .select({
+      type: properties.type,
+      count: sql<number>`count(*)::int`,
+    })
+    .from(properties)
+    .groupBy(properties.type)
+    .orderBy(desc(sql`count(*)`));
+
   // Contacts by source
   const contactsBySource = await db
     .select({
@@ -22,6 +32,19 @@ export async function getDashboardStats() {
     })
     .from(contacts)
     .groupBy(contacts.source);
+
+  // Contacts created per month (last 6 months, for area chart)
+  const sixMonthsAgo = new Date();
+  sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+  const contactsByMonth = await db
+    .select({
+      month: sql<string>`TO_CHAR(${contacts.createdAt}, 'YYYY-MM')`,
+      count: sql<number>`count(*)::int`,
+    })
+    .from(contacts)
+    .where(gte(contacts.createdAt, sixMonthsAgo))
+    .groupBy(sql`TO_CHAR(${contacts.createdAt}, 'YYYY-MM')`)
+    .orderBy(sql`TO_CHAR(${contacts.createdAt}, 'YYYY-MM')`);
 
   // Total counts
   const [propertyCount] = await db
@@ -49,6 +72,21 @@ export async function getDashboardStats() {
       ),
     );
 
+  // Appointments by day of week (for column chart)
+  const appointmentsByDay = await db
+    .select({
+      day: sql<number>`EXTRACT(DOW FROM ${appointments.startsAt})::int`,
+      count: sql<number>`count(*)::int`,
+    })
+    .from(appointments)
+    .where(
+      and(
+        gte(appointments.startsAt, weekStart),
+        lte(appointments.startsAt, weekEnd),
+      ),
+    )
+    .groupBy(sql`EXTRACT(DOW FROM ${appointments.startsAt})`);
+
   // Recent contacts
   const recentContacts = await db.query.contacts.findMany({
     orderBy: [desc(contacts.createdAt)],
@@ -66,7 +104,10 @@ export async function getDashboardStats() {
     totalContacts: contactCount.count,
     appointmentsThisWeek: appointmentCount.count,
     propertiesByStatus,
+    propertiesByType,
     contactsBySource,
+    contactsByMonth,
+    appointmentsByDay,
     recentContacts,
     recentProperties,
   };
