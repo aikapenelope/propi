@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { marketListings } from "@/server/schema";
+import { marketListings, socialAccounts } from "@/server/schema";
 import { getMeliToken, type MeliSearchResult } from "@/lib/mercadolibre";
 import { eq } from "drizzle-orm";
 
@@ -24,6 +24,9 @@ const TWELVE_MONTHS_MS = 365 * 24 * 60 * 60 * 1000;
 
 /**
  * Daily cron job to sync MercadoLibre listings into market_listings.
+ * Multi-tenant: iterates over all users with ML connected, syncs with each user's token.
+ * market_listings is a shared public table (not scoped by userId).
+ *
  * Protected by CRON_SECRET header.
  * Call: curl -H "Authorization: Bearer $CRON_SECRET" /api/cron/sync-market
  */
@@ -43,20 +46,66 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  let token: string;
-  try {
-    token = await getMeliToken();
-  } catch {
+  // Get all users with ML connected
+  const mlAccounts = await db.query.socialAccounts.findMany({
+    where: eq(socialAccounts.platform, "mercadolibre"),
+  });
+
+  if (mlAccounts.length === 0) {
     return NextResponse.json(
-      { error: "MercadoLibre not connected" },
-      { status: 502 },
+      { error: "No MercadoLibre accounts connected" },
+      { status: 200 },
     );
   }
 
-  const cutoff = new Date(Date.now() - TWELVE_MONTHS_MS);
   let totalInserted = 0;
   let totalUpdated = 0;
   let totalSkipped = 0;
+  const userResults: { userId: string; inserted: number; updated: number; error?: string }[] = [];
+
+  // Sync for each user with ML connected
+  for (const account of mlAccounts) {
+    let token: string;
+    try {
+      token = await getMeliToken(account.userId);
+    } catch (err) {
+      userResults.push({
+        userId: account.userId,
+        inserted: 0,
+        updated: 0,
+        error: err instanceof Error ? err.message : "Token error",
+      });
+      continue;
+    }
+
+    const result = await syncForUser(token);
+    totalInserted += result.inserted;
+    totalUpdated += result.updated;
+    totalSkipped += result.skipped;
+    userResults.push({
+      userId: account.userId,
+      inserted: result.inserted,
+      updated: result.updated,
+    });
+  }
+
+  return NextResponse.json({
+    success: true,
+    users: userResults.length,
+    inserted: totalInserted,
+    updated: totalUpdated,
+    skipped: totalSkipped,
+    details: userResults,
+    timestamp: new Date().toISOString(),
+  });
+}
+
+/** Sync all categories for a single user's ML token */
+async function syncForUser(token: string) {
+  const cutoff = new Date(Date.now() - TWELVE_MONTHS_MS);
+  let inserted = 0;
+  let updated = 0;
+  let skipped = 0;
 
   for (const category of CATEGORIES) {
     for (let page = 0; page < MAX_PAGES; page++) {
@@ -75,7 +124,6 @@ export async function GET(request: Request) {
         });
 
         if (res.status === 429) {
-          // Rate limited, wait and retry
           const retryAfter = parseInt(
             res.headers.get("retry-after") || "5",
             10,
@@ -90,27 +138,23 @@ export async function GET(request: Request) {
         const data = await res.json();
         results = data.results || [];
 
-        // No more results
         if (results.length === 0) break;
       } catch {
         break;
       }
 
       for (const item of results) {
-        // Extract attributes
         const attrs: Record<string, string> = {};
         for (const a of item.attributes || []) {
           if (a.value_name) attrs[a.id] = a.value_name;
         }
 
-        // Parse published date
         const publishedAt = item.start_time
           ? new Date(item.start_time)
           : null;
 
-        // Skip listings older than 12 months
         if (publishedAt && publishedAt < cutoff) {
-          totalSkipped++;
+          skipped++;
           continue;
         }
 
@@ -154,7 +198,6 @@ export async function GET(request: Request) {
         });
 
         if (existing) {
-          // Update last_seen_at and price if changed
           await db
             .update(marketListings)
             .set({
@@ -163,20 +206,14 @@ export async function GET(request: Request) {
               thumbnail: listingData.thumbnail,
             })
             .where(eq(marketListings.externalId, item.id));
-          totalUpdated++;
+          updated++;
         } else {
           await db.insert(marketListings).values(listingData);
-          totalInserted++;
+          inserted++;
         }
       }
     }
   }
 
-  return NextResponse.json({
-    success: true,
-    inserted: totalInserted,
-    updated: totalUpdated,
-    skipped: totalSkipped,
-    timestamp: new Date().toISOString(),
-  });
+  return { inserted, updated, skipped };
 }
