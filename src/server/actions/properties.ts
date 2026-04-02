@@ -7,6 +7,7 @@ import { revalidatePath } from "next/cache";
 import { PutObjectCommand, DeleteObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { s3, MEDIA_BUCKET } from "@/lib/s3";
+import { requireUserId } from "@/lib/auth-helper";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -48,7 +49,8 @@ export type PropertyFilters = {
 // ---------------------------------------------------------------------------
 
 export async function getProperties(filters: PropertyFilters = {}) {
-  const conditions: SQL[] = [];
+  const userId = await requireUserId();
+  const conditions: SQL[] = [eq(properties.userId, userId)];
 
   if (filters.search) {
     const searchCondition = or(
@@ -95,7 +97,7 @@ export async function getProperties(filters: PropertyFilters = {}) {
   }
 
   return db.query.properties.findMany({
-    where: conditions.length > 0 ? and(...conditions) : undefined,
+    where: and(...conditions),
     with: {
       images: {
         orderBy: [propertyImages.sortOrder],
@@ -110,8 +112,10 @@ export async function getProperties(filters: PropertyFilters = {}) {
 }
 
 export async function getProperty(id: string) {
+  const userId = await requireUserId();
+
   return db.query.properties.findFirst({
-    where: eq(properties.id, id),
+    where: and(eq(properties.id, id), eq(properties.userId, userId)),
     with: {
       images: {
         orderBy: [propertyImages.sortOrder],
@@ -133,6 +137,8 @@ export async function getProperty(id: string) {
 // ---------------------------------------------------------------------------
 
 export async function createProperty(data: PropertyFormData) {
+  const userId = await requireUserId();
+
   const [property] = await db
     .insert(properties)
     .values({
@@ -154,9 +160,10 @@ export async function createProperty(data: PropertyFormData) {
       city: data.city || null,
       state: data.state || null,
       zipCode: data.zipCode || null,
-      country: data.country || "CO",
+      country: data.country || "VE",
       latitude: data.latitude || null,
       longitude: data.longitude || null,
+      userId,
     })
     .returning();
 
@@ -174,6 +181,8 @@ export async function createProperty(data: PropertyFormData) {
 }
 
 export async function updateProperty(id: string, data: PropertyFormData) {
+  const userId = await requireUserId();
+
   const [property] = await db
     .update(properties)
     .set({
@@ -195,11 +204,11 @@ export async function updateProperty(id: string, data: PropertyFormData) {
       city: data.city || null,
       state: data.state || null,
       zipCode: data.zipCode || null,
-      country: data.country || "CO",
+      country: data.country || "VE",
       latitude: data.latitude || null,
       longitude: data.longitude || null,
     })
-    .where(eq(properties.id, id))
+    .where(and(eq(properties.id, id), eq(properties.userId, userId)))
     .returning();
 
   // Replace tags
@@ -219,7 +228,10 @@ export async function updateProperty(id: string, data: PropertyFormData) {
 }
 
 export async function deleteProperty(id: string) {
-  await db.delete(properties).where(eq(properties.id, id));
+  const userId = await requireUserId();
+  await db
+    .delete(properties)
+    .where(and(eq(properties.id, id), eq(properties.userId, userId)));
   revalidatePath("/properties");
 }
 
@@ -232,7 +244,8 @@ export async function getUploadUrl(
   filename: string,
   contentType: string,
 ) {
-  const key = `properties/${propertyId}/${Date.now()}-${filename}`;
+  const userId = await requireUserId();
+  const key = `${userId}/properties/${propertyId}/${Date.now()}-${filename}`;
 
   const command = new PutObjectCommand({
     Bucket: MEDIA_BUCKET,
@@ -251,6 +264,13 @@ export async function addPropertyImage(
   filename: string,
   isCover = false,
 ) {
+  // Verify the property belongs to the user
+  const userId = await requireUserId();
+  const property = await db.query.properties.findFirst({
+    where: and(eq(properties.id, propertyId), eq(properties.userId, userId)),
+  });
+  if (!property) throw new Error("Property not found");
+
   const [image] = await db
     .insert(propertyImages)
     .values({

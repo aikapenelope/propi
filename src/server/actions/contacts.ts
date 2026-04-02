@@ -2,8 +2,9 @@
 
 import { db } from "@/lib/db";
 import { contacts, contactTags, tags } from "@/server/schema";
-import { eq, ilike, or, desc, sql } from "drizzle-orm";
+import { eq, and, ilike, or, desc, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
+import { requireUserId } from "@/lib/auth-helper";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -24,31 +25,34 @@ export type ContactFormData = {
 // ---------------------------------------------------------------------------
 
 export async function getContacts(search?: string) {
-  const query = db.query.contacts.findMany({
+  const userId = await requireUserId();
+
+  return db.query.contacts.findMany({
+    where: search
+      ? and(
+          eq(contacts.userId, userId),
+          or(
+            ilike(contacts.name, `%${search}%`),
+            ilike(contacts.email, `%${search}%`),
+            ilike(contacts.phone, `%${search}%`),
+            ilike(contacts.company, `%${search}%`),
+          ),
+        )
+      : eq(contacts.userId, userId),
     with: {
       contactTags: {
         with: { tag: true },
       },
     },
     orderBy: [desc(contacts.updatedAt)],
-    ...(search
-      ? {
-          where: or(
-            ilike(contacts.name, `%${search}%`),
-            ilike(contacts.email, `%${search}%`),
-            ilike(contacts.phone, `%${search}%`),
-            ilike(contacts.company, `%${search}%`),
-          ),
-        }
-      : {}),
   });
-
-  return query;
 }
 
 export async function getContact(id: string) {
+  const userId = await requireUserId();
+
   return db.query.contacts.findFirst({
-    where: eq(contacts.id, id),
+    where: and(eq(contacts.id, id), eq(contacts.userId, userId)),
     with: {
       contactTags: {
         with: { tag: true },
@@ -63,7 +67,10 @@ export async function getContact(id: string) {
 }
 
 export async function getTags() {
+  const userId = await requireUserId();
+
   return db.query.tags.findMany({
+    where: eq(tags.userId, userId),
     orderBy: [tags.name],
   });
 }
@@ -73,6 +80,8 @@ export async function getTags() {
 // ---------------------------------------------------------------------------
 
 export async function createContact(data: ContactFormData) {
+  const userId = await requireUserId();
+
   const [contact] = await db
     .insert(contacts)
     .values({
@@ -82,6 +91,7 @@ export async function createContact(data: ContactFormData) {
       company: data.company || null,
       notes: data.notes || null,
       source: (data.source as typeof contacts.$inferInsert.source) || "other",
+      userId,
     })
     .returning();
 
@@ -100,6 +110,8 @@ export async function createContact(data: ContactFormData) {
 }
 
 export async function updateContact(id: string, data: ContactFormData) {
+  const userId = await requireUserId();
+
   const [contact] = await db
     .update(contacts)
     .set({
@@ -110,7 +122,7 @@ export async function updateContact(id: string, data: ContactFormData) {
       notes: data.notes || null,
       source: (data.source as typeof contacts.$inferInsert.source) || "other",
     })
-    .where(eq(contacts.id, id))
+    .where(and(eq(contacts.id, id), eq(contacts.userId, userId)))
     .returning();
 
   // Replace tags: delete existing, insert new
@@ -130,14 +142,18 @@ export async function updateContact(id: string, data: ContactFormData) {
 }
 
 export async function deleteContact(id: string) {
-  await db.delete(contacts).where(eq(contacts.id, id));
+  const userId = await requireUserId();
+  await db
+    .delete(contacts)
+    .where(and(eq(contacts.id, id), eq(contacts.userId, userId)));
   revalidatePath("/contacts");
 }
 
 export async function createTag(name: string, color?: string) {
+  const userId = await requireUserId();
   const [tag] = await db
     .insert(tags)
-    .values({ name, color: color || "#6366f1" })
+    .values({ name, color: color || "#6366f1", userId })
     .returning();
   return tag;
 }
