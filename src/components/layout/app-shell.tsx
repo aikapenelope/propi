@@ -19,7 +19,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         onToggle={() => setSidebarCollapsed((prev) => !prev)}
       />
 
-      {/* Mobile sidebar overlay (opened by top bar menu OR bottom nav "Mas") */}
+      {/* Mobile sidebar overlay */}
       <MobileSidebar
         open={mobileMenuOpen}
         onClose={() => setMobileMenuOpen(false)}
@@ -31,17 +31,17 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         onMenuToggle={() => setMobileMenuOpen(true)}
       />
 
-      {/* Main content area */}
+      {/* Main content area - fixed structure, no layout shift */}
       <main
         className={cn(
-          "min-h-screen pt-24 pb-16 transition-all duration-200 md:pb-0 relative",
+          "min-h-screen pt-16 md:pt-24 pb-20 md:pb-0 transition-all duration-200 relative overflow-x-hidden",
           sidebarCollapsed ? "md:pl-16" : "md:pl-[260px]",
         )}
       >
-        {/* Ambient background effects */}
-        <div className="absolute top-0 right-[20%] w-[600px] h-[300px] bg-primary/5 blur-[120px] rounded-full pointer-events-none z-0" />
-        <div className="absolute bottom-0 left-[10%] w-[400px] h-[400px] bg-purple-500/5 blur-[150px] rounded-full pointer-events-none z-0" />
-        <div className="relative z-10">
+        {/* Ambient background effects (desktop only) */}
+        <div className="absolute top-0 right-[20%] w-[600px] h-[300px] bg-primary/5 blur-[120px] rounded-full pointer-events-none z-0 hidden md:block" />
+        <div className="absolute bottom-0 left-[10%] w-[400px] h-[400px] bg-purple-500/5 blur-[150px] rounded-full pointer-events-none z-0 hidden md:block" />
+        <div className="relative z-10 min-w-0">
           {children}
         </div>
       </main>
