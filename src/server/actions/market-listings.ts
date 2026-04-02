@@ -1,0 +1,177 @@
+"use server";
+
+import { db } from "@/lib/db";
+import { marketListings } from "@/server/schema";
+import { sql, and, gte, lte, ilike, eq, desc, count } from "drizzle-orm";
+import type { ParsedQuery } from "@/lib/market-parser";
+
+// ---------------------------------------------------------------------------
+// Search
+// ---------------------------------------------------------------------------
+
+/** Search market_listings with parsed query parameters */
+export async function searchMarketListings(
+  query: ParsedQuery,
+  limit = 20,
+) {
+  const conditions = [];
+
+  if (query.propertyType) {
+    conditions.push(ilike(marketListings.propertyType, `%${query.propertyType}%`));
+  }
+  if (query.operation) {
+    conditions.push(ilike(marketListings.operation, `%${query.operation}%`));
+  }
+  if (query.neighborhood) {
+    conditions.push(ilike(marketListings.neighborhood, `%${query.neighborhood}%`));
+  } else if (query.city) {
+    conditions.push(ilike(marketListings.city, `%${query.city}%`));
+  }
+  if (query.areaMin) {
+    conditions.push(gte(sql`CAST(${marketListings.areaM2} AS NUMERIC)`, query.areaMin));
+  }
+  if (query.areaMax) {
+    conditions.push(lte(sql`CAST(${marketListings.areaM2} AS NUMERIC)`, query.areaMax));
+  }
+  if (query.priceMin) {
+    conditions.push(gte(sql`CAST(${marketListings.price} AS NUMERIC)`, query.priceMin));
+  }
+  if (query.priceMax) {
+    conditions.push(lte(sql`CAST(${marketListings.price} AS NUMERIC)`, query.priceMax));
+  }
+  if (query.bedrooms) {
+    conditions.push(eq(marketListings.bedrooms, query.bedrooms));
+  }
+  if (query.bathrooms) {
+    conditions.push(eq(marketListings.bathrooms, query.bathrooms));
+  }
+
+  // Only listings from last 12 months
+  const cutoff = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000);
+  conditions.push(gte(marketListings.publishedAt, cutoff));
+
+  const where = conditions.length > 0 ? and(...conditions) : undefined;
+
+  const results = await db
+    .select()
+    .from(marketListings)
+    .where(where)
+    .orderBy(desc(marketListings.lastSeenAt))
+    .limit(limit);
+
+  return results;
+}
+
+// ---------------------------------------------------------------------------
+// KPIs (all SQL, no LLM)
+// ---------------------------------------------------------------------------
+
+/** Get KPIs for a search query */
+export async function getMarketKPIs(query: ParsedQuery) {
+  const conditions = [];
+
+  if (query.propertyType) {
+    conditions.push(ilike(marketListings.propertyType, `%${query.propertyType}%`));
+  }
+  if (query.operation) {
+    conditions.push(ilike(marketListings.operation, `%${query.operation}%`));
+  }
+  if (query.neighborhood) {
+    conditions.push(ilike(marketListings.neighborhood, `%${query.neighborhood}%`));
+  } else if (query.city) {
+    conditions.push(ilike(marketListings.city, `%${query.city}%`));
+  }
+
+  const cutoff = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000);
+  conditions.push(gte(marketListings.publishedAt, cutoff));
+
+  const where = conditions.length > 0 ? and(...conditions) : undefined;
+
+  const [stats] = await db
+    .select({
+      total: count(),
+      avgPrice: sql<number>`AVG(CAST(${marketListings.price} AS NUMERIC))`,
+      minPrice: sql<number>`MIN(CAST(${marketListings.price} AS NUMERIC))`,
+      maxPrice: sql<number>`MAX(CAST(${marketListings.price} AS NUMERIC))`,
+      medianPrice: sql<number>`PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY CAST(${marketListings.price} AS NUMERIC))`,
+      avgPriceM2: sql<number>`AVG(CAST(${marketListings.price} AS NUMERIC) / NULLIF(CAST(${marketListings.areaM2} AS NUMERIC), 0))`,
+    })
+    .from(marketListings)
+    .where(where);
+
+  return {
+    total: stats?.total ?? 0,
+    avgPrice: stats?.avgPrice ? Math.round(stats.avgPrice) : null,
+    minPrice: stats?.minPrice ? Math.round(stats.minPrice) : null,
+    maxPrice: stats?.maxPrice ? Math.round(stats.maxPrice) : null,
+    medianPrice: stats?.medianPrice ? Math.round(stats.medianPrice) : null,
+    avgPriceM2: stats?.avgPriceM2 ? Math.round(stats.avgPriceM2) : null,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Global stats (for Market Insights page)
+// ---------------------------------------------------------------------------
+
+/** Total listings in DB */
+export async function getMarketTotalListings() {
+  const [result] = await db
+    .select({ total: count() })
+    .from(marketListings);
+  return result?.total ?? 0;
+}
+
+/** Listings by property type */
+export async function getMarketByType() {
+  return db
+    .select({
+      propertyType: marketListings.propertyType,
+      count: count(),
+    })
+    .from(marketListings)
+    .groupBy(marketListings.propertyType)
+    .orderBy(desc(count()));
+}
+
+/** Listings by operation (sale vs rent) */
+export async function getMarketByOperation() {
+  return db
+    .select({
+      operation: marketListings.operation,
+      count: count(),
+    })
+    .from(marketListings)
+    .groupBy(marketListings.operation);
+}
+
+/** Top 10 neighborhoods by avg price/m2 */
+export async function getTopNeighborhoods(limit = 10) {
+  return db
+    .select({
+      neighborhood: marketListings.neighborhood,
+      avgPriceM2: sql<number>`AVG(CAST(${marketListings.price} AS NUMERIC) / NULLIF(CAST(${marketListings.areaM2} AS NUMERIC), 0))`,
+      count: count(),
+    })
+    .from(marketListings)
+    .where(
+      and(
+        sql`CAST(${marketListings.areaM2} AS NUMERIC) > 0`,
+        sql`${marketListings.neighborhood} IS NOT NULL`,
+        sql`${marketListings.neighborhood} != ''`,
+      ),
+    )
+    .groupBy(marketListings.neighborhood)
+    .having(sql`COUNT(*) >= 3`)
+    .orderBy(desc(sql`AVG(CAST(${marketListings.price} AS NUMERIC) / NULLIF(CAST(${marketListings.areaM2} AS NUMERIC), 0))`))
+    .limit(limit);
+}
+
+/** New listings this week */
+export async function getNewListingsThisWeek() {
+  const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+  const [result] = await db
+    .select({ total: count() })
+    .from(marketListings)
+    .where(gte(marketListings.createdAt, weekAgo));
+  return result?.total ?? 0;
+}
