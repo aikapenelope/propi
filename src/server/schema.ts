@@ -10,6 +10,7 @@ import {
   pgEnum,
   index,
   primaryKey,
+  jsonb,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
@@ -297,6 +298,7 @@ export const socialPlatformEnum = pgEnum("social_platform", [
   "instagram",
   "facebook",
   "whatsapp",
+  "mercadolibre",
 ]);
 
 export const socialAccounts = pgTable("social_accounts", {
@@ -312,6 +314,8 @@ export const socialAccounts = pgTable("social_accounts", {
   accountName: varchar("account_name", { length: 255 }),
   /** When the token expires (long-lived = 60 days) */
   tokenExpiresAt: timestamp("token_expires_at", { withTimezone: true }),
+  /** Extra platform-specific data (e.g. MeLi refresh token, user ID) */
+  metadata: jsonb("metadata"),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
@@ -561,3 +565,86 @@ export const messagesRelations = relations(messages, ({ one }) => ({
     references: [conversations.id],
   }),
 }));
+
+// ---------------------------------------------------------------------------
+// Market Analysis
+// ---------------------------------------------------------------------------
+
+/** Saved market analyses from MercadoLibre + Groq */
+export const marketAnalyses = pgTable(
+  "market_analyses",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    propertyId: uuid("property_id").references(() => properties.id, {
+      onDelete: "cascade",
+    }),
+    query: text("query").notNull(),
+    source: text("source").notNull().default("mercadolibre"),
+    siteId: text("site_id").notNull().default("MLV"),
+    avgPriceM2: numeric("avg_price_m2"),
+    priceRange: jsonb("price_range"),
+    totalAnalyzed: integer("total_analyzed"),
+    saleVsRent: jsonb("sale_vs_rent"),
+    userPosition: text("user_position"),
+    suggestedPrice: numeric("suggested_price"),
+    suggestedPriceRange: jsonb("suggested_price_range"),
+    confidence: text("confidence"),
+    summary: text("summary"),
+    insights: jsonb("insights"),
+    similarIndices: jsonb("similar_indices"),
+    rawGroqResponse: jsonb("raw_groq_response"),
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (table) => [
+    index("market_analyses_property_idx").on(table.propertyId),
+    index("market_analyses_created_idx").on(table.createdAt),
+  ],
+);
+
+/** Snapshot of MercadoLibre listings used in an analysis */
+export const marketSnapshots = pgTable(
+  "market_snapshots",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    analysisId: uuid("analysis_id").references(() => marketAnalyses.id, {
+      onDelete: "cascade",
+    }),
+    externalId: text("external_id").notNull(),
+    title: text("title"),
+    price: numeric("price"),
+    currency: text("currency"),
+    areaM2: numeric("area_m2"),
+    bedrooms: integer("bedrooms"),
+    bathrooms: integer("bathrooms"),
+    parking: integer("parking"),
+    city: text("city"),
+    neighborhood: text("neighborhood"),
+    permalink: text("permalink"),
+    thumbnail: text("thumbnail"),
+    attributes: jsonb("attributes"),
+    listingIndex: integer("listing_index"),
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (table) => [index("market_snapshots_analysis_idx").on(table.analysisId)],
+);
+
+export const marketAnalysesRelations = relations(
+  marketAnalyses,
+  ({ one, many }) => ({
+    property: one(properties, {
+      fields: [marketAnalyses.propertyId],
+      references: [properties.id],
+    }),
+    snapshots: many(marketSnapshots),
+  }),
+);
+
+export const marketSnapshotsRelations = relations(
+  marketSnapshots,
+  ({ one }) => ({
+    analysis: one(marketAnalyses, {
+      fields: [marketSnapshots.analysisId],
+      references: [marketAnalyses.id],
+    }),
+  }),
+);
