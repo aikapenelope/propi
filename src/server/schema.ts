@@ -567,49 +567,19 @@ export const messagesRelations = relations(messages, ({ one }) => ({
 }));
 
 // ---------------------------------------------------------------------------
-// Market Analysis
+// Market Listings (centralized property database from MercadoLibre)
 // ---------------------------------------------------------------------------
 
-/** Saved market analyses from MercadoLibre + Groq */
-export const marketAnalyses = pgTable(
-  "market_analyses",
+/** Centralized table of all properties fetched from MercadoLibre.
+ *  Single source of truth for market data. Grows daily via cron sync.
+ *  KPIs are calculated with SQL queries against this table, not LLM. */
+export const marketListings = pgTable(
+  "market_listings",
   {
     id: uuid("id").primaryKey().defaultRandom(),
-    propertyId: uuid("property_id").references(() => properties.id, {
-      onDelete: "cascade",
-    }),
-    query: text("query").notNull(),
+    externalId: text("external_id").notNull().unique(),
     source: text("source").notNull().default("mercadolibre"),
     siteId: text("site_id").notNull().default("MLV"),
-    avgPriceM2: numeric("avg_price_m2"),
-    priceRange: jsonb("price_range"),
-    totalAnalyzed: integer("total_analyzed"),
-    saleVsRent: jsonb("sale_vs_rent"),
-    userPosition: text("user_position"),
-    suggestedPrice: numeric("suggested_price"),
-    suggestedPriceRange: jsonb("suggested_price_range"),
-    confidence: text("confidence"),
-    summary: text("summary"),
-    insights: jsonb("insights"),
-    similarIndices: jsonb("similar_indices"),
-    rawGroqResponse: jsonb("raw_groq_response"),
-    createdAt: timestamp("created_at").defaultNow(),
-  },
-  (table) => [
-    index("market_analyses_property_idx").on(table.propertyId),
-    index("market_analyses_created_idx").on(table.createdAt),
-  ],
-);
-
-/** Snapshot of MercadoLibre listings used in an analysis */
-export const marketSnapshots = pgTable(
-  "market_snapshots",
-  {
-    id: uuid("id").primaryKey().defaultRandom(),
-    analysisId: uuid("analysis_id").references(() => marketAnalyses.id, {
-      onDelete: "cascade",
-    }),
-    externalId: text("external_id").notNull(),
     title: text("title"),
     price: numeric("price"),
     currency: text("currency"),
@@ -617,36 +587,29 @@ export const marketSnapshots = pgTable(
     bedrooms: integer("bedrooms"),
     bathrooms: integer("bathrooms"),
     parking: integer("parking"),
+    propertyType: text("property_type"),
+    operation: text("operation"),
     city: text("city"),
+    state: text("state"),
     neighborhood: text("neighborhood"),
+    latitude: numeric("latitude"),
+    longitude: numeric("longitude"),
+    condition: text("condition"),
     permalink: text("permalink"),
     thumbnail: text("thumbnail"),
+    sellerNickname: text("seller_nickname"),
+    publishedAt: timestamp("published_at"),
+    lastSeenAt: timestamp("last_seen_at").defaultNow(),
     attributes: jsonb("attributes"),
-    listingIndex: integer("listing_index"),
     createdAt: timestamp("created_at").defaultNow(),
   },
-  (table) => [index("market_snapshots_analysis_idx").on(table.analysisId)],
-);
-
-export const marketAnalysesRelations = relations(
-  marketAnalyses,
-  ({ one, many }) => ({
-    property: one(properties, {
-      fields: [marketAnalyses.propertyId],
-      references: [properties.id],
-    }),
-    snapshots: many(marketSnapshots),
-  }),
-);
-
-export const marketSnapshotsRelations = relations(
-  marketSnapshots,
-  ({ one }) => ({
-    analysis: one(marketAnalyses, {
-      fields: [marketSnapshots.analysisId],
-      references: [marketAnalyses.id],
-    }),
-  }),
+  (table) => [
+    index("market_listings_external_idx").on(table.externalId),
+    index("market_listings_type_op_idx").on(table.propertyType, table.operation),
+    index("market_listings_city_hood_idx").on(table.city, table.neighborhood),
+    index("market_listings_published_idx").on(table.publishedAt),
+    index("market_listings_price_idx").on(table.price),
+  ],
 );
 
 // ---------------------------------------------------------------------------

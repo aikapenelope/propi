@@ -1,10 +1,26 @@
 import { Building2, Bed, Bath, Car, ExternalLink } from "lucide-react";
-import type { CleanedListing } from "@/lib/mercadolibre";
 
-export function SimilarListingCard({ listing }: { listing: CleanedListing }) {
+interface MarketListing {
+  id: string;
+  externalId: string;
+  title: string | null;
+  price: string | null;
+  currency: string | null;
+  areaM2: string | null;
+  bedrooms: number | null;
+  bathrooms: number | null;
+  parking: number | null;
+  propertyType: string | null;
+  neighborhood: string | null;
+  city: string | null;
+  permalink: string | null;
+  thumbnail: string | null;
+}
+
+export function ListingCard({ listing }: { listing: MarketListing }) {
   return (
     <a
-      href={listing.permalink}
+      href={listing.permalink || "#"}
       target="_blank"
       rel="noopener noreferrer"
       className="flex gap-3 rounded-2xl border border-border bg-background p-3 hover:shadow-lg hover:-translate-y-0.5 transition-all"
@@ -13,7 +29,7 @@ export function SimilarListingCard({ listing }: { listing: CleanedListing }) {
         // eslint-disable-next-line @next/next/no-img-element
         <img
           src={listing.thumbnail}
-          alt={listing.title}
+          alt={listing.title || ""}
           className="w-20 h-20 rounded-xl object-cover flex-shrink-0 bg-muted"
         />
       )}
@@ -22,7 +38,10 @@ export function SimilarListingCard({ listing }: { listing: CleanedListing }) {
           {listing.title}
         </h4>
         <p className="text-base font-extrabold text-primary mt-0.5">
-          ${listing.price.toLocaleString()} {listing.currency}
+          {listing.price
+            ? `$${parseFloat(listing.price).toLocaleString()}`
+            : "Consultar"}{" "}
+          {listing.currency}
         </p>
         <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground flex-wrap">
           {listing.bedrooms && (
@@ -35,9 +54,9 @@ export function SimilarListingCard({ listing }: { listing: CleanedListing }) {
               <Bath className="h-3 w-3" /> {listing.bathrooms}
             </span>
           )}
-          {listing.area && (
+          {listing.areaM2 && (
             <span className="flex items-center gap-1">
-              <Building2 className="h-3 w-3" /> {listing.area}m²
+              <Building2 className="h-3 w-3" /> {listing.areaM2}m²
             </span>
           )}
           {listing.parking && (
@@ -55,30 +74,18 @@ export function SimilarListingCard({ listing }: { listing: CleanedListing }) {
   );
 }
 
-export function SimilarListings({
-  listings,
-  similarIndices,
-}: {
-  listings: CleanedListing[];
-  similarIndices?: number[];
-}) {
-  // Show similar ones first, then the rest
-  const similar = similarIndices
-    ? similarIndices.map((i) => listings[i]).filter(Boolean)
-    : listings.slice(0, 5);
-
-  if (similar.length === 0) return null;
-
+export function ListingCards({ listings }: { listings: MarketListing[] }) {
+  if (listings.length === 0) return null;
   return (
-    <div>
-      <h3 className="text-sm font-bold text-foreground mb-3">
-        Propiedades Similares ({similar.length})
-      </h3>
-      <div className="space-y-2">
-        {similar.map((listing) => (
-          <SimilarListingCard key={listing.id} listing={listing} />
-        ))}
-      </div>
+    <div className="space-y-2 my-3">
+      {listings.slice(0, 5).map((l) => (
+        <ListingCard key={l.id} listing={l} />
+      ))}
+      {listings.length > 5 && (
+        <p className="text-xs text-muted-foreground text-center">
+          + {listings.length - 5} propiedades mas
+        </p>
+      )}
     </div>
   );
 }
