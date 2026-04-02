@@ -54,13 +54,29 @@ ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 ENV NEXT_TELEMETRY_DISABLED=1
 
+# Next.js standalone output
 COPY --from=builder --chown=node:node /app/public ./public
 RUN mkdir .next && chown node:node .next
 COPY --from=builder --chown=node:node /app/.next/standalone ./
 COPY --from=builder --chown=node:node /app/.next/static ./.next/static
 
+# Drizzle: schema + config + drizzle-kit for automatic schema sync on deploy.
+# entrypoint.sh runs `drizzle-kit push` before starting the app.
+COPY --from=builder --chown=node:node /app/src/server/schema.ts ./src/server/schema.ts
+COPY --from=builder --chown=node:node /app/drizzle.config.ts ./drizzle.config.ts
+COPY --from=builder --chown=node:node /app/node_modules/drizzle-kit ./node_modules/drizzle-kit
+COPY --from=builder --chown=node:node /app/node_modules/drizzle-orm ./node_modules/drizzle-orm
+COPY --from=builder --chown=node:node /app/node_modules/esbuild ./node_modules/esbuild
+COPY --from=builder --chown=node:node /app/node_modules/@esbuild ./node_modules/@esbuild
+COPY --from=builder --chown=node:node /app/node_modules/@esbuild-kit ./node_modules/@esbuild-kit
+COPY --from=builder --chown=node:node /app/node_modules/get-tsconfig ./node_modules/get-tsconfig
+
+# Entrypoint: sync schema then start server
+COPY --chown=node:node entrypoint.sh ./entrypoint.sh
+RUN chmod +x entrypoint.sh
+
 USER node
 
 EXPOSE 3000
 
-CMD ["node", "server.js"]
+CMD ["./entrypoint.sh"]
