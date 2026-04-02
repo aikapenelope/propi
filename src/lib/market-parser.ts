@@ -154,14 +154,18 @@ export function parseMarketQuery(input: string): ParsedQuery {
     /(\d+)\s*(?:-|a)\s*(\d+)\s*m(?:2|²)/i,
   );
   if (areaRange) {
-    result.areaMin = parseInt(areaRange[1]);
-    result.areaMax = parseInt(areaRange[2]);
+    const min = parseInt(areaRange[1]);
+    const max = parseInt(areaRange[2]);
+    if (!isNaN(min)) result.areaMin = min;
+    if (!isNaN(max)) result.areaMax = max;
   } else {
     const areaSingle = input.match(/(\d+)\s*m(?:2|²)/i);
     if (areaSingle) {
       const area = parseInt(areaSingle[1]);
-      result.areaMin = Math.round(area * 0.8);
-      result.areaMax = Math.round(area * 1.2);
+      if (!isNaN(area)) {
+        result.areaMin = Math.round(area * 0.8);
+        result.areaMax = Math.round(area * 1.2);
+      }
     }
   }
 
@@ -172,26 +176,22 @@ export function parseMarketQuery(input: string): ParsedQuery {
   if (priceRange) {
     let min = parseInt(priceRange[1]);
     let max = parseInt(priceRange[2]);
-    if (min < 1000) min *= 1000;
-    if (max < 1000) max *= 1000;
-    result.priceMin = min;
-    result.priceMax = max;
+    if (!isNaN(min)) { if (min < 1000) min *= 1000; result.priceMin = min; }
+    if (!isNaN(max)) { if (max < 1000) max *= 1000; result.priceMax = max; }
   } else {
     const priceLess = input.match(
       /menos\s+de\s+\$?\s*(\d+)[kK]?/i,
     );
     if (priceLess) {
       let max = parseInt(priceLess[1]);
-      if (max < 1000) max *= 1000;
-      result.priceMax = max;
+      if (!isNaN(max)) { if (max < 1000) max *= 1000; result.priceMax = max; }
     }
     const priceMore = input.match(
       /(?:mas|más)\s+de\s+\$?\s*(\d+)[kK]?/i,
     );
     if (priceMore) {
       let min = parseInt(priceMore[1]);
-      if (min < 1000) min *= 1000;
-      result.priceMin = min;
+      if (!isNaN(min)) { if (min < 1000) min *= 1000; result.priceMin = min; }
     }
   }
 
@@ -200,13 +200,15 @@ export function parseMarketQuery(input: string): ParsedQuery {
     /(\d+)\s*(?:hab(?:itacion(?:es)?)?|cuarto[s]?|dormitorio[s]?)/i,
   );
   if (bedMatch) {
-    result.bedrooms = parseInt(bedMatch[1]);
+    const val = parseInt(bedMatch[1]);
+    if (!isNaN(val)) result.bedrooms = val;
   }
 
   // Bathrooms: "2 banos", "2 baños"
   const bathMatch = input.match(/(\d+)\s*(?:baño[s]?|bano[s]?)/i);
   if (bathMatch) {
-    result.bathrooms = parseInt(bathMatch[1]);
+    const val = parseInt(bathMatch[1]);
+    if (!isNaN(val)) result.bathrooms = val;
   }
 
   return result;

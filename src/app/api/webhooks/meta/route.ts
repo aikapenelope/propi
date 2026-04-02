@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import crypto from "crypto";
 
 // Force dynamic - never pre-render this route at build time
 export const dynamic = "force-dynamic";
@@ -39,13 +40,29 @@ export async function GET(request: NextRequest) {
 // ---------------------------------------------------------------------------
 
 export async function POST(request: NextRequest) {
+  // Validate HMAC signature from Meta
+  const signature = request.headers.get("x-hub-signature-256");
+  const appSecret = process.env.META_APP_SECRET;
+
+  const rawBody = await request.text();
+
+  if (appSecret && signature) {
+    const expectedSig =
+      "sha256=" +
+      crypto.createHmac("sha256", appSecret).update(rawBody).digest("hex");
+    if (signature !== expectedSig) {
+      console.error("Webhook signature mismatch");
+      return NextResponse.json({ error: "Invalid signature" }, { status: 403 });
+    }
+  }
+
   // Dynamic import to avoid DB initialization at build time
   const { findOrCreateConversation, storeInboundMessage } = await import(
     "@/server/actions/messaging"
   );
 
   try {
-    const body = await request.json();
+    const body = JSON.parse(rawBody);
     const object = body.object as string;
 
     if (object === "whatsapp_business_account") {

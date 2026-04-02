@@ -4,6 +4,23 @@ import { s3, MEDIA_BUCKET } from "@/lib/s3";
 
 export const dynamic = "force-dynamic";
 
+// Simple in-memory rate limit: max 100 requests per IP per minute
+const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
+const RATE_LIMIT = 100;
+const WINDOW_MS = 60_000;
+
+function checkRateLimit(ip: string): boolean {
+  const now = Date.now();
+  const entry = rateLimitMap.get(ip);
+  if (!entry || now > entry.resetAt) {
+    rateLimitMap.set(ip, { count: 1, resetAt: now + WINDOW_MS });
+    return true;
+  }
+  if (entry.count >= RATE_LIMIT) return false;
+  entry.count++;
+  return true;
+}
+
 /**
  * Public image proxy for MinIO.
  * Serves property images at a public URL that external services (Meta, etc.) can access.
@@ -23,9 +40,15 @@ export const dynamic = "force-dynamic";
  * Cache: 24 hours (images don't change once uploaded)
  */
 export async function GET(
-  _request: Request,
+  request: Request,
   props: { params: Promise<{ key: string }> },
 ) {
+  // Rate limit
+  const ip = request.headers.get("x-forwarded-for") || "unknown";
+  if (!checkRateLimit(ip)) {
+    return NextResponse.json({ error: "Too many requests" }, { status: 429 });
+  }
+
   const { key } = await props.params;
 
   if (!key) {
