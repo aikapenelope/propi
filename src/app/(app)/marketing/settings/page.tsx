@@ -3,6 +3,7 @@ import { getAllSocialAccounts } from "@/server/actions/social-accounts";
 import { formatDate } from "@/lib/utils";
 import { SocialAccountForm } from "@/components/marketing/social-account-form";
 import { MeliConnectButton } from "@/components/marketing/meli-connect-button";
+import { WasiConfigForm } from "@/components/marketing/wasi-config-form";
 
 export const dynamic = "force-dynamic";
 
@@ -15,6 +16,7 @@ export default async function MarketingSettingsPage(props: {
   const fbAccount = accounts.find((a) => a.platform === "facebook");
   const waAccount = accounts.find((a) => a.platform === "whatsapp");
   const mlAccount = accounts.find((a) => a.platform === "mercadolibre");
+  const wasiAccount = accounts.find((a) => a.platform === "wasi");
 
   const mlAppId = process.env.ML_APP_ID;
   const mlRedirectUri = `${process.env.NEXT_PUBLIC_APP_URL || "https://propi.aikalabs.cc"}/api/auth/mercadolibre/callback`;
@@ -73,6 +75,35 @@ export default async function MarketingSettingsPage(props: {
             Necesario para el Analisis de Mercado. Conecta tu cuenta de
             MercadoLibre Venezuela para buscar propiedades similares.
           </p>
+        </div>
+
+        {/* Wasi */}
+        <div className="rounded-lg border border-border p-4">
+          <div className="mb-4 flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-orange-500/10">
+              <ShoppingBag className="h-5 w-5 text-orange-500" />
+            </div>
+            <div>
+              <h2 className="font-semibold text-foreground">Wasi</h2>
+              <p className="text-xs text-muted-foreground">
+                {wasiAccount
+                  ? `Conectado: ${wasiAccount.platformAccountId}`
+                  : "No conectado"}
+              </p>
+            </div>
+          </div>
+          <WasiConfigForm
+            existing={
+              wasiAccount
+                ? {
+                    idCompany: wasiAccount.platformAccountId,
+                    wasiToken:
+                      (wasiAccount.metadata as Record<string, string> | null)
+                        ?.wasiToken || wasiAccount.accessToken,
+                  }
+                : undefined
+            }
+          />
         </div>
 
         {/* Instagram */}
