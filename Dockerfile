@@ -66,6 +66,7 @@ COPY --from=builder --chown=node:node /app/src/server/schema.ts ./src/server/sch
 COPY --from=builder --chown=node:node /app/drizzle.config.ts ./drizzle.config.ts
 COPY --from=builder --chown=node:node /app/node_modules/drizzle-kit ./node_modules/drizzle-kit
 COPY --from=builder --chown=node:node /app/node_modules/drizzle-orm ./node_modules/drizzle-orm
+COPY --from=builder --chown=node:node /app/node_modules/postgres ./node_modules/postgres
 COPY --from=builder --chown=node:node /app/node_modules/esbuild ./node_modules/esbuild
 COPY --from=builder --chown=node:node /app/node_modules/@esbuild ./node_modules/@esbuild
 COPY --from=builder --chown=node:node /app/node_modules/@esbuild-kit ./node_modules/@esbuild-kit
