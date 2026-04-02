@@ -1,5 +1,3 @@
-"use server";
-
 import { db } from "@/lib/db";
 import { socialAccounts } from "@/server/schema";
 import { eq } from "drizzle-orm";
