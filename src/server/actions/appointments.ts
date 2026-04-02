@@ -2,8 +2,9 @@
 
 import { db } from "@/lib/db";
 import { appointments } from "@/server/schema";
-import { eq, and, gte, lte } from "drizzle-orm";
+import { eq, and, gte, lte, type SQL } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
+import { requireUserId } from "@/lib/auth-helper";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -25,7 +26,8 @@ export type AppointmentFormData = {
 // ---------------------------------------------------------------------------
 
 export async function getAppointments(from?: Date, to?: Date) {
-  const conditions = [];
+  const userId = await requireUserId();
+  const conditions: SQL[] = [eq(appointments.userId, userId)];
 
   if (from) {
     conditions.push(gte(appointments.startsAt, from));
@@ -35,7 +37,7 @@ export async function getAppointments(from?: Date, to?: Date) {
   }
 
   return db.query.appointments.findMany({
-    where: conditions.length > 0 ? and(...conditions) : undefined,
+    where: and(...conditions),
     with: {
       contact: true,
       property: true,
@@ -45,8 +47,13 @@ export async function getAppointments(from?: Date, to?: Date) {
 }
 
 export async function getUpcomingAppointments(limit = 5) {
+  const userId = await requireUserId();
+
   return db.query.appointments.findMany({
-    where: gte(appointments.startsAt, new Date()),
+    where: and(
+      eq(appointments.userId, userId),
+      gte(appointments.startsAt, new Date()),
+    ),
     with: {
       contact: true,
       property: true,
@@ -57,8 +64,10 @@ export async function getUpcomingAppointments(limit = 5) {
 }
 
 export async function getAppointment(id: string) {
+  const userId = await requireUserId();
+
   return db.query.appointments.findFirst({
-    where: eq(appointments.id, id),
+    where: and(eq(appointments.id, id), eq(appointments.userId, userId)),
     with: {
       contact: true,
       property: true,
@@ -71,6 +80,8 @@ export async function getAppointment(id: string) {
 // ---------------------------------------------------------------------------
 
 export async function createAppointment(data: AppointmentFormData) {
+  const userId = await requireUserId();
+
   const [appointment] = await db
     .insert(appointments)
     .values({
@@ -83,6 +94,7 @@ export async function createAppointment(data: AppointmentFormData) {
       location: data.location || null,
       contactId: data.contactId || null,
       propertyId: data.propertyId || null,
+      userId,
     })
     .returning();
 
@@ -94,6 +106,8 @@ export async function updateAppointment(
   id: string,
   data: AppointmentFormData,
 ) {
+  const userId = await requireUserId();
+
   const [appointment] = await db
     .update(appointments)
     .set({
@@ -107,7 +121,7 @@ export async function updateAppointment(
       contactId: data.contactId || null,
       propertyId: data.propertyId || null,
     })
-    .where(eq(appointments.id, id))
+    .where(and(eq(appointments.id, id), eq(appointments.userId, userId)))
     .returning();
 
   revalidatePath("/calendar");
@@ -115,6 +129,9 @@ export async function updateAppointment(
 }
 
 export async function deleteAppointment(id: string) {
-  await db.delete(appointments).where(eq(appointments.id, id));
+  const userId = await requireUserId();
+  await db
+    .delete(appointments)
+    .where(and(eq(appointments.id, id), eq(appointments.userId, userId)));
   revalidatePath("/calendar");
 }
