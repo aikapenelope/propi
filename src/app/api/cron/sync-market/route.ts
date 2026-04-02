@@ -28,11 +28,18 @@ const TWELVE_MONTHS_MS = 365 * 24 * 60 * 60 * 1000;
  * Call: curl -H "Authorization: Bearer $CRON_SECRET" /api/cron/sync-market
  */
 export async function GET(request: Request) {
-  // Auth check
+  // Auth check - CRON_SECRET is required
   const authHeader = request.headers.get("authorization");
   const cronSecret = process.env.CRON_SECRET;
 
-  if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+  if (!cronSecret) {
+    return NextResponse.json(
+      { error: "CRON_SECRET not configured" },
+      { status: 500 },
+    );
+  }
+
+  if (authHeader !== `Bearer ${cronSecret}`) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
