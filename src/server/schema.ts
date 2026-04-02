@@ -81,12 +81,15 @@ export const documentTypeEnum = pgEnum("document_type", [
 
 export const tags = pgTable("tags", {
   id: uuid("id").primaryKey().defaultRandom(),
-  name: varchar("name", { length: 100 }).notNull().unique(),
+  name: varchar("name", { length: 100 }).notNull(),
   color: varchar("color", { length: 7 }).default("#6366f1"),
+  userId: text("user_id").notNull(),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
-});
+}, (table) => [
+  index("tags_user_idx").on(table.userId),
+]);
 
 // ---------------------------------------------------------------------------
 // Contacts
@@ -102,6 +105,7 @@ export const contacts = pgTable(
     company: varchar("company", { length: 255 }),
     notes: text("notes"),
     source: contactSourceEnum("source").default("other"),
+    userId: text("user_id").notNull(),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -113,6 +117,7 @@ export const contacts = pgTable(
   (table) => [
     index("contacts_name_idx").on(table.name),
     index("contacts_email_idx").on(table.email),
+    index("contacts_user_idx").on(table.userId),
   ],
 );
 
@@ -166,6 +171,7 @@ export const properties = pgTable(
     longitude: numeric("longitude", { precision: 10, scale: 7 }),
     /** External publication IDs: { ml: "MLV123", wasi: "456" } */
     externalIds: jsonb("external_ids"),
+    userId: text("user_id").notNull(),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -180,6 +186,7 @@ export const properties = pgTable(
     index("properties_operation_idx").on(table.operation),
     index("properties_city_idx").on(table.city),
     index("properties_price_idx").on(table.price),
+    index("properties_user_idx").on(table.userId),
   ],
 );
 
@@ -245,6 +252,7 @@ export const appointments = pgTable(
     contactId: uuid("contact_id").references(() => contacts.id),
     /** Linked property (optional) */
     propertyId: uuid("property_id").references(() => properties.id),
+    userId: text("user_id").notNull(),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -257,6 +265,7 @@ export const appointments = pgTable(
     index("appointments_starts_at_idx").on(table.startsAt),
     index("appointments_contact_idx").on(table.contactId),
     index("appointments_property_idx").on(table.propertyId),
+    index("appointments_user_idx").on(table.userId),
   ],
 );
 
@@ -282,6 +291,7 @@ export const documents = pgTable(
     contactId: uuid("contact_id").references(() => contacts.id),
     /** Linked property (optional) */
     propertyId: uuid("property_id").references(() => properties.id),
+    userId: text("user_id").notNull(),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -289,6 +299,7 @@ export const documents = pgTable(
   (table) => [
     index("documents_contact_idx").on(table.contactId),
     index("documents_property_idx").on(table.propertyId),
+    index("documents_user_idx").on(table.userId),
   ],
 );
 
@@ -319,6 +330,7 @@ export const socialAccounts = pgTable("social_accounts", {
   tokenExpiresAt: timestamp("token_expires_at", { withTimezone: true }),
   /** Extra platform-specific data (e.g. MeLi refresh token, user ID) */
   metadata: jsonb("metadata"),
+  userId: text("user_id").notNull(),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
@@ -326,7 +338,10 @@ export const socialAccounts = pgTable("social_accounts", {
     .notNull()
     .defaultNow()
     .$onUpdate(() => new Date()),
-});
+}, (table) => [
+  index("social_accounts_user_idx").on(table.userId),
+  index("social_accounts_platform_user_idx").on(table.platform, table.userId),
+]);
 
 // ---------------------------------------------------------------------------
 // Email Campaigns
@@ -353,11 +368,15 @@ export const emailCampaigns = pgTable(
     failedCount: integer("failed_count").default(0),
     scheduledAt: timestamp("scheduled_at", { withTimezone: true }),
     sentAt: timestamp("sent_at", { withTimezone: true }),
+    userId: text("user_id").notNull(),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
   },
-  (table) => [index("email_campaigns_status_idx").on(table.status)],
+  (table) => [
+    index("email_campaigns_status_idx").on(table.status),
+    index("email_campaigns_user_idx").on(table.userId),
+  ],
 );
 
 export const campaignRecipients = pgTable(
@@ -414,6 +433,7 @@ export const conversations = pgTable(
     /** Number of unread inbound messages */
     unreadCount: integer("unread_count").notNull().default(0),
     lastMessageAt: timestamp("last_message_at", { withTimezone: true }),
+    userId: text("user_id").notNull(),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -423,6 +443,7 @@ export const conversations = pgTable(
     index("conversations_contact_idx").on(table.contactId),
     index("conversations_external_idx").on(table.externalId),
     index("conversations_last_msg_idx").on(table.lastMessageAt),
+    index("conversations_user_idx").on(table.userId),
   ],
 );
 
