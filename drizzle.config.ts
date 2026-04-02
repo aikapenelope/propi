@@ -5,7 +5,11 @@ export default defineConfig({
   out: "./drizzle",
   dialect: "postgresql",
   dbCredentials: {
-    // Use direct Postgres (not PgBouncer) for migrations
-    url: process.env.DATABASE_URL || "postgresql://platform:password@10.0.1.20:5432/propi",
+    // DATABASE_DIRECT_URL bypasses PgBouncer (port 5432) for DDL operations.
+    // Falls back to DATABASE_URL for environments without PgBouncer.
+    url:
+      process.env.DATABASE_DIRECT_URL ||
+      process.env.DATABASE_URL ||
+      "",
   },
 });
