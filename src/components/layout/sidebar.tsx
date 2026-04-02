@@ -16,6 +16,7 @@ import {
   Settings,
   ChevronLeft,
   ChevronRight,
+  Sparkles,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -25,6 +26,7 @@ const navItems = [
   { href: "/properties", label: "Propiedades", icon: Building2 },
   { href: "/calendar", label: "Calendario", icon: Calendar },
   { href: "/documents", label: "Documentos", icon: FileText },
+  { href: "/market-analysis", label: "Propi Magic", icon: Sparkles },
 ];
 
 const marketingItems = [

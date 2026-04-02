@@ -9,7 +9,6 @@ import {
   Maximize,
   Pencil,
   Calendar,
-  BarChart3,
 } from "lucide-react";
 import { getProperty, getImageUrl } from "@/server/actions/properties";
 import { formatCurrency, formatDate } from "@/lib/utils";
@@ -130,13 +129,6 @@ export default async function PropertyDetailPage({
             city={property.city ?? undefined}
             propertyId={id}
           />
-          <Link
-            href={`/properties/${id}/analysis`}
-            className="inline-flex items-center gap-1 rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors"
-          >
-            <BarChart3 className="h-4 w-4" />
-            Analizar Mercado
-          </Link>
           <Link
             href={`/properties/${id}/edit`}
             className="inline-flex items-center gap-1 rounded-lg border border-border px-3 py-2 text-sm font-medium text-foreground hover:bg-muted transition-colors"
