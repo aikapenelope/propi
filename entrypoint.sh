@@ -7,7 +7,7 @@ set -e
 # This is safe to run on every deploy - it only applies diffs.
 if [ -n "$DATABASE_DIRECT_URL" ]; then
   echo "Running drizzle-kit push..."
-  npx drizzle-kit push --force
+  node ./node_modules/drizzle-kit/bin.cjs push --force
   echo "Schema sync complete."
 else
   echo "WARNING: DATABASE_DIRECT_URL not set, skipping schema sync."
