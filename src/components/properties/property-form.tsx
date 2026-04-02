@@ -191,7 +191,7 @@ export function PropertyForm({
           </label>
           <select id="currency" name="currency" defaultValue={property?.currency ?? "USD"} className={inputClass}>
             <option value="USD">USD</option>
-            <option value="COP">COP</option>
+            <option value="VES">VES</option>
             <option value="EUR">EUR</option>
           </select>
         </div>

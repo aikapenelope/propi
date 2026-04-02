@@ -160,7 +160,7 @@ export const properties = pgTable(
     city: varchar("city", { length: 255 }),
     state: varchar("state", { length: 255 }),
     zipCode: varchar("zip_code", { length: 20 }),
-    country: varchar("country", { length: 100 }).default("CO"),
+    country: varchar("country", { length: 100 }).default("VE"),
     /** GPS coordinates */
     latitude: numeric("latitude", { precision: 10, scale: 7 }),
     longitude: numeric("longitude", { precision: 10, scale: 7 }),
