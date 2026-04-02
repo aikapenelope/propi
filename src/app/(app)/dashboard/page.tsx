@@ -7,12 +7,28 @@ import {
   TrendingUp,
   Calendar,
   ArrowUpRight,
+  Calculator,
 } from "lucide-react";
 import { getDashboardStats } from "@/server/actions/dashboard";
 import { getUpcomingAppointments } from "@/server/actions/appointments";
 import { formatDate } from "@/lib/utils";
+import { CommissionCalculator } from "@/components/dashboard/commission-calculator";
 
 export const dynamic = "force-dynamic";
+
+/** Map property type enum to display label */
+const typeLabels: Record<string, string> = {
+  apartment: "Apto",
+  house: "Casa",
+  office: "Ofic",
+  commercial: "Local",
+  land: "Lote",
+  warehouse: "Galp",
+  other: "Otro",
+};
+
+/** Day of week labels (0=Sun) */
+const dayLabels = ["Dom", "Lun", "Mar", "Mie", "Jue", "Vie", "Sab"];
 
 export default async function DashboardPage() {
   const [stats, upcoming] = await Promise.all([
@@ -26,6 +42,42 @@ export default async function DashboardPage() {
     stats.propertiesByStatus.find((s) => s.status === "sold")?.count ?? 0;
   const reservedProperties =
     stats.propertiesByStatus.find((s) => s.status === "reserved")?.count ?? 0;
+
+  // Bar chart: properties by type (normalize to percentages)
+  const maxTypeCount = Math.max(
+    ...stats.propertiesByType.map((t) => t.count),
+    1,
+  );
+  const typeBarData = stats.propertiesByType.slice(0, 7).map((t) => ({
+    label: typeLabels[t.type] || t.type,
+    height: Math.round((t.count / maxTypeCount) * 100),
+    count: t.count,
+  }));
+
+  // Area chart: contacts by month (build SVG path)
+  const monthCounts = stats.contactsByMonth.map((m) => m.count);
+  const maxMonthCount = Math.max(...monthCounts, 1);
+  const contactPoints = monthCounts.map((c, i) => {
+    const x = monthCounts.length > 1 ? (i / (monthCounts.length - 1)) * 200 : 100;
+    const y = 70 - (c / maxMonthCount) * 60;
+    return `${x},${y}`;
+  });
+  const contactLinePath =
+    contactPoints.length > 1
+      ? `M${contactPoints.join(" L")}`
+      : "M0,70 L200,70";
+  const contactAreaPath =
+    contactPoints.length > 1
+      ? `M${contactPoints.join(" L")} L200,80 L0,80 Z`
+      : "M0,70 L200,70 L200,80 L0,80 Z";
+
+  // Column chart: appointments by day of week
+  const dayData = dayLabels.map((label, dayIndex) => {
+    const found = stats.appointmentsByDay.find((d) => d.day === dayIndex);
+    return { label, count: found?.count ?? 0 };
+  });
+  const maxDayCount = Math.max(...dayData.map((d) => d.count), 1);
+  const todayDow = new Date().getDay();
 
   return (
     <div className="max-w-[1600px] mx-auto px-4 md:px-8 py-6">
@@ -52,7 +104,7 @@ export default async function DashboardPage() {
 
       {/* 4 Metric Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5 mb-6">
-        {/* Properties Listed */}
+        {/* Card 1: Properties by type (real bar chart) */}
         <div className="bg-[var(--card-bg)] border border-border rounded-2xl p-5 card-shadow relative overflow-hidden group hover:border-white/[0.08] hover:-translate-y-0.5 transition-all duration-300">
           <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 blur-[40px] rounded-full pointer-events-none opacity-50 group-hover:opacity-100 transition-opacity" />
           <div className="flex items-center gap-3 mb-4 relative z-10">
@@ -70,14 +122,28 @@ export default async function DashboardPage() {
             {stats.totalProperties}
           </h3>
 
-          {/* Mini bar chart */}
-          <div className="flex items-end justify-between h-8 gap-1.5 mb-4 relative z-10">
-            {[60, 80, 50, 90, 100, 70, 85, 75, 95, 65].map((h, i) => (
-              <div
-                key={i}
-                className="w-full bg-primary/40 rounded-[2px] hover:bg-primary transition-colors"
-                style={{ height: `${h}%` }}
-              />
+          {/* Real bar chart from propertiesByType */}
+          <div className="flex items-end justify-between h-8 gap-1.5 mb-2 relative z-10">
+            {typeBarData.length > 0
+              ? typeBarData.map((bar, i) => (
+                  <div
+                    key={i}
+                    className="w-full bg-primary/40 rounded-[2px] hover:bg-primary transition-colors"
+                    style={{ height: `${Math.max(bar.height, 5)}%` }}
+                    title={`${bar.label}: ${bar.count}`}
+                  />
+                ))
+              : Array.from({ length: 7 }).map((_, i) => (
+                  <div
+                    key={i}
+                    className="w-full bg-primary/10 rounded-[2px]"
+                    style={{ height: "5%" }}
+                  />
+                ))}
+          </div>
+          <div className="flex justify-between text-[9px] text-muted-foreground relative z-10 mb-3">
+            {typeBarData.map((bar, i) => (
+              <span key={i}>{bar.label}</span>
             ))}
           </div>
 
@@ -101,7 +167,7 @@ export default async function DashboardPage() {
           </div>
         </div>
 
-        {/* Active Leads */}
+        {/* Card 2: Contacts (real SVG area chart from contactsByMonth) */}
         <div className="bg-[var(--card-bg)] border border-border rounded-2xl p-5 card-shadow relative overflow-hidden group hover:border-white/[0.08] hover:-translate-y-0.5 transition-all duration-300">
           <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 blur-[40px] rounded-full pointer-events-none opacity-50 group-hover:opacity-100 transition-opacity" />
           <div className="flex items-center gap-3 mb-4 relative z-10">
@@ -113,13 +179,13 @@ export default async function DashboardPage() {
             </span>
           </div>
           <p className="text-muted-foreground text-xs mb-1 relative z-10">
-            Leads activos
+            Ultimos 6 meses
           </p>
           <h3 className="text-3xl font-bold mb-2 text-foreground relative z-10">
             {stats.totalContacts}
           </h3>
 
-          {/* SVG area chart */}
+          {/* Real SVG area chart from contactsByMonth */}
           <div className="absolute bottom-0 left-0 right-0 h-28 opacity-80 group-hover:opacity-100 transition-opacity">
             <svg
               viewBox="0 0 200 80"
@@ -138,21 +204,32 @@ export default async function DashboardPage() {
                   <stop offset="100%" stopColor="#3B82F6" stopOpacity="0" />
                 </linearGradient>
               </defs>
+              <path d={contactAreaPath} fill="url(#blueFade)" />
               <path
-                d="M0,60 C30,50 60,70 100,40 C130,20 170,50 200,10 L200,80 L0,80 Z"
-                fill="url(#blueFade)"
-              />
-              <path
-                d="M0,60 C30,50 60,70 100,40 C130,20 170,50 200,10"
+                d={contactLinePath}
                 fill="none"
                 stroke="#3B82F6"
                 strokeWidth="2"
               />
             </svg>
           </div>
+
+          {/* Source breakdown */}
+          <div className="relative z-10 mt-auto pt-16">
+            <div className="flex flex-wrap gap-2">
+              {stats.contactsBySource.slice(0, 3).map((s) => (
+                <span
+                  key={s.source}
+                  className="text-[10px] px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 font-medium"
+                >
+                  {s.source}: {s.count}
+                </span>
+              ))}
+            </div>
+          </div>
         </div>
 
-        {/* Closed Sales */}
+        {/* Card 3: Closed Sales */}
         <div className="bg-[var(--card-bg)] border border-border rounded-2xl p-5 card-shadow relative overflow-hidden group hover:border-white/[0.08] hover:-translate-y-0.5 transition-all duration-300 flex flex-col">
           <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/5 blur-[40px] rounded-full pointer-events-none opacity-50 group-hover:opacity-100 transition-opacity" />
           <div className="flex items-center gap-3 mb-6 relative z-10">
@@ -186,7 +263,7 @@ export default async function DashboardPage() {
           </div>
         </div>
 
-        {/* Appointments */}
+        {/* Card 4: Appointments by day (real column chart) */}
         <div className="bg-[var(--card-bg)] border border-border rounded-2xl p-5 card-shadow relative overflow-hidden group hover:border-white/[0.08] hover:-translate-y-0.5 transition-all duration-300 flex flex-col">
           <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/5 blur-[40px] rounded-full pointer-events-none opacity-50 group-hover:opacity-100 transition-opacity" />
           <div className="flex items-center gap-3 mb-6 relative z-10">
@@ -202,25 +279,45 @@ export default async function DashboardPage() {
             {stats.appointmentsThisWeek}
           </h3>
 
-          {/* Mini column chart */}
+          {/* Real column chart from appointmentsByDay */}
           <div className="flex-1 flex items-end justify-between gap-1.5 px-1 relative z-10 pb-2">
-            {[40, 60, 80, 50, 70, 45].map((h, i) => (
-              <div
+            {dayData.map((d, i) => {
+              const isToday = i === todayDow;
+              const height =
+                maxDayCount > 0
+                  ? Math.max(Math.round((d.count / maxDayCount) * 100), 5)
+                  : 5;
+              return (
+                <div
+                  key={i}
+                  className={`w-full rounded-t-[3px] transition-colors ${
+                    isToday
+                      ? "bg-gradient-to-t from-amber-600 to-amber-400 shadow-[0_0_15px_rgba(245,158,11,0.3)]"
+                      : d.count > 0
+                        ? "bg-amber-500/30 hover:bg-amber-500/50"
+                        : "bg-white/[0.04] hover:bg-white/10"
+                  }`}
+                  style={{ height: `${height}%` }}
+                  title={`${d.label}: ${d.count} citas`}
+                />
+              );
+            })}
+          </div>
+          <div className="flex justify-between mt-1 px-1 text-[10px] text-muted-foreground font-medium border-t border-border pt-2">
+            {dayData.map((d, i) => (
+              <span
                 key={i}
-                className={`w-full rounded-t-[3px] transition-colors ${
-                  i === 2
-                    ? "bg-gradient-to-t from-amber-600 to-amber-400 shadow-[0_0_15px_rgba(245,158,11,0.3)]"
-                    : "bg-white/[0.04] hover:bg-white/10"
-                }`}
-                style={{ height: `${h}%` }}
-              />
+                className={i === todayDow ? "text-amber-400 font-bold" : ""}
+              >
+                {d.label}
+              </span>
             ))}
           </div>
         </div>
       </div>
 
-      {/* Bottom: Upcoming Appointments + Recent Activity */}
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+      {/* Bottom: Appointments + Activity + Calculator */}
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         {/* Upcoming Appointments */}
         <div className="bg-[var(--card-bg)] border border-border rounded-2xl p-7 card-shadow">
           <div className="flex items-center justify-between mb-6">
@@ -282,7 +379,7 @@ export default async function DashboardPage() {
           )}
         </div>
 
-        {/* Recent Properties + Contacts */}
+        {/* Recent Activity */}
         <div className="bg-[var(--card-bg)] border border-border rounded-2xl p-7 card-shadow">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-2">
@@ -295,13 +392,12 @@ export default async function DashboardPage() {
             </div>
           </div>
 
-          {/* Recent Properties */}
           <div className="mb-6">
             <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3">
               Propiedades
             </h3>
             <div className="space-y-2">
-              {stats.recentProperties.slice(0, 4).map((p) => (
+              {stats.recentProperties.slice(0, 3).map((p) => (
                 <Link
                   key={p.id}
                   href={`/properties/${p.id}`}
@@ -312,11 +408,11 @@ export default async function DashboardPage() {
                       <Building2 className="h-4 w-4 text-primary" />
                     </div>
                     <div>
-                      <span className="font-semibold text-sm text-foreground group-hover:text-primary transition-colors">
+                      <span className="font-semibold text-sm text-foreground group-hover:text-primary transition-colors truncate block max-w-[180px]">
                         {p.title}
                       </span>
                       {p.price && (
-                        <span className="text-xs text-primary font-bold ml-2">
+                        <span className="text-xs text-primary font-bold">
                           ${parseFloat(p.price).toLocaleString()} {p.currency}
                         </span>
                       )}
@@ -328,13 +424,12 @@ export default async function DashboardPage() {
             </div>
           </div>
 
-          {/* Recent Contacts */}
           <div>
             <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3">
               Contactos
             </h3>
             <div className="space-y-2">
-              {stats.recentContacts.slice(0, 4).map((c) => (
+              {stats.recentContacts.slice(0, 3).map((c) => (
                 <Link
                   key={c.id}
                   href={`/contacts/${c.id}`}
@@ -360,6 +455,19 @@ export default async function DashboardPage() {
               ))}
             </div>
           </div>
+        </div>
+
+        {/* Commission Calculator */}
+        <div className="bg-[var(--card-bg)] border border-border rounded-2xl p-7 card-shadow">
+          <div className="flex items-center gap-2 mb-6">
+            <div className="w-7 h-7 rounded border border-amber-500/30 flex items-center justify-center bg-amber-500/10">
+              <Calculator className="h-4 w-4 text-amber-400" />
+            </div>
+            <h2 className="text-base font-semibold text-foreground">
+              Calculadora de Comisiones
+            </h2>
+          </div>
+          <CommissionCalculator />
         </div>
       </div>
     </div>
