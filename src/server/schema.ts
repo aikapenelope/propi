@@ -648,3 +648,49 @@ export const marketSnapshotsRelations = relations(
     }),
   }),
 );
+
+// ---------------------------------------------------------------------------
+// Market Listings (centralized property database from MercadoLibre)
+// ---------------------------------------------------------------------------
+
+/** Centralized table of all properties fetched from MercadoLibre.
+ *  Single source of truth for market data. Grows daily via cron sync.
+ *  KPIs are calculated with SQL queries against this table, not LLM. */
+export const marketListings = pgTable(
+  "market_listings",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    externalId: text("external_id").notNull().unique(),
+    source: text("source").notNull().default("mercadolibre"),
+    siteId: text("site_id").notNull().default("MLV"),
+    title: text("title"),
+    price: numeric("price"),
+    currency: text("currency"),
+    areaM2: numeric("area_m2"),
+    bedrooms: integer("bedrooms"),
+    bathrooms: integer("bathrooms"),
+    parking: integer("parking"),
+    propertyType: text("property_type"),
+    operation: text("operation"),
+    city: text("city"),
+    state: text("state"),
+    neighborhood: text("neighborhood"),
+    latitude: numeric("latitude"),
+    longitude: numeric("longitude"),
+    condition: text("condition"),
+    permalink: text("permalink"),
+    thumbnail: text("thumbnail"),
+    sellerNickname: text("seller_nickname"),
+    publishedAt: timestamp("published_at"),
+    lastSeenAt: timestamp("last_seen_at").defaultNow(),
+    attributes: jsonb("attributes"),
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (table) => [
+    index("market_listings_external_idx").on(table.externalId),
+    index("market_listings_type_op_idx").on(table.propertyType, table.operation),
+    index("market_listings_city_hood_idx").on(table.city, table.neighborhood),
+    index("market_listings_published_idx").on(table.publishedAt),
+    index("market_listings_price_idx").on(table.price),
+  ],
+);

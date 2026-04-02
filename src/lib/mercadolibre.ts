@@ -30,6 +30,7 @@ export interface MeliSearchResult {
   attributes: { id: string; value_name: string | null }[];
   location?: { latitude: number; longitude: number };
   seller?: { id: number; nickname: string };
+  start_time?: string;
 }
 
 export interface CleanedListing {
