@@ -59,6 +59,17 @@ RUN mkdir .next && chown node:node .next
 COPY --from=builder --chown=node:node /app/.next/standalone ./
 COPY --from=builder --chown=node:node /app/.next/static ./.next/static
 
+# Include drizzle-kit, schema, and config for running migrations inside the container.
+# Usage: DATABASE_DIRECT_URL=postgresql://...@10.0.1.20:5432/propi npx drizzle-kit push
+COPY --from=builder --chown=node:node /app/src/server/schema.ts ./src/server/schema.ts
+COPY --from=builder --chown=node:node /app/drizzle.config.ts ./drizzle.config.ts
+COPY --from=builder --chown=node:node /app/node_modules/drizzle-kit ./node_modules/drizzle-kit
+COPY --from=builder --chown=node:node /app/node_modules/drizzle-orm ./node_modules/drizzle-orm
+COPY --from=builder --chown=node:node /app/node_modules/esbuild ./node_modules/esbuild
+COPY --from=builder --chown=node:node /app/node_modules/@esbuild ./node_modules/@esbuild
+COPY --from=builder --chown=node:node /app/node_modules/@esbuild-kit ./node_modules/@esbuild-kit
+COPY --from=builder --chown=node:node /app/node_modules/get-tsconfig ./node_modules/get-tsconfig
+
 USER node
 
 EXPOSE 3000
