@@ -213,8 +213,8 @@ export function UnifiedInbox({ initialConversations, initialActiveId }: UnifiedI
 
   return (
     <div
-      style={{ height: "calc(100vh - 3.5rem)", position: "relative" }}
-      className="inbox-container"
+      style={{ height: "calc(100vh - 4rem)", position: "relative" }}
+      className="inbox-container md:!h-[calc(100vh-6rem)]"
     >
       <MainContainer responsive>
         {/* Conversation list sidebar */}
