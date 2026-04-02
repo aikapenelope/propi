@@ -2,53 +2,76 @@
 
 ## Resumen
 
-Feature que permite al agente analizar el mercado inmobiliario en tiempo real. Busca propiedades similares en MercadoLibre, las analiza con Groq (Llama 3.3), y presenta un reporte con precio promedio, comparativa, y sugerencia de precio. Los analisis se guardan en DB para consulta posterior.
+Feature que permite al agente analizar el mercado inmobiliario en tiempo real. Busca propiedades similares en MercadoLibre, las analiza con Groq (Llama 3.3), y presenta un reporte visual con cards de propiedades (imagen, precio, datos, link) + KPIs + sugerencia de precio. Los analisis se guardan en DB para consulta posterior.
 
 ---
 
 ## 1. MercadoLibre API
 
-### Endpoints necesarios
+### Venezuela (MLV) - Requiere autenticacion
 
-**Busqueda publica (no requiere auth):**
+La API publica de MercadoLibre Venezuela esta restringida. Todos los endpoints de busqueda retornan 403 sin autenticacion. Se necesita OAuth2.
+
+**Flujo de autenticacion:**
+1. Crear app en https://developers.mercadolibre.com.ve
+2. El usuario conecta su cuenta de ML via OAuth2 (similar a como conecta Meta)
+3. Se obtiene access_token
+4. Todas las requests van con `Authorization: Bearer $ACCESS_TOKEN`
+
+**Endpoints (requieren auth):**
 ```
-GET https://api.mercadolibre.com.co/sites/MCO/search
+GET https://api.mercadolibre.com/sites/MLV/search
   ?category={category_id}
   &q={query}
   &limit=50
   &offset=0
-```
+  Authorization: Bearer $ACCESS_TOKEN
 
-**Detalle de item (no requiere auth):**
-```
 GET https://api.mercadolibre.com/items/{item_id}
+  Authorization: Bearer $ACCESS_TOKEN
+
+GET https://api.mercadolibre.com/sites/MLV/categories
+  Authorization: Bearer $ACCESS_TOKEN
 ```
 
-**Categorias de real estate (no requiere auth):**
+**Ubicaciones Venezuela:**
 ```
-GET https://api.mercadolibre.com/sites/MCO/categories
-```
-
-**Ubicaciones (no requiere auth):**
-```
-GET https://api.mercadolibre.com/classified_locations/countries/CO
-GET https://api.mercadolibre.com/classified_locations/countries/CO/states
+GET https://api.mercadolibre.com/classified_locations/countries/VE
+GET https://api.mercadolibre.com/classified_locations/countries/VE/states
 GET https://api.mercadolibre.com/classified_locations/states/{state_id}/cities
-GET https://api.mercadolibre.com/classified_locations/cities/{city_id}
 ```
 
-### Categorias de inmuebles en Colombia (MCO)
+### Otros paises (busqueda publica, sin auth)
+
+Para Colombia (MCO), Argentina (MLA), Mexico (MLM), la busqueda es publica:
+```
+GET https://api.mercadolibre.com/sites/{SITE_ID}/search?q={query}&limit=50
+```
+
+### Categorias de inmuebles Venezuela (MLV)
 
 | Categoria | ID | Descripcion |
 |-----------|-----|-------------|
-| Inmuebles | MCO1459 | Categoria padre |
-| Apartamentos | MCO1472 | Venta de apartamentos |
-| Casas | MCO1466 | Venta de casas |
-| Oficinas | MCO1473 | Venta de oficinas |
-| Locales | MCO1474 | Venta de locales |
-| Lotes | MCO1475 | Venta de lotes |
-| Arriendo Aptos | MCO1493 | Arriendo de apartamentos |
-| Arriendo Casas | MCO1492 | Arriendo de casas |
+| Inmuebles | MLV1459 | Categoria padre |
+| Apartamentos Venta | MLV1472 | Venta de apartamentos |
+| Casas Venta | MLV1466 | Venta de casas |
+| Oficinas Venta | MLV1473 | Venta de oficinas |
+| Locales Venta | MLV1474 | Venta de locales |
+| Terrenos Venta | MLV1475 | Venta de terrenos |
+| Apartamentos Alquiler | MLV1493 | Alquiler de apartamentos |
+| Casas Alquiler | MLV1492 | Alquiler de casas |
+
+Nota: Los IDs siguen el patron de ML (misma estructura que MCO/MLA pero con prefijo MLV). Verificar IDs exactos con `GET /sites/MLV/categories` una vez autenticado.
+
+### Cuentas necesarias para MercadoLibre
+
+| Paso | Que hacer | Donde |
+|------|----------|-------|
+| 1 | Crear cuenta de desarrollador | https://developers.mercadolibre.com.ve |
+| 2 | Crear aplicacion | Dashboard de desarrollador |
+| 3 | Obtener App ID y Secret Key | Dashboard de la app |
+| 4 | Configurar redirect URI | `https://propi.aikalabs.cc/api/auth/mercadolibre/callback` |
+| 5 | El usuario conecta su cuenta via OAuth2 | Desde `/marketing/settings` en Propi |
 
 ### Campos que retorna la busqueda
 
@@ -351,7 +374,80 @@ CREATE TABLE market_snapshots (
 GROQ_API_KEY=gsk_...          # Gratis en console.groq.com
 ```
 
-Solo una. MercadoLibre no necesita API key para busqueda publica.
+Solo una. MercadoLibre usa OAuth2 (tokens guardados en DB, como Meta).
+
+---
+
+## 7. Como se ve la respuesta (UI)
+
+La respuesta NO es solo texto del LLM. Es un panel hibrido con datos reales de MercadoLibre + analisis de Groq:
+
+```
+┌─────────────────────────────────────────────────┐
+│ Analisis de Mercado                             │
+│ Apartamento en Chapinero, 90m2                  │
+├─────────────────────────────────────────────────┤
+│                                                 │
+│ KPIs (datos calculados por Groq)                │
+│ ┌──────────┐ ┌──────────┐ ┌────────┐ ┌───────┐│
+│ │ $4.2M    │ │ $350M    │ │  48    │ │Compet ││
+│ │ COP/m2   │ │ Mediana  │ │ Props  │ │itivo  ││
+│ │ promedio  │ │ precio   │ │ anali- │ │       ││
+│ └──────────┘ └──────────┘ │ zadas  │ └───────┘│
+│                            └────────┘          │
+│ Resumen (texto generado por Groq)               │
+│ "Tu propiedad de 90m2 a $380M esta en rango     │
+│  competitivo. El promedio en Chapinero es $4.2M  │
+│  por m2. Sugerimos un precio entre $360M-$390M." │
+│                                                 │
+│ Propiedades Similares (datos reales de ML)       │
+│ ┌───────────────────────────────────────────────┐│
+│ │ ┌─────┐ Apto 85m2 Chapinero                  ││
+│ │ │ IMG │ $350,000,000 COP                      ││
+│ │ │     │ 3 hab | 2 banos | Piso 5              ││
+│ │ └─────┘ Ver en MercadoLibre ->                ││
+│ ├───────────────────────────────────────────────┤│
+│ │ ┌─────┐ Apto 90m2 Chapinero Norte             ││
+│ │ │ IMG │ $380,000,000 COP                      ││
+│ │ │     │ 3 hab | 2 banos | Piso 8              ││
+│ │ └─────┘ Ver en MercadoLibre ->                ││
+│ ├───────────────────────────────────────────────┤│
+│ │ ┌─────┐ Apto 78m2 Rosales                     ││
+│ │ │ IMG │ $320,000,000 COP                      ││
+│ │ │     │ 2 hab | 2 banos | Piso 3              ││
+│ │ └─────┘ Ver en MercadoLibre ->                ││
+│ └───────────────────────────────────────────────┘│
+│                                                 │
+│ Chat (preguntas de seguimiento via AI SDK)       │
+│ ┌───────────────────────────────────────────────┐│
+│ │ "Y si bajo el precio a 300M?"                 ││
+│ │ "Como esta el alquiler en esta zona?"         ││
+│ │ "Hay propiedades nuevas similares?"           ││
+│ └───────────────────────────────────────────────┘│
+└─────────────────────────────────────────────────┘
+```
+
+### Que viene de donde
+
+| Elemento | Fuente | Tipo |
+|----------|--------|------|
+| KPIs (precio/m2, mediana, total) | Groq calcula, datos de ML | Numeros en cards |
+| Resumen y sugerencia | Groq genera | Texto |
+| Posicion del usuario | Groq calcula | Badge (competitivo/arriba/abajo) |
+| Cards de propiedades similares | Datos directos de ML API | Componente React con imagen |
+| Imagen de propiedad | `thumbnail` de ML (URL publica) | `<img>` tag |
+| Link "Ver en MercadoLibre" | `permalink` de ML | `<a>` tag externo |
+| Titulo, precio, atributos | Campos de ML | Texto en la card |
+| Chat de seguimiento | AI SDK `useChat` + Groq | Streaming text |
+
+### Componentes React
+
+- `AnalysisPanel` - KPIs en cards (precio/m2, mediana, total, posicion)
+- `AnalysisSummary` - Texto del resumen + sugerencia de precio
+- `SimilarListingCard` - Card individual con imagen, titulo, precio, atributos, link a ML
+- `SimilarListings` - Grid/lista de SimilarListingCard (max 5)
+- `AnalysisChat` - Chat con `useChat` para preguntas de seguimiento
+- `AnalysisHistory` - Lista de analisis anteriores guardados en DB
 
 ---
 
