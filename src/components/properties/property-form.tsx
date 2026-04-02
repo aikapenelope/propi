@@ -249,7 +249,7 @@ export function PropertyForm({
         </div>
         <div>
           <label htmlFor="country" className="block text-sm font-medium text-foreground">Pais</label>
-          <input id="country" name="country" type="text" defaultValue={property?.country ?? "CO"} className={inputClass} />
+          <input id="country" name="country" type="text" defaultValue={property?.country ?? "VE"} className={inputClass} />
         </div>
       </div>
 

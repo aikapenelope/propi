@@ -133,9 +133,9 @@ export function PropiMagicChat() {
   }
 
   return (
-    <div className="flex flex-col" style={{ height: "calc(100vh - 12rem)", minHeight: "400px", maxHeight: "800px" }}>
-      {/* Messages */}
-      <div ref={scrollRef} className="flex-1 overflow-y-auto space-y-4 pb-4">
+    <div className="flex flex-col h-[calc(100vh-8rem)] md:h-[calc(100vh-12rem)] min-h-[400px]">
+      {/* Messages - scrollable area */}
+      <div ref={scrollRef} className="flex-1 overflow-y-auto space-y-4 pb-4 min-h-0">
         {messages.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full text-center">
             <Sparkles className="h-12 w-12 text-purple-300 mb-4" />
