@@ -15,6 +15,7 @@ import { formatCurrency, formatDate } from "@/lib/utils";
 import { DeletePropertyButton } from "@/components/properties/delete-property-button";
 import { PropertyImageUpload } from "@/components/properties/property-image-upload";
 import { SharePropertyButton } from "@/components/properties/share-property-button";
+import { PublishWasiButton } from "@/components/properties/publish-wasi-button";
 
 const typeLabels: Record<string, string> = {
   apartment: "Apartamento",
@@ -128,6 +129,10 @@ export default async function PropertyDetailPage({
             currency={property.currency ?? undefined}
             city={property.city ?? undefined}
             propertyId={id}
+          />
+          <PublishWasiButton
+            propertyId={id}
+            wasiId={(property.externalIds as Record<string, string> | null)?.wasi}
           />
           <Link
             href={`/properties/${id}/edit`}

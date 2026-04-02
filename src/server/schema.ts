@@ -164,6 +164,8 @@ export const properties = pgTable(
     /** GPS coordinates */
     latitude: numeric("latitude", { precision: 10, scale: 7 }),
     longitude: numeric("longitude", { precision: 10, scale: 7 }),
+    /** External publication IDs: { ml: "MLV123", wasi: "456" } */
+    externalIds: jsonb("external_ids"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -299,6 +301,7 @@ export const socialPlatformEnum = pgEnum("social_platform", [
   "facebook",
   "whatsapp",
   "mercadolibre",
+  "wasi",
 ]);
 
 export const socialAccounts = pgTable("social_accounts", {
