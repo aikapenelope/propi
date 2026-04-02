@@ -1,4 +1,4 @@
-import { Instagram, Facebook, MessageCircle, Mail, ShoppingBag } from "lucide-react";
+import { Instagram, Facebook, MessageCircle, Mail, ShoppingBag, Wallet, ChevronRight } from "lucide-react";
 import { getAllSocialAccounts } from "@/server/actions/social-accounts";
 import { formatDate } from "@/lib/utils";
 import { SocialAccountForm } from "@/components/marketing/social-account-form";
@@ -35,6 +35,58 @@ export default async function MarketingSettingsPage(props: {
       </p>
 
       <div className="grid gap-6 max-w-2xl">
+        {/* Invite a friend */}
+        <a
+          href={`https://wa.me/?text=${encodeURIComponent("Prueba Propi, el CRM inmobiliario que funciona en tu telefono. Contactos, propiedades, inbox unificado de WhatsApp/Instagram/Facebook, y analisis de mercado con IA. https://propi.aikalabs.cc")}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-4 rounded-2xl p-5 transition-all hover:opacity-90 active:scale-[0.98]"
+          style={{ background: "rgba(37, 211, 102, 0.1)" }}
+        >
+          <div
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full"
+            style={{ background: "rgba(37, 211, 102, 0.2)" }}
+          >
+            <MessageCircle className="h-5 w-5 text-[#25D366]" />
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-[#25D366]">
+              Invita a un amigo
+            </p>
+            <p className="mt-0.5 text-[11px] text-muted-foreground">
+              Comparte Propi por WhatsApp
+            </p>
+          </div>
+        </a>
+
+        {/* Plans, Payments & Support */}
+        <a
+          href={`https://wa.me/?text=${encodeURIComponent("Hola, quiero informacion sobre los planes de Propi CRM")}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-4 rounded-2xl p-5 transition-all hover:opacity-90 active:scale-[0.98] border"
+          style={{
+            background: "linear-gradient(135deg, rgba(99,102,241,0.15), rgba(139,92,246,0.1))",
+            borderColor: "rgba(99,102,241,0.2)",
+          }}
+        >
+          <div
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full"
+            style={{ background: "linear-gradient(135deg, #6366f1, #8b5cf6)" }}
+          >
+            <Wallet className="h-5 w-5 text-white" />
+          </div>
+          <div className="flex-1">
+            <p className="text-sm font-semibold text-foreground">
+              Planes, Pagos y Soporte
+            </p>
+            <p className="mt-0.5 text-[11px] text-muted-foreground">
+              Actualiza tu plan o contacta soporte
+            </p>
+          </div>
+          <ChevronRight className="h-4 w-4 text-muted-foreground/40" />
+        </a>
+
         {/* MercadoLibre */}
         <div className="rounded-lg border border-border p-4">
           <div className="mb-4 flex items-center gap-3">
