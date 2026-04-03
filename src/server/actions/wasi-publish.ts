@@ -2,20 +2,23 @@
 
 import { db } from "@/lib/db";
 import { properties, propertyImages } from "@/server/schema";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { GetObjectCommand } from "@aws-sdk/client-s3";
 import { s3, MEDIA_BUCKET } from "@/lib/s3";
 import { publishToWasi, uploadWasiImage, syncWasiPortals } from "@/lib/wasi";
+import { requireUserId } from "@/lib/auth-helper";
 
 /**
  * Publish a Propi property to Wasi with all its images.
  * Updates the property's externalIds with the Wasi property ID.
  */
 export async function publishPropertyToWasi(propertyId: string) {
-  // 1. Get property
+  const userId = await requireUserId();
+
+  // 1. Get property (verify ownership)
   const property = await db.query.properties.findFirst({
-    where: eq(properties.id, propertyId),
+    where: and(eq(properties.id, propertyId), eq(properties.userId, userId)),
   });
 
   if (!property) throw new Error("Propiedad no encontrada");
