@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { Upload, X, ImageIcon } from "lucide-react";
 import {
   getUploadKey,
@@ -27,6 +28,7 @@ export function PropertyImageUpload({
   const [uploading, setUploading] = useState(false);
   const [deleting, setDeleting] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const router = useRouter();
 
   async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -55,6 +57,7 @@ export function PropertyImageUpload({
 
       // 3. Save image record in DB
       await addPropertyImage(propertyId, key, file.name, images.length === 0);
+      router.refresh();
     } catch (err) {
       console.error("Upload error:", err);
       alert(err instanceof Error ? err.message : "Error al subir imagen");
@@ -68,6 +71,7 @@ export function PropertyImageUpload({
     setDeleting(imageId);
     try {
       await deletePropertyImage(imageId, key);
+      router.refresh();
     } finally {
       setDeleting(null);
     }

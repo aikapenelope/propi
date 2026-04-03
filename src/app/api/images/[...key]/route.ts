@@ -71,7 +71,7 @@ export async function GET(
         "Content-Length": response.ContentLength
           ? String(response.ContentLength)
           : "",
-        "Cache-Control": "public, max-age=86400, immutable",
+        "Cache-Control": "public, max-age=3600",
         "Access-Control-Allow-Origin": "*",
       },
     });
