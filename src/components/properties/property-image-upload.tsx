@@ -30,9 +30,17 @@ export function PropertyImageUpload({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
+  const MAX_IMAGES = 4;
+
   async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    if (images.length >= MAX_IMAGES) {
+      alert(`Maximo ${MAX_IMAGES} imagenes por propiedad.`);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
 
     setUploading(true);
     try {
@@ -81,21 +89,23 @@ export function PropertyImageUpload({
     <div>
       <div className="mb-3 flex items-center justify-between">
         <h2 className="text-sm font-semibold text-foreground">
-          Imagenes ({images.length})
+          Imagenes ({images.length}/{MAX_IMAGES})
         </h2>
-        <label>
-          <input
-            ref={fileInputRef}
-            type="file"
-            className="hidden"
-            accept="image/jpeg,image/png,image/webp"
-            onChange={handleUpload}
-          />
-          <span className="inline-flex cursor-pointer items-center gap-1 rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors">
-            <Upload className="h-3.5 w-3.5" />
-            {uploading ? "Subiendo..." : "Subir Imagen"}
-          </span>
-        </label>
+        {images.length < MAX_IMAGES && (
+          <label>
+            <input
+              ref={fileInputRef}
+              type="file"
+              className="hidden"
+              accept="image/jpeg,image/png,image/webp"
+              onChange={handleUpload}
+            />
+            <span className="inline-flex cursor-pointer items-center gap-1 rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors">
+              <Upload className="h-3.5 w-3.5" />
+              {uploading ? "Subiendo..." : "Subir Imagen"}
+            </span>
+          </label>
+        )}
       </div>
 
       {images.length === 0 ? (

@@ -269,12 +269,16 @@ export async function addPropertyImage(
   filename: string,
   isCover = false,
 ) {
-  // Verify the property belongs to the user
   const userId = await requireUserId();
   const property = await db.query.properties.findFirst({
     where: and(eq(properties.id, propertyId), eq(properties.userId, userId)),
+    with: { images: true },
   });
   if (!property) throw new Error("Property not found");
+
+  if (property.images.length >= 4) {
+    throw new Error("Maximo 4 imagenes por propiedad.");
+  }
 
   const [image] = await db
     .insert(propertyImages)
