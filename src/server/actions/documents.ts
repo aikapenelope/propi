@@ -52,6 +52,10 @@ export async function getDocumentUploadUrl(
 }
 
 export async function getDocumentDownloadUrl(key: string) {
+  // Key is already scoped by userId prefix ({userId}/documents/...)
+  // but verify the caller is authenticated
+  await requireUserId();
+
   const command = new GetObjectCommand({
     Bucket: DOCS_BUCKET,
     Key: key,

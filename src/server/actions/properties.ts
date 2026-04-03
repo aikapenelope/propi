@@ -286,6 +286,16 @@ export async function addPropertyImage(
 }
 
 export async function deletePropertyImage(imageId: string, key: string) {
+  // Verify the image belongs to a property owned by the user
+  const userId = await requireUserId();
+  const image = await db.query.propertyImages.findFirst({
+    where: eq(propertyImages.id, imageId),
+    with: { property: true },
+  });
+  if (!image || image.property.userId !== userId) {
+    throw new Error("Image not found");
+  }
+
   // Delete from MinIO
   await s3.send(
     new DeleteObjectCommand({
@@ -299,6 +309,10 @@ export async function deletePropertyImage(imageId: string, key: string) {
 }
 
 export async function getImageUrl(key: string) {
+  // Key is already scoped by userId prefix ({userId}/properties/...)
+  // but verify the caller is authenticated
+  await requireUserId();
+
   const command = new GetObjectCommand({
     Bucket: MEDIA_BUCKET,
     Key: key,
