@@ -12,7 +12,7 @@ ARG NODE_VERSION=22-slim
 # ============================================
 FROM node:${NODE_VERSION} AS builder
 
-RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates curl && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
@@ -45,7 +45,7 @@ RUN npm run build
 # ============================================
 FROM node:${NODE_VERSION} AS runner
 
-RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates curl && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
