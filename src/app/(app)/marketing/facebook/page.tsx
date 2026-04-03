@@ -1,4 +1,4 @@
-import { Facebook, ThumbsUp, MessageCircle } from "lucide-react";
+import { Facebook, ThumbsUp, MessageCircle, AlertCircle, Settings, BarChart3 } from "lucide-react";
 import { getFbPosts } from "@/server/actions/facebook";
 import { FbReplyForm } from "@/components/marketing/facebook/fb-reply-form";
 import Link from "next/link";
@@ -13,19 +13,7 @@ export default async function FacebookPage() {
     error = e instanceof Error ? e.message : "Error al conectar con Facebook";
   }
 
-  if (error) {
-    return (
-      <div className="p-4 md:p-6">
-        <div className="flex items-center gap-3 mb-6">
-          <Facebook className="h-6 w-6 text-blue-600" />
-          <h1 className="text-2xl font-bold text-foreground">Facebook</h1>
-        </div>
-        <div className="rounded-lg border border-destructive/50 bg-destructive/5 p-4 text-sm text-destructive">
-          {error}
-        </div>
-      </div>
-    );
-  }
+  const hasData = posts.length > 0;
 
   return (
     <div className="p-4 md:p-6">
@@ -43,28 +31,46 @@ export default async function FacebookPage() {
           </Link>
           <Link
             href="/marketing/facebook/insights"
-            className="rounded-lg border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-muted transition-colors"
+            className="flex items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-sm font-medium text-foreground hover:bg-muted transition-colors"
           >
+            <BarChart3 className="h-3.5 w-3.5" />
             Insights
           </Link>
         </div>
       </div>
 
-      {/* Posts list */}
-      {posts.length === 0 ? (
-        <p className="py-8 text-center text-sm text-muted-foreground">
-          No hay posts recientes
-        </p>
-      ) : (
+      {/* Alert banner */}
+      {error && (
+        <div className="flex items-center gap-2 rounded-xl bg-amber-500/5 border border-amber-500/20 px-4 py-2.5 mb-6">
+          <AlertCircle className="h-4 w-4 text-amber-500 shrink-0" />
+          <p className="text-xs text-amber-400 flex-1">
+            Conecta tu pagina de Facebook en{" "}
+            <Link href="/marketing/settings" className="underline font-medium">
+              Configuracion
+            </Link>{" "}
+            para ver datos reales.
+          </p>
+          <Link
+            href="/marketing/settings"
+            className="shrink-0 flex items-center gap-1 rounded-lg bg-amber-500/10 px-2.5 py-1 text-[10px] font-medium text-amber-400 hover:bg-amber-500/20 transition-colors"
+          >
+            <Settings className="h-3 w-3" />
+            Conectar
+          </Link>
+        </div>
+      )}
+
+      {/* Posts list or placeholder */}
+      {hasData ? (
         <div className="space-y-3">
           {posts.map((post) => (
             <div
               key={post.id}
-              className="rounded-lg border border-border p-4"
+              className="bg-[var(--card-bg)] border border-border rounded-2xl p-4 card-shadow"
             >
               <div className="flex items-start gap-3">
                 {post.full_picture && (
-                  <div className="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-muted">
+                  <div className="h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-muted">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={post.full_picture}
@@ -109,6 +115,25 @@ export default async function FacebookPage() {
                   <FbReplyForm postId={post.id} />
                 </div>
               )}
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="bg-[var(--card-bg)] border border-border rounded-2xl p-4 card-shadow opacity-30">
+              <div className="flex gap-3">
+                <div className="w-16 h-16 shrink-0 rounded-xl bg-muted" />
+                <div className="flex-1 space-y-2">
+                  <div className="h-4 w-full rounded bg-muted" />
+                  <div className="h-4 w-2/3 rounded bg-muted" />
+                  <div className="flex gap-3">
+                    <div className="h-3 w-12 rounded bg-muted" />
+                    <div className="h-3 w-12 rounded bg-muted" />
+                    <div className="h-3 w-16 rounded bg-muted" />
+                  </div>
+                </div>
+              </div>
             </div>
           ))}
         </div>
