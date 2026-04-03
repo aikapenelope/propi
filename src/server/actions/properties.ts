@@ -8,6 +8,7 @@ import { PutObjectCommand, DeleteObjectCommand, GetObjectCommand } from "@aws-sd
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { s3, MEDIA_BUCKET } from "@/lib/s3";
 import { requireUserId } from "@/lib/auth-helper";
+import { checkStorageQuota } from "@/lib/storage-quota";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -245,6 +246,7 @@ export async function getUploadUrl(
   contentType: string,
 ) {
   const userId = await requireUserId();
+  await checkStorageQuota(userId);
   const key = `${userId}/properties/${propertyId}/${Date.now()}-${filename}`;
 
   const command = new PutObjectCommand({

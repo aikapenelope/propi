@@ -1,0 +1,23 @@
+# Worker container for BullMQ background jobs.
+# Runs separately from the Next.js app container.
+# Deploy as a second service in Coolify pointing to the same repo.
+
+ARG NODE_VERSION=22-slim
+
+FROM node:${NODE_VERSION}
+
+RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+COPY package.json package-lock.json ./
+RUN rm -rf node_modules package-lock.json && npm install --no-audit --no-fund
+
+COPY src/workers/ ./src/workers/
+COPY src/server/schema.ts ./src/server/schema.ts
+COPY src/lib/queue.ts ./src/lib/queue.ts
+COPY tsconfig.json ./
+
+USER node
+
+CMD ["npx", "tsx", "src/workers/market-sync-worker.ts"]

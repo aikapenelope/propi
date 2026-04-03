@@ -12,6 +12,7 @@ import {
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { s3, DOCS_BUCKET } from "@/lib/s3";
 import { requireUserId } from "@/lib/auth-helper";
+import { checkStorageQuota } from "@/lib/storage-quota";
 
 // ---------------------------------------------------------------------------
 // Queries
@@ -39,6 +40,7 @@ export async function getDocumentUploadUrl(
   contentType: string,
 ) {
   const userId = await requireUserId();
+  await checkStorageQuota(userId);
   const key = `${userId}/documents/${Date.now()}-${filename}`;
 
   const command = new PutObjectCommand({
