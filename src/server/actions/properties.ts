@@ -321,6 +321,6 @@ export async function deletePropertyImage(imageId: string, key: string) {
 /** Get a public-facing URL for a property image via the proxy. */
 export async function getImageUrl(key: string) {
   await requireUserId();
-  // Use the image proxy instead of presigned URLs (MinIO is on private network)
-  return `/api/images/${encodeURIComponent(key)}`;
+  // Use the image proxy (catch-all route handles slashes in key)
+  return `/api/images/${key}`;
 }

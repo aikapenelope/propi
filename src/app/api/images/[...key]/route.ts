@@ -23,42 +23,37 @@ function checkRateLimit(ip: string): boolean {
 
 /**
  * Public image proxy for MinIO.
- * Serves property images at a public URL that external services (Meta, etc.) can access.
+ * Serves property images via a public URL.
  *
- * URL: /api/images/{key}
- * Example: /api/images/properties/1234-photo.jpg
+ * Uses catch-all route [...key] to handle keys with slashes:
+ *   /api/images/user_abc/properties/uuid/photo.jpg
+ *   -> key segments: ["user_abc", "properties", "uuid", "photo.jpg"]
+ *   -> MinIO key: "user_abc/properties/uuid/photo.jpg"
  *
- * Used by:
- * - Instagram publish (image_url must be public, Meta cURLs it)
- * - Facebook publish (url must be public)
- * - Property share links
- *
- * NOT used by:
- * - MercadoLibre (uses multipart upload, not URLs)
- * - Wasi (uses multipart upload, not URLs)
- *
- * Cache: 24 hours (images don't change once uploaded)
+ * Cache: 24 hours, immutable (images don't change once uploaded)
  */
 export async function GET(
   request: Request,
-  props: { params: Promise<{ key: string }> },
+  props: { params: Promise<{ key: string[] }> },
 ) {
-  // Rate limit
   const ip = request.headers.get("x-forwarded-for") || "unknown";
   if (!checkRateLimit(ip)) {
     return NextResponse.json({ error: "Too many requests" }, { status: 429 });
   }
 
-  const { key } = await props.params;
+  const { key: keySegments } = await props.params;
 
-  if (!key) {
+  if (!keySegments || keySegments.length === 0) {
     return NextResponse.json({ error: "Key required" }, { status: 400 });
   }
+
+  // Rejoin segments into the full MinIO key
+  const key = keySegments.map(decodeURIComponent).join("/");
 
   try {
     const command = new GetObjectCommand({
       Bucket: MEDIA_BUCKET,
-      Key: decodeURIComponent(key),
+      Key: key,
     });
 
     const response = await s3.send(command);
@@ -67,7 +62,6 @@ export async function GET(
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
-    // Convert to web ReadableStream
     const stream = response.Body.transformToWebStream();
 
     return new Response(stream, {

@@ -33,10 +33,10 @@ export default async function PublicPropertyPage(
 
   if (!property) notFound();
 
-  // Generate proxy URLs for images
+  // Generate proxy URLs for images (catch-all route handles slashes)
   const imagesWithUrls = property.images.map((img) => ({
     ...img,
-    url: `/api/images/${encodeURIComponent(img.key)}`,
+    url: `/api/images/${img.key}`,
   }));
 
   const typeLabels: Record<string, string> = {
