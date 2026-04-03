@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Eye, EyeOff } from "lucide-react";
 import { updatePropertyStatus } from "@/server/actions/properties";
 
@@ -11,6 +12,7 @@ interface PublishToggleProps {
 
 export function PublishToggle({ propertyId, currentStatus }: PublishToggleProps) {
   const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
   const isDraft = currentStatus === "draft" || currentStatus === "inactive";
 
@@ -21,6 +23,7 @@ export function PublishToggle({ propertyId, currentStatus }: PublishToggleProps)
         propertyId,
         isDraft ? "active" : "draft",
       );
+      router.refresh();
     } finally {
       setLoading(false);
     }
