@@ -2,20 +2,28 @@
 
 import { db } from "@/lib/db";
 import { conversations, messages } from "@/server/schema";
-import { eq, desc, lt, sql } from "drizzle-orm";
+import { eq, and, desc, lt, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { sendIgMessage } from "./instagram";
 import { sendWhatsAppText } from "./whatsapp";
 import { graphApiFetch } from "@/lib/meta-api";
 import { getSocialAccount } from "./social-accounts";
+import { requireUserId } from "@/lib/auth-helper";
 
 // ---------------------------------------------------------------------------
 // Queries
 // ---------------------------------------------------------------------------
 
 export async function getConversations(platform?: "instagram" | "facebook" | "whatsapp") {
+  const userId = await requireUserId();
+
+  const conditions = [eq(conversations.userId, userId)];
+  if (platform) {
+    conditions.push(eq(conversations.platform, platform));
+  }
+
   return db.query.conversations.findMany({
-    where: platform ? eq(conversations.platform, platform) : undefined,
+    where: and(...conditions),
     with: {
       contact: true,
       messages: {
@@ -28,8 +36,10 @@ export async function getConversations(platform?: "instagram" | "facebook" | "wh
 }
 
 export async function getConversation(id: string) {
+  const userId = await requireUserId();
+
   return db.query.conversations.findFirst({
-    where: eq(conversations.id, id),
+    where: and(eq(conversations.id, id), eq(conversations.userId, userId)),
     with: {
       contact: true,
       messages: {
@@ -41,6 +51,16 @@ export async function getConversation(id: string) {
 }
 
 export async function getMessages(conversationId: string, limit = 50) {
+  // Verify conversation ownership
+  const userId = await requireUserId();
+  const convo = await db.query.conversations.findFirst({
+    where: and(
+      eq(conversations.id, conversationId),
+      eq(conversations.userId, userId),
+    ),
+  });
+  if (!convo) throw new Error("Conversacion no encontrada.");
+
   return db.query.messages.findMany({
     where: eq(messages.conversationId, conversationId),
     orderBy: [desc(messages.createdAt)],
@@ -53,8 +73,13 @@ export async function getMessages(conversationId: string, limit = 50) {
 // ---------------------------------------------------------------------------
 
 export async function sendMessage(conversationId: string, body: string) {
+  const userId = await requireUserId();
+
   const convo = await db.query.conversations.findFirst({
-    where: eq(conversations.id, conversationId),
+    where: and(
+      eq(conversations.id, conversationId),
+      eq(conversations.userId, userId),
+    ),
   });
 
   if (!convo) throw new Error("Conversacion no encontrada.");
@@ -117,7 +142,7 @@ export async function sendMessage(conversationId: string, body: string) {
 }
 
 // ---------------------------------------------------------------------------
-// Create or find conversation
+// Create or find conversation (used by webhook - receives userId explicitly)
 // ---------------------------------------------------------------------------
 
 export async function findOrCreateConversation(data: {
@@ -126,10 +151,15 @@ export async function findOrCreateConversation(data: {
   participantName?: string;
   participantExternalId: string;
   contactId?: string;
+  /** userId resolved by webhook from platformAccountId */
+  userId: string;
 }) {
-  // Try to find existing by platform + participant
+  // Find existing by platform + participant + userId
   const existing = await db.query.conversations.findFirst({
-    where: eq(conversations.participantExternalId, data.participantExternalId),
+    where: and(
+      eq(conversations.participantExternalId, data.participantExternalId),
+      eq(conversations.userId, data.userId),
+    ),
   });
 
   if (existing) return existing;
@@ -143,6 +173,7 @@ export async function findOrCreateConversation(data: {
       participantExternalId: data.participantExternalId,
       contactId: data.contactId || null,
       lastMessageAt: new Date(),
+      userId: data.userId,
     })
     .returning();
 
@@ -150,7 +181,7 @@ export async function findOrCreateConversation(data: {
 }
 
 // ---------------------------------------------------------------------------
-// Store inbound message
+// Store inbound message (called from webhook, no auth context)
 // ---------------------------------------------------------------------------
 
 export async function storeInboundMessage(
@@ -188,23 +219,29 @@ export async function storeInboundMessage(
 // ---------------------------------------------------------------------------
 
 export async function markConversationRead(conversationId: string) {
+  const userId = await requireUserId();
+
   await db
     .update(conversations)
     .set({ unreadCount: 0 })
-    .where(eq(conversations.id, conversationId));
+    .where(
+      and(
+        eq(conversations.id, conversationId),
+        eq(conversations.userId, userId),
+      ),
+    );
 
   revalidatePath("/marketing/inbox");
 }
 
 // ---------------------------------------------------------------------------
-// Cleanup: delete messages older than 90 days
+// Cleanup: delete messages older than 90 days (admin/cron, no user filter)
 // ---------------------------------------------------------------------------
 
 export async function cleanupOldMessages() {
   const cutoff = new Date();
   cutoff.setDate(cutoff.getDate() - 90);
 
-  // Delete old messages
   const deleted = await db
     .delete(messages)
     .where(lt(messages.createdAt, cutoff))
@@ -225,15 +262,18 @@ export async function cleanupOldMessages() {
 }
 
 // ---------------------------------------------------------------------------
-// Get total unread count across all conversations
+// Get total unread count across all conversations for the current user
 // ---------------------------------------------------------------------------
 
 export async function getTotalUnreadCount() {
+  const userId = await requireUserId();
+
   const result = await db
     .select({
       total: sql<number>`COALESCE(SUM(${conversations.unreadCount}), 0)::int`,
     })
-    .from(conversations);
+    .from(conversations)
+    .where(eq(conversations.userId, userId));
 
   return result[0]?.total ?? 0;
 }

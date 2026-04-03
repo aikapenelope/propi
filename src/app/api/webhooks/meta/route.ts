@@ -10,14 +10,15 @@ export const dynamic = "force-dynamic";
  * - Facebook Messenger (messaging webhook)
  * - WhatsApp Cloud API (messages webhook)
  *
- * Configure this URL in your Meta App Dashboard:
- *   https://your-domain.com/api/webhooks/meta
+ * Multi-tenant routing: resolves userId from platformAccountId in socialAccounts.
+ * Each user connects their own IG/FB/WA account, so the platformAccountId
+ * (phone_number_id for WA, recipient.id for IG/FB) maps to exactly one user.
  *
- * Required env var: META_WEBHOOK_VERIFY_TOKEN
+ * Required env vars: META_WEBHOOK_VERIFY_TOKEN, META_APP_SECRET
  */
 
 // ---------------------------------------------------------------------------
-// GET: Webhook verification (Meta sends this when you register the webhook)
+// GET: Webhook verification
 // ---------------------------------------------------------------------------
 
 export async function GET(request: NextRequest) {
@@ -56,9 +57,12 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  // Dynamic import to avoid DB initialization at build time
+  // Dynamic imports to avoid DB initialization at build time
   const { findOrCreateConversation, storeInboundMessage } = await import(
     "@/server/actions/messaging"
+  );
+  const { resolveUserIdByPlatformAccount } = await import(
+    "@/server/actions/social-accounts"
   );
 
   try {
@@ -66,11 +70,11 @@ export async function POST(request: NextRequest) {
     const object = body.object as string;
 
     if (object === "whatsapp_business_account") {
-      await handleWhatsAppWebhook(body, findOrCreateConversation, storeInboundMessage);
+      await handleWhatsAppWebhook(body, resolveUserIdByPlatformAccount, findOrCreateConversation, storeInboundMessage);
     } else if (object === "instagram") {
-      await handleInstagramWebhook(body, findOrCreateConversation, storeInboundMessage);
+      await handleInstagramWebhook(body, resolveUserIdByPlatformAccount, findOrCreateConversation, storeInboundMessage);
     } else if (object === "page") {
-      await handleFacebookWebhook(body, findOrCreateConversation, storeInboundMessage);
+      await handleFacebookWebhook(body, resolveUserIdByPlatformAccount, findOrCreateConversation, storeInboundMessage);
     }
 
     return NextResponse.json({ status: "ok" });
@@ -82,8 +86,13 @@ export async function POST(request: NextRequest) {
 }
 
 // ---------------------------------------------------------------------------
-// Types for messaging actions
+// Types
 // ---------------------------------------------------------------------------
+
+type ResolveUser = (
+  platform: "instagram" | "facebook" | "whatsapp",
+  platformAccountId: string,
+) => Promise<string | null>;
 
 type FindOrCreate = (data: {
   platform: "instagram" | "facebook" | "whatsapp";
@@ -91,6 +100,7 @@ type FindOrCreate = (data: {
   participantName?: string;
   participantExternalId: string;
   contactId?: string;
+  userId: string;
 }) => Promise<{ id: string }>;
 
 type StoreInbound = (
@@ -107,6 +117,7 @@ type StoreInbound = (
 interface WaWebhookEntry {
   changes: {
     value: {
+      metadata?: { phone_number_id: string };
       messages?: {
         id: string;
         from: string;
@@ -122,35 +133,46 @@ interface WaWebhookEntry {
 
 async function handleWhatsAppWebhook(
   body: { entry: WaWebhookEntry[] },
+  resolveUser: ResolveUser,
   findOrCreateConversation: FindOrCreate,
   storeInboundMessage: StoreInbound,
 ) {
   for (const entry of body.entry) {
     for (const change of entry.changes) {
       const value = change.value;
+      if (!value.messages) continue;
 
-      if (value.messages) {
-        for (const msg of value.messages) {
-          const contactName =
-            value.contacts?.find((c) => c.wa_id === msg.from)?.profile.name ||
-            msg.from;
+      // Resolve user from phone_number_id
+      const phoneNumberId = value.metadata?.phone_number_id;
+      if (!phoneNumberId) continue;
 
-          const convo = await findOrCreateConversation({
-            platform: "whatsapp",
-            participantExternalId: msg.from,
-            participantName: contactName,
-          });
+      const userId = await resolveUser("whatsapp", phoneNumberId);
+      if (!userId) {
+        console.warn(`WA webhook: no user found for phone_number_id ${phoneNumberId}`);
+        continue;
+      }
 
-          const textBody =
-            msg.type === "text" ? msg.text?.body || "" : `[${msg.type}]`;
+      for (const msg of value.messages) {
+        const contactName =
+          value.contacts?.find((c) => c.wa_id === msg.from)?.profile.name ||
+          msg.from;
 
-          await storeInboundMessage(
-            convo.id,
-            textBody,
-            msg.id,
-            JSON.stringify({ type: msg.type, timestamp: msg.timestamp }),
-          );
-        }
+        const convo = await findOrCreateConversation({
+          platform: "whatsapp",
+          participantExternalId: msg.from,
+          participantName: contactName,
+          userId,
+        });
+
+        const textBody =
+          msg.type === "text" ? msg.text?.body || "" : `[${msg.type}]`;
+
+        await storeInboundMessage(
+          convo.id,
+          textBody,
+          msg.id,
+          JSON.stringify({ type: msg.type, timestamp: msg.timestamp }),
+        );
       }
     }
   }
@@ -171,6 +193,7 @@ interface IgWebhookEntry {
 
 async function handleInstagramWebhook(
   body: { entry: IgWebhookEntry[] },
+  resolveUser: ResolveUser,
   findOrCreateConversation: FindOrCreate,
   storeInboundMessage: StoreInbound,
 ) {
@@ -180,9 +203,17 @@ async function handleInstagramWebhook(
     for (const event of entry.messaging) {
       if (!event.message) continue;
 
+      // recipient.id is the IG Business Account ID (our user's account)
+      const userId = await resolveUser("instagram", event.recipient.id);
+      if (!userId) {
+        console.warn(`IG webhook: no user found for recipient ${event.recipient.id}`);
+        continue;
+      }
+
       const convo = await findOrCreateConversation({
         platform: "instagram",
         participantExternalId: event.sender.id,
+        userId,
       });
 
       await storeInboundMessage(
@@ -209,6 +240,7 @@ interface FbWebhookEntry {
 
 async function handleFacebookWebhook(
   body: { entry: FbWebhookEntry[] },
+  resolveUser: ResolveUser,
   findOrCreateConversation: FindOrCreate,
   storeInboundMessage: StoreInbound,
 ) {
@@ -218,9 +250,17 @@ async function handleFacebookWebhook(
     for (const event of entry.messaging) {
       if (!event.message) continue;
 
+      // recipient.id is the Facebook Page ID (our user's page)
+      const userId = await resolveUser("facebook", event.recipient.id);
+      if (!userId) {
+        console.warn(`FB webhook: no user found for recipient ${event.recipient.id}`);
+        continue;
+      }
+
       const convo = await findOrCreateConversation({
         platform: "facebook",
         participantExternalId: event.sender.id,
+        userId,
       });
 
       await storeInboundMessage(
