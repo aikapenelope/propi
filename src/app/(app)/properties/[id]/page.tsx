@@ -8,7 +8,6 @@ import {
   Car,
   Maximize,
   Pencil,
-  ExternalLink,
   Calendar,
 } from "lucide-react";
 import { getProperty, getImageUrl } from "@/server/actions/properties";
@@ -17,6 +16,7 @@ import { DeletePropertyButton } from "@/components/properties/delete-property-bu
 import { PropertyImageUpload } from "@/components/properties/property-image-upload";
 import { SharePropertyButton } from "@/components/properties/share-property-button";
 import { PublishToggle } from "@/components/properties/publish-toggle";
+import { PublishSection } from "@/components/properties/publish-section";
 
 const typeLabels: Record<string, string> = {
   apartment: "Apartamento",
@@ -256,31 +256,24 @@ export default async function PropertyDetailPage({
           </div>
         )}
 
-        {/* External Links */}
-        {(() => {
-          const links = (property.externalLinks as string[] | null) || [];
-          return links.length > 0 ? (
-            <div className="rounded-lg border border-border p-4 md:col-span-2">
-              <h2 className="mb-3 text-sm font-semibold text-foreground">
-                Publicada en
-              </h2>
-              <div className="flex flex-wrap gap-2">
-                {links.map((link, i) => (
-                  <a
-                    key={i}
-                    href={link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-xs font-medium text-foreground hover:bg-muted transition-colors"
-                  >
-                    <ExternalLink className="h-3.5 w-3.5" />
-                    {new URL(link).hostname.replace("www.", "")}
-                  </a>
-                ))}
-              </div>
-            </div>
-          ) : null;
-        })()}
+        {/* Publish to portals */}
+        <PublishSection
+          propertyId={id}
+          title={property.title}
+          description={property.description}
+          type={property.type}
+          operation={property.operation}
+          price={property.price}
+          currency={property.currency}
+          area={property.area}
+          bedrooms={property.bedrooms}
+          bathrooms={property.bathrooms}
+          parkingSpaces={property.parkingSpaces}
+          city={property.city}
+          state={property.state}
+          address={property.address}
+          externalLinks={(property.externalLinks as string[] | null) || []}
+        />
       </div>
     </div>
   );
