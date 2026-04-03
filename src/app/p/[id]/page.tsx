@@ -2,9 +2,6 @@ import { db } from "@/lib/db";
 import { properties, propertyImages } from "@/server/schema";
 import { eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
-import { GetObjectCommand } from "@aws-sdk/client-s3";
-import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import { s3, MEDIA_BUCKET } from "@/lib/s3";
 import {
   Building2,
   MapPin,
@@ -36,21 +33,11 @@ export default async function PublicPropertyPage(
 
   if (!property) notFound();
 
-  // Generate presigned URLs for images
-  const imagesWithUrls = await Promise.all(
-    property.images.map(async (img) => {
-      try {
-        const url = await getSignedUrl(
-          s3,
-          new GetObjectCommand({ Bucket: MEDIA_BUCKET, Key: img.key }),
-          { expiresIn: 3600 },
-        );
-        return { ...img, url };
-      } catch {
-        return { ...img, url: null };
-      }
-    }),
-  );
+  // Generate proxy URLs for images
+  const imagesWithUrls = property.images.map((img) => ({
+    ...img,
+    url: `/api/images/${encodeURIComponent(img.key)}`,
+  }));
 
   const typeLabels: Record<string, string> = {
     apartment: "Apartamento",

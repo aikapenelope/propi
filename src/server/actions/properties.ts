@@ -4,8 +4,7 @@ import { db } from "@/lib/db";
 import { properties, propertyTags, propertyImages } from "@/server/schema";
 import { eq, ilike, or, desc, and, gte, lte, type SQL } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
-import { DeleteObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
-import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { DeleteObjectCommand } from "@aws-sdk/client-s3";
 import { s3, MEDIA_BUCKET } from "@/lib/s3";
 import { requireUserId } from "@/lib/auth-helper";
 import { checkStorageQuota } from "@/lib/storage-quota";
@@ -181,6 +180,19 @@ export async function createProperty(data: PropertyFormData) {
   return property;
 }
 
+export async function updatePropertyStatus(
+  id: string,
+  status: "draft" | "active" | "reserved" | "sold" | "rented" | "inactive",
+) {
+  const userId = await requireUserId();
+  await db
+    .update(properties)
+    .set({ status })
+    .where(and(eq(properties.id, id), eq(properties.userId, userId)));
+  revalidatePath(`/properties/${id}`);
+  revalidatePath("/properties");
+}
+
 export async function updateProperty(id: string, data: PropertyFormData) {
   const userId = await requireUserId();
 
@@ -301,14 +313,9 @@ export async function deletePropertyImage(imageId: string, key: string) {
   await db.delete(propertyImages).where(eq(propertyImages.id, imageId));
 }
 
+/** Get a public-facing URL for a property image via the proxy. */
 export async function getImageUrl(key: string) {
-  // Key is already scoped by userId prefix ({userId}/properties/...)
-  // but verify the caller is authenticated
   await requireUserId();
-
-  const command = new GetObjectCommand({
-    Bucket: MEDIA_BUCKET,
-    Key: key,
-  });
-  return getSignedUrl(s3, command, { expiresIn: 3600 });
+  // Use the image proxy instead of presigned URLs (MinIO is on private network)
+  return `/api/images/${encodeURIComponent(key)}`;
 }
