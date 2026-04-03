@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 import { socialAccounts } from "@/server/schema";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -146,10 +146,23 @@ async function refreshMeliToken(refreshToken: string): Promise<MeliTokens> {
   };
 }
 
-/** Get a valid access token, refreshing if needed */
-export async function getMeliToken(): Promise<string> {
+/** Get a valid access token, refreshing if needed.
+ *  Pass userId explicitly for cron jobs where auth() is not available. */
+export async function getMeliToken(userIdOverride?: string): Promise<string> {
+  // Import dynamically to avoid circular deps and allow cron usage
+  let userId: string;
+  if (userIdOverride) {
+    userId = userIdOverride;
+  } else {
+    const { requireUserId } = await import("@/lib/auth-helper");
+    userId = await requireUserId();
+  }
+
   const account = await db.query.socialAccounts.findFirst({
-    where: eq(socialAccounts.platform, "mercadolibre"),
+    where: and(
+      eq(socialAccounts.platform, "mercadolibre"),
+      eq(socialAccounts.userId, userId),
+    ),
   });
 
   if (!account) {

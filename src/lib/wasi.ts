@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
 import { socialAccounts } from "@/server/schema";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
+import { requireUserId } from "@/lib/auth-helper";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -56,10 +57,14 @@ const WASI_CURRENCY_MAP: Record<string, number> = {
 // Auth
 // ---------------------------------------------------------------------------
 
-/** Get Wasi credentials from social_accounts */
+/** Get Wasi credentials from social_accounts for the current user */
 export async function getWasiCredentials(): Promise<WasiCredentials> {
+  const userId = await requireUserId();
   const account = await db.query.socialAccounts.findFirst({
-    where: eq(socialAccounts.platform, "wasi"),
+    where: and(
+      eq(socialAccounts.platform, "wasi"),
+      eq(socialAccounts.userId, userId),
+    ),
   });
 
   if (!account) {
