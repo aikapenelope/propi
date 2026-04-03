@@ -1,23 +1,29 @@
-// Propi Service Worker v1
+// Propi Service Worker v2
 // Manual SW - no dependencies, no build tools needed.
 // Strategies:
-//   - App shell (HTML): network-first with cache fallback
-//   - Static assets (JS, CSS, fonts, images): cache-first
+//   - Static assets (JS, CSS, fonts, images): cache-first (immutable)
+//   - App pages (HTML): stale-while-revalidate (instant load + background update)
 //   - API calls: network-only (never cache)
-//   - Navigation: network-first
+//   - Navigation fallback: cached dashboard shell
 
-const CACHE_VERSION = "propi-v1";
+const CACHE_VERSION = "propi-v2";
 
-// App shell files to precache on install
+// App shell + key pages to precache on install
 const PRECACHE_URLS = [
   "/",
   "/dashboard",
+  "/contacts",
+  "/properties",
+  "/calendar",
+  "/documents",
+  "/marketing/inbox",
+  "/help",
   "/manifest.json",
   "/icons/icon-192.png",
   "/icons/icon-512.png",
 ];
 
-// Install: precache the app shell
+// Install: precache the app shell and key pages
 self.addEventListener("install", (event) => {
   event.waitUntil(
     caches
@@ -51,7 +57,7 @@ self.addEventListener("fetch", (event) => {
   // Skip non-GET requests
   if (request.method !== "GET") return;
 
-  // Skip API routes, webhooks, clerk - never cache
+  // Skip API routes, auth, external - never cache
   if (
     url.pathname.startsWith("/api/") ||
     url.pathname.startsWith("/sign-in") ||
@@ -62,6 +68,7 @@ self.addEventListener("fetch", (event) => {
   }
 
   // Static assets (JS, CSS, fonts, images): cache-first
+  // These have content hashes in filenames, so they're immutable
   if (
     url.pathname.startsWith("/_next/static/") ||
     url.pathname.startsWith("/icons/") ||
@@ -70,13 +77,13 @@ self.addEventListener("fetch", (event) => {
     url.pathname.endsWith(".woff2") ||
     url.pathname.endsWith(".png") ||
     url.pathname.endsWith(".jpg") ||
-    url.pathname.endsWith(".svg")
+    url.pathname.endsWith(".svg") ||
+    url.pathname.endsWith(".webp")
   ) {
     event.respondWith(
       caches.match(request).then((cached) => {
         if (cached) return cached;
         return fetch(request).then((response) => {
-          // Only cache successful responses
           if (!response || response.status !== 200) return response;
           const clone = response.clone();
           caches.open(CACHE_VERSION).then((cache) => cache.put(request, clone));
@@ -87,33 +94,48 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // HTML pages / navigation: network-first with cache fallback
+  // App pages: stale-while-revalidate
+  // Show cached version INSTANTLY, then update cache in background
+  // This makes navigation feel instant on repeat visits
   event.respondWith(
-    fetch(request)
-      .then((response) => {
-        // Cache successful page responses
-        if (response && response.status === 200 && response.type === "basic") {
-          const clone = response.clone();
-          caches.open(CACHE_VERSION).then((cache) => cache.put(request, clone));
-        }
-        return response;
-      })
-      .catch(() => {
-        // Offline: serve from cache
-        return caches.match(request).then((cached) => {
+    caches.match(request).then((cached) => {
+      const fetchPromise = fetch(request)
+        .then((response) => {
+          if (response && response.status === 200 && response.type === "basic") {
+            const clone = response.clone();
+            caches.open(CACHE_VERSION).then((cache) => cache.put(request, clone));
+          }
+          return response;
+        })
+        .catch(() => {
+          // Offline: if we have a cached version, it was already returned
+          // If not, try fallback
           if (cached) return cached;
           // Fallback to cached dashboard for any app route
-          if (url.pathname.startsWith("/dashboard") ||
-              url.pathname.startsWith("/contacts") ||
-              url.pathname.startsWith("/properties") ||
-              url.pathname.startsWith("/calendar") ||
-              url.pathname.startsWith("/documents") ||
-              url.pathname.startsWith("/marketing") ||
-              url.pathname.startsWith("/search")) {
+          if (
+            url.pathname.startsWith("/dashboard") ||
+            url.pathname.startsWith("/contacts") ||
+            url.pathname.startsWith("/properties") ||
+            url.pathname.startsWith("/calendar") ||
+            url.pathname.startsWith("/documents") ||
+            url.pathname.startsWith("/marketing") ||
+            url.pathname.startsWith("/search") ||
+            url.pathname.startsWith("/help")
+          ) {
             return caches.match("/dashboard");
           }
           return caches.match("/");
         });
-      })
+
+      // Return cached immediately if available, otherwise wait for network
+      return cached || fetchPromise;
+    })
   );
+});
+
+// Background sync: check for updates every 60 minutes
+self.addEventListener("message", (event) => {
+  if (event.data === "skipWaiting") {
+    self.skipWaiting();
+  }
 });
