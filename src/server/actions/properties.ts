@@ -182,6 +182,18 @@ export async function createProperty(data: PropertyFormData) {
   return property;
 }
 
+export async function updatePropertyLinks(
+  id: string,
+  externalLinks: string[],
+) {
+  const userId = await requireUserId();
+  await db
+    .update(properties)
+    .set({ externalLinks: externalLinks.slice(0, 3) })
+    .where(and(eq(properties.id, id), eq(properties.userId, userId)));
+  revalidatePath(`/properties/${id}`);
+}
+
 export async function updatePropertyStatus(
   id: string,
   status: "draft" | "active" | "reserved" | "sold" | "rented" | "inactive",
