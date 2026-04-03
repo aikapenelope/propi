@@ -6,11 +6,38 @@ import {
   searchMarketListings,
   getMarketKPIs,
 } from "@/server/actions/market-listings";
+import { auth } from "@clerk/nextjs/server";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
 
+// Per-user rate limit: 20 requests per hour
+const userChatLimits = new Map<string, { count: number; resetAt: number }>();
+const CHAT_LIMIT = 20;
+const CHAT_WINDOW_MS = 60 * 60 * 1000; // 1 hour
+
 export async function POST(req: Request) {
+  // Auth check
+  const { userId } = await auth();
+  if (!userId) {
+    return Response.json({ error: "Not authenticated" }, { status: 401 });
+  }
+
+  // Rate limit per user
+  const now = Date.now();
+  const entry = userChatLimits.get(userId);
+  if (entry && now < entry.resetAt && entry.count >= CHAT_LIMIT) {
+    return Response.json(
+      { error: "Limite de consultas alcanzado (20/hora). Intenta mas tarde." },
+      { status: 429 },
+    );
+  }
+  if (!entry || now >= (entry?.resetAt ?? 0)) {
+    userChatLimits.set(userId, { count: 1, resetAt: now + CHAT_WINDOW_MS });
+  } else {
+    entry.count++;
+  }
+
   const { messages } = await req.json();
 
   if (!messages || messages.length === 0) {
