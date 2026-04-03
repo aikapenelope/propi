@@ -301,16 +301,21 @@ export async function deletePropertyImage(imageId: string, key: string) {
     throw new Error("Image not found");
   }
 
-  // Delete from MinIO
-  await s3.send(
-    new DeleteObjectCommand({
-      Bucket: MEDIA_BUCKET,
-      Key: key,
-    }),
-  );
+  // Delete from MinIO (don't fail if the file doesn't exist)
+  try {
+    await s3.send(
+      new DeleteObjectCommand({
+        Bucket: MEDIA_BUCKET,
+        Key: key,
+      }),
+    );
+  } catch (err) {
+    console.error("MinIO delete error (continuing):", err);
+  }
 
-  // Delete from DB
+  // Always delete from DB
   await db.delete(propertyImages).where(eq(propertyImages.id, imageId));
+  revalidatePath(`/properties/${image.propertyId}`);
 }
 
 /** Get a public-facing URL for a property image via the proxy. */
