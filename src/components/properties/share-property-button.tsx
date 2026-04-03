@@ -29,17 +29,17 @@ export function SharePropertyButton({
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  const propertyUrl =
+  const publicUrl =
     typeof window !== "undefined"
-      ? `${window.location.origin}/properties/${propertyId}`
-      : `/properties/${propertyId}`;
+      ? `${window.location.origin}/p/${propertyId}`
+      : `/p/${propertyId}`;
 
   const message = [
     title,
     price ? `Precio: ${new Intl.NumberFormat("es", { style: "currency", currency: currency || "USD", minimumFractionDigits: 0 }).format(parseFloat(price))}` : null,
     city ? `Ubicacion: ${city}` : null,
     "",
-    propertyUrl,
+    publicUrl,
   ]
     .filter(Boolean)
     .join("\n");
@@ -47,7 +47,7 @@ export function SharePropertyButton({
   const encodedMessage = encodeURIComponent(message);
 
   function handleCopyLink() {
-    navigator.clipboard.writeText(propertyUrl).then(() => {
+    navigator.clipboard.writeText(publicUrl).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     });
@@ -70,7 +70,7 @@ export function SharePropertyButton({
       label: "Facebook",
       icon: Facebook,
       color: "#1877F2",
-      href: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(propertyUrl)}&quote=${encodedMessage}`,
+      href: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(publicUrl)}&quote=${encodedMessage}`,
     },
   ];
 

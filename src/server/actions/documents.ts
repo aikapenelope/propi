@@ -5,7 +5,6 @@ import { documents } from "@/server/schema";
 import { eq, and, desc } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import {
-  PutObjectCommand,
   DeleteObjectCommand,
   GetObjectCommand,
 } from "@aws-sdk/client-s3";
@@ -35,22 +34,14 @@ export async function getDocuments() {
 // Upload (presigned URL for client-side upload)
 // ---------------------------------------------------------------------------
 
-export async function getDocumentUploadUrl(
+/** Generate a MinIO key for a document upload. */
+export async function getDocumentUploadKey(
   filename: string,
-  contentType: string,
 ) {
   const userId = await requireUserId();
   await checkStorageQuota(userId);
   const key = `${userId}/documents/${Date.now()}-${filename}`;
-
-  const command = new PutObjectCommand({
-    Bucket: DOCS_BUCKET,
-    Key: key,
-    ContentType: contentType,
-  });
-
-  const url = await getSignedUrl(s3, command, { expiresIn: 600 });
-  return { url, key };
+  return { key };
 }
 
 export async function getDocumentDownloadUrl(key: string) {
