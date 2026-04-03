@@ -171,6 +171,8 @@ export const properties = pgTable(
     longitude: numeric("longitude", { precision: 10, scale: 7 }),
     /** External publication IDs: { ml: "MLV123", wasi: "456" } */
     externalIds: jsonb("external_ids"),
+    /** External listing links (up to 3): ["https://wasi.co/...", "https://mercadolibre.com.ve/..."] */
+    externalLinks: jsonb("external_links"),
     userId: text("user_id").notNull(),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()

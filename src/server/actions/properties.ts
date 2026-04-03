@@ -33,6 +33,7 @@ export type PropertyFormData = {
   latitude?: string;
   longitude?: string;
   tagIds?: string[];
+  externalLinks?: string[];
 };
 
 export type PropertyFilters = {
@@ -163,6 +164,7 @@ export async function createProperty(data: PropertyFormData) {
       country: data.country || "VE",
       latitude: data.latitude || null,
       longitude: data.longitude || null,
+      externalLinks: data.externalLinks?.filter(Boolean).slice(0, 3) || null,
       userId,
     })
     .returning();
@@ -220,6 +222,7 @@ export async function updateProperty(id: string, data: PropertyFormData) {
       country: data.country || "VE",
       latitude: data.latitude || null,
       longitude: data.longitude || null,
+      externalLinks: data.externalLinks?.filter(Boolean).slice(0, 3) || null,
     })
     .where(and(eq(properties.id, id), eq(properties.userId, userId)))
     .returning();

@@ -8,6 +8,7 @@ import {
   Car,
   Maximize,
   Pencil,
+  ExternalLink,
   Calendar,
 } from "lucide-react";
 import { getProperty, getImageUrl } from "@/server/actions/properties";
@@ -15,7 +16,6 @@ import { formatCurrency, formatDate } from "@/lib/utils";
 import { DeletePropertyButton } from "@/components/properties/delete-property-button";
 import { PropertyImageUpload } from "@/components/properties/property-image-upload";
 import { SharePropertyButton } from "@/components/properties/share-property-button";
-import { PublishWasiButton } from "@/components/properties/publish-wasi-button";
 import { PublishToggle } from "@/components/properties/publish-toggle";
 
 const typeLabels: Record<string, string> = {
@@ -131,10 +131,6 @@ export default async function PropertyDetailPage({
             currency={property.currency ?? undefined}
             city={property.city ?? undefined}
             propertyId={id}
-          />
-          <PublishWasiButton
-            propertyId={id}
-            wasiId={(property.externalIds as Record<string, string> | null)?.wasi}
           />
           <Link
             href={`/properties/${id}/edit`}
@@ -259,6 +255,32 @@ export default async function PropertyDetailPage({
             </p>
           </div>
         )}
+
+        {/* External Links */}
+        {(() => {
+          const links = (property.externalLinks as string[] | null) || [];
+          return links.length > 0 ? (
+            <div className="rounded-lg border border-border p-4 md:col-span-2">
+              <h2 className="mb-3 text-sm font-semibold text-foreground">
+                Publicada en
+              </h2>
+              <div className="flex flex-wrap gap-2">
+                {links.map((link, i) => (
+                  <a
+                    key={i}
+                    href={link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-xs font-medium text-foreground hover:bg-muted transition-colors"
+                  >
+                    <ExternalLink className="h-3.5 w-3.5" />
+                    {new URL(link).hostname.replace("www.", "")}
+                  </a>
+                ))}
+              </div>
+            </div>
+          ) : null;
+        })()}
       </div>
     </div>
   );
