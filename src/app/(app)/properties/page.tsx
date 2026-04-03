@@ -156,12 +156,15 @@ export default async function PropertiesPage({
                 href={`/properties/${property.id}`}
                 className="group overflow-hidden rounded-lg border border-border transition-shadow hover:shadow-md"
               >
-                {/* Image placeholder */}
-                <div className="relative aspect-[4/3] bg-muted">
+                {/* Image */}
+                <div className="relative aspect-[4/3] bg-muted overflow-hidden">
                   {coverImage ? (
-                    <div className="flex h-full items-center justify-center text-xs text-muted-foreground">
-                      {coverImage.filename}
-                    </div>
+                    /* eslint-disable-next-line @next/next/no-img-element */
+                    <img
+                      src={`/api/images/${coverImage.key}`}
+                      alt={property.title}
+                      className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
                   ) : (
                     <div className="flex h-full items-center justify-center text-muted-foreground">
                       <MapPin className="h-8 w-8" />
