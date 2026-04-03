@@ -6,9 +6,7 @@ import { eq, and, desc } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import {
   DeleteObjectCommand,
-  GetObjectCommand,
 } from "@aws-sdk/client-s3";
-import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { s3, DOCS_BUCKET } from "@/lib/s3";
 import { requireUserId } from "@/lib/auth-helper";
 import { checkStorageQuota } from "@/lib/storage-quota";
@@ -44,17 +42,11 @@ export async function getDocumentUploadKey(
   return { key };
 }
 
+/** Get a download URL for a document via the server-side proxy. */
 export async function getDocumentDownloadUrl(key: string) {
-  // Key is already scoped by userId prefix ({userId}/documents/...)
-  // but verify the caller is authenticated
   await requireUserId();
-
-  const command = new GetObjectCommand({
-    Bucket: DOCS_BUCKET,
-    Key: key,
-  });
-
-  return getSignedUrl(s3, command, { expiresIn: 3600 });
+  // Use the download proxy instead of presigned URLs (MinIO is on private network)
+  return `/api/download?key=${encodeURIComponent(key)}`;
 }
 
 // ---------------------------------------------------------------------------

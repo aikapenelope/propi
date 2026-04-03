@@ -16,6 +16,7 @@ import { DeletePropertyButton } from "@/components/properties/delete-property-bu
 import { PropertyImageUpload } from "@/components/properties/property-image-upload";
 import { SharePropertyButton } from "@/components/properties/share-property-button";
 import { PublishWasiButton } from "@/components/properties/publish-wasi-button";
+import { PublishToggle } from "@/components/properties/publish-toggle";
 
 const typeLabels: Record<string, string> = {
   apartment: "Apartamento",
@@ -123,6 +124,7 @@ export default async function PropertyDetailPage({
           )}
         </div>
         <div className="flex flex-wrap gap-2">
+          <PublishToggle propertyId={id} currentStatus={property.status} />
           <SharePropertyButton
             title={property.title}
             price={property.price ?? undefined}
