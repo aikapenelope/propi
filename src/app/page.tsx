@@ -1,511 +1,469 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import {
-  Building2,
-  Users,
-  MessageCircle,
-  Calendar,
-  FileText,
-  Instagram,
-  Facebook,
-  Mail,
-  BarChart3,
-  Smartphone,
-  WifiOff,
-  Download,
-  Zap,
-  Shield,
-  Globe,
-  ChevronRight,
-  Minus,
-  Plus,
-  ArrowUpRight,
-  Star,
-  CheckCircle2,
-  Sparkles,
-  ShoppingBag,
-  TrendingUp,
-  MapPin,
-  DollarSign,
-} from "lucide-react";
+import Image from "next/image";
 
 // ---------------------------------------------------------------------------
 // Data
 // ---------------------------------------------------------------------------
 
-const features = [
+const featureCards = [
   {
-    icon: Users,
-    title: "Contactos & Leads",
-    desc: "Segmenta por tags, trackea si llego por WhatsApp, Instagram o referido. Busqueda global instantanea. Tap-to-call directo.",
-    color: "#10b981",
-  },
-  {
-    icon: Building2,
-    title: "Inventario de Propiedades",
-    desc: "Apartamentos, casas, oficinas, locales, terrenos. Precio en USD o bolivares. Galeria de fotos, GPS, filtros combinables.",
-    color: "#3b82f6",
-  },
-  {
-    icon: MessageCircle,
-    title: "Inbox Unificado",
+    num: "01",
+    title: "INBOX UNIFICADO",
+    tag: "WhatsApp, IG, Facebook",
     desc: "WhatsApp, Instagram DMs y Facebook Messenger en una sola pantalla. Responde a tus clientes sin cambiar de app.",
-    color: "#8b5cf6",
+    img: "https://hoirqrkdgbmvpwutwuwj.supabase.co/storage/v1/object/public/assets/assets/0dccab47-16b0-4716-9e1a-b97f124e3031_1600w.webp",
   },
   {
-    icon: Sparkles,
-    title: "Propi Magic (IA)",
+    num: "02",
+    title: "PROPI MAGIC (IA)",
+    tag: "Inteligencia de Mercado",
     desc: "Pregunta en español: 'Apartamentos en Altamira de 80m2'. La IA busca en MercadoLibre, analiza precios y te da el resumen.",
-    color: "#f97316",
+    img: "https://hoirqrkdgbmvpwutwuwj.supabase.co/storage/v1/object/public/assets/assets/952269bf-60f5-48dc-afce-13953bead1eb_1600w.webp",
   },
   {
-    icon: ShoppingBag,
-    title: "Publica en Portales",
-    desc: "1 click para publicar en Wasi. Tus fotos se suben automaticamente. Sincroniza con portales inmobiliarios de Venezuela.",
-    color: "#ec4899",
+    num: "03",
+    title: "PUBLICA EN PORTALES",
+    tag: "Sincronizacion a 1 click",
+    desc: "1 click para publicar en Wasi. Tus fotos se suben automaticamente. Sincroniza con portales inmobiliarios de Venezuela al instante.",
+    img: "https://hoirqrkdgbmvpwutwuwj.supabase.co/storage/v1/object/public/assets/assets/aa5ed4de-1a7e-4bb7-b0ea-1a4c511663df_1600w.webp",
   },
-  {
-    icon: Calendar,
-    title: "Calendario & Citas",
-    desc: "Agenda visitas, vincula al contacto y la propiedad. Ve tus citas de la semana en el dashboard.",
-    color: "#f59e0b",
-  },
-  {
-    icon: FileText,
-    title: "Documentos",
-    desc: "Contratos, escrituras, avaluos, planos. Todo vinculado al contacto y la propiedad. Descarga segura.",
-    color: "#ef4444",
-  },
-  {
-    icon: Mail,
-    title: "Email Marketing",
-    desc: "Campanas HTML a segmentos por tag. Powered by Resend. 3,000 emails gratis al mes.",
-    color: "#06b6d4",
-  },
-  {
-    icon: BarChart3,
-    title: "Dashboard & Metricas",
-    desc: "Propiedades por tipo, contactos por fuente, citas de la semana, comisiones. Metricas de Instagram y Facebook.",
-    color: "#0ea5e9",
-  },
+];
+
+const gridFeatures = [
+  { icon: "solar:users-group-two-rounded-linear", title: "Contactos & Leads", desc: "Segmenta por tags, trackea si llego por WhatsApp, Instagram o referido. Busqueda global. Tap-to-call directo." },
+  { icon: "solar:home-smile-linear", title: "Inventario", desc: "Apartamentos, casas, terrenos. Precio en USD o bolivares. Galeria de fotos, GPS, filtros combinables." },
+  { icon: "solar:calendar-mark-linear", title: "Calendario & Citas", desc: "Agenda visitas, vincula al contacto y la propiedad. Ve tus citas de la semana directamente en el dashboard." },
+  { icon: "solar:document-text-linear", title: "Documentos", desc: "Contratos, escrituras, avaluos, planos. Todo vinculado al contacto y la propiedad. Descarga totalmente segura." },
+  { icon: "solar:letter-opened-linear", title: "Email Marketing", desc: "Campanas HTML a segmentos por tag. Powered by Resend. 3,000 emails gratis al mes incluidos." },
+  { icon: "solar:chart-square-linear", title: "Metricas", desc: "Propiedades por tipo, contactos por fuente, comisiones. Metricas de alcance e interacciones de Meta." },
 ];
 
 const pwaFeatures = [
-  {
-    icon: Download,
-    title: "Instala desde el navegador",
-    desc: "Sin App Store, sin Google Play. Un tap y esta en tu pantalla de inicio. Funciona en Android y iPhone.",
-  },
-  {
-    icon: WifiOff,
-    title: "Funciona sin internet",
-    desc: "Consulta contactos, propiedades y citas sin conexion. Ideal para mostrar inmuebles en zonas sin señal.",
-  },
-  {
-    icon: Zap,
-    title: "Rapida en cualquier telefono",
-    desc: "Optimizada para gama media. Carga en menos de 2 segundos. No necesitas el ultimo iPhone.",
-  },
-  {
-    icon: Shield,
-    title: "Segura como app nativa",
-    desc: "HTTPS, autenticacion con Clerk, archivos en storage privado. Tus datos y los de tus clientes protegidos.",
-  },
+  { icon: "solar:global-linear", title: "Instala desde el navegador", desc: "Sin App Store, sin Google Play. Un tap y esta en tu pantalla de inicio. Funciona en Android y iPhone perfectamente." },
+  { icon: "solar:wifi-router-minimalistic-linear", title: "Funciona sin internet", desc: "Consulta contactos, propiedades y citas sin conexion. Ideal para mostrar inmuebles en zonas sin senal celular." },
+  { icon: "solar:bolt-linear", title: "Rapida en cualquier telefono", desc: "Optimizada para gama media. Carga en menos de 2 segundos. No necesitas el ultimo iPhone para vender." },
+  { icon: "solar:shield-check-linear", title: "Segura como app nativa", desc: "HTTPS, autenticacion robusta, archivos en storage privado. Tus datos y los de tus clientes siempre protegidos." },
 ];
 
 const integrations = [
-  { icon: Instagram, label: "Instagram", desc: "Publica fotos, responde DMs, ve metricas de alcance y engagement", color: "#E1306C" },
-  { icon: Facebook, label: "Facebook", desc: "Posts en tu pagina, comentarios, insights de visitas y seguidores", color: "#1877F2" },
-  { icon: MessageCircle, label: "WhatsApp", desc: "Mensajes y templates via Meta Cloud API. Sin Twilio, sin costos extra", color: "#25D366" },
-  { icon: ShoppingBag, label: "Wasi", desc: "Publica propiedades con 1 click. Fotos se suben automaticamente", color: "#FF6B00" },
-  { icon: TrendingUp, label: "MercadoLibre", desc: "Analisis de mercado con IA. Precios, tendencias, comparables", color: "#FFE600" },
-  { icon: Mail, label: "Resend", desc: "Email marketing a segmentos. 3,000 emails gratis al mes", color: "#000" },
+  { icon: "skill-icons:instagram", title: "Instagram", desc: "Publica fotos, responde DMs, ve metricas de alcance y engagement en tiempo real." },
+  { icon: "logos:facebook", title: "Facebook", desc: "Posts en tu pagina, comentarios, insights de visitas y nuevos seguidores de tus listados." },
+  { icon: "logos:whatsapp-icon", title: "WhatsApp", desc: "Mensajes y templates via Meta Cloud API. Sin Twilio, sin costos extra por intermediarios." },
+  { icon: "wasi", title: "Wasi", desc: "Publica propiedades con 1 click. Las galerias de fotos se suben y redimensionan automaticamente." },
+  { icon: "simple-icons:mercadolibre", title: "MercadoLibre", desc: "Analisis de mercado con IA. Obten precios, tendencias y comparables de tu zona." },
+  { icon: "simple-icons:resend", title: "Resend", desc: "Email marketing a segmentos personalizados. Disfruta de 3,000 emails gratis al mes." },
+];
+
+const testimonials = [
+  { name: "Carlos M.", role: "Broker Asociado", img: "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=150&q=80", text: "Publicar mis captaciones en todos los portales me tomaba horas. Con Propi, en segundos estoy en multiples plataformas. Ahorro tiempo valioso que dedico a cerrar tratos." },
+  { name: "Andrea V.", role: "Top Producer", img: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=150&q=80", text: "Tener WhatsApp, Instagram y Facebook en un solo lugar cambio mi embudo. Ya no pierdo leads, y los KPIs de mis publicaciones me dicen exactamente que propiedad enfocar." },
+  { name: "Roberto S.", role: "Director Comercial", img: "https://images.unsplash.com/photo-1556157382-97eda2d62296?auto=format&fit=crop&w=150&q=80", text: "La busqueda global en MercadoLibre y los KPIs con data propietaria me dan una ventaja injusta al tasar. Ahora defiendo mis exclusivas con datos reales del mercado." },
 ];
 
 const faqItems = [
-  {
-    q: "¿Necesito descargar algo del App Store?",
-    a: "No. Propi es una PWA que se instala directamente desde el navegador. Abre propi.aikalabs.cc en Chrome o Safari, toca 'Agregar a pantalla de inicio' y listo.",
-  },
-  {
-    q: "¿Funciona en mi telefono?",
-    a: "Si. Funciona en Android 8+ y iOS 14+. Esta optimizada para telefonos gama media. Solo necesitas Chrome o Safari.",
-  },
-  {
-    q: "¿Como se conecta con WhatsApp e Instagram?",
-    a: "Usamos la Meta Graph API oficial. Conectas tu cuenta Business de Instagram, tu pagina de Facebook y tu numero de WhatsApp Business desde Configuracion. Un token para los tres canales.",
-  },
-  {
-    q: "¿Mis datos estan seguros?",
-    a: "Si. Autenticacion con Clerk (Google login, MFA), conexiones HTTPS, archivos en storage privado con URLs que expiran. Servidor en Europa con acceso solo via VPN.",
-  },
-  {
-    q: "¿Cuanto cuesta?",
-    a: "Modelo por seat: pagas por usuario que necesite acceso. Sin limites de contactos, propiedades o mensajes. Sin costos ocultos.",
-  },
-  {
-    q: "¿Puedo publicar en Wasi y MercadoLibre?",
-    a: "Si. Wasi ya esta integrado: 1 click desde la propiedad y se publica con fotos. MercadoLibre esta en desarrollo con analisis de mercado via IA.",
-  },
-  {
-    q: "¿Que es Propi Magic?",
-    a: "Es el sistema de inteligencia de mercado. Escribes en español lo que buscas ('Apartamentos en Las Mercedes de 100m2') y la IA busca en MercadoLibre, calcula precio promedio, mediana y te da un resumen.",
-  },
-  {
-    q: "¿Funciona solo en Venezuela?",
-    a: "Esta optimizado para Venezuela (bolivares, ciudades, barrios, MercadoLibre Venezuela). Pero funciona en cualquier pais con USD como moneda default.",
-  },
+  { q: "Necesito descargar algo del App Store?", a: "No. Propi es una PWA que se instala directamente desde el navegador. Abre propi.aikalabs.cc en Chrome o Safari, toca 'Agregar a pantalla de inicio' y listo." },
+  { q: "Funciona en mi telefono?", a: "Si, Propi esta optimizado para funcionar sin problemas tanto en dispositivos Android como en iPhone, incluso en modelos de gama media o baja." },
+  { q: "Como se conecta con WhatsApp e Instagram?", a: "Utilizamos la API oficial de Meta. Simplemente vinculas tu cuenta de Facebook Business y recibiras todos los mensajes centralizados en el inbox de Propi." },
+  { q: "Mis datos estan seguros?", a: "Completamente. Tus datos estan encriptados bajo HTTPS, con bases de datos privadas y sistemas de autenticacion de nivel bancario." },
+  { q: "Puedo publicar en Wasi y MercadoLibre?", a: "La integracion con Wasi permite publicar propiedades con 1 solo click. MercadoLibre se utiliza actualmente a traves de nuestra IA para inteligencia de precios y mercado." },
+  { q: "Que es Propi Magic?", a: "Es nuestra inteligencia artificial integrada. Le puedes pedir que analice precios en una zona especifica, te redacte la descripcion de una propiedad o responda preguntas basicas." },
 ];
+
+// ---------------------------------------------------------------------------
+// Iconify component (loads from CDN)
+// ---------------------------------------------------------------------------
+
+function Icon({ icon, className, style }: { icon: string; className?: string; style?: React.CSSProperties }) {
+  return (
+    // @ts-expect-error - iconify-icon is a web component
+    <iconify-icon icon={icon} class={className} style={style} />
+  );
+}
 
 // ---------------------------------------------------------------------------
 // Landing Page
 // ---------------------------------------------------------------------------
 
 export default function LandingPage() {
-  const [openFaq, setOpenFaq] = useState(0);
+  const [loaded, setLoaded] = useState(false);
+  const [loaderDone, setLoaderDone] = useState(false);
+  const heroRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    // Load Iconify
+    const script = document.createElement("script");
+    script.src = "https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js";
+    document.head.appendChild(script);
+
+    // Simulate loader
+    const timer = setTimeout(() => {
+      setLoaded(true);
+      setTimeout(() => setLoaderDone(true), 800);
+    }, 1200);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    if (!loaderDone) return;
+
+    // Dynamic import GSAP + ScrollTrigger
+    import("gsap").then(({ gsap }) => {
+      import("gsap/ScrollTrigger").then(({ ScrollTrigger }) => {
+        gsap.registerPlugin(ScrollTrigger);
+
+        // Hero text reveal
+        gsap.to(".hero-line", {
+          y: 0,
+          stagger: 0.1,
+          duration: 1.2,
+          ease: "power3.out",
+        });
+        gsap.to(".hero-fade", { opacity: 1, duration: 1, delay: 0.3 });
+
+        // Hero parallax
+        gsap.to(".hero-img", {
+          yPercent: 30,
+          ease: "none",
+          scrollTrigger: { trigger: ".hero-img", start: "top top", end: "bottom top", scrub: true },
+        });
+
+        // Card stack
+        const cards = gsap.utils.toArray<HTMLElement>(".card-item");
+        cards.forEach((card, i) => {
+          const next = cards[i + 1];
+          if (next) {
+            gsap.to(card.querySelector(".card-inner"), {
+              scale: 0.92,
+              opacity: 0.5,
+              ease: "none",
+              scrollTrigger: { trigger: next, start: "top bottom", end: "top 10vh", scrub: true },
+            });
+          }
+        });
+
+        // Footer parallax
+        gsap.from(".footer-content", {
+          y: 100,
+          opacity: 0.5,
+          scale: 0.95,
+          scrollTrigger: { trigger: ".footer-sticky", start: "top bottom", end: "bottom bottom", scrub: true },
+        });
+      });
+    });
+  }, [loaderDone]);
 
   return (
-    <div
-      className="min-h-screen relative overflow-x-hidden"
-      style={{
-        background: "#FAFAF8",
-        color: "#111827",
-        fontFamily: "var(--font-jakarta), sans-serif",
-      }}
-    >
-      {/* Background */}
-      <div className="absolute top-0 left-0 w-full h-[900px] overflow-hidden -z-10 pointer-events-none">
-        <div className="absolute rounded-full" style={{ top: "-15%", left: "5%", width: 700, height: 700, background: "rgba(16,185,129,0.08)", filter: "blur(140px)" }} />
-        <div className="absolute rounded-full" style={{ top: "5%", right: "0%", width: 800, height: 800, background: "rgba(139,92,246,0.06)", filter: "blur(140px)" }} />
+    <div className="min-h-screen relative overflow-x-hidden" style={{ background: "#E3E1DC", color: "#121212", fontFamily: "'Manrope', sans-serif" }}>
+      {/* Google Fonts */}
+      {/* eslint-disable-next-line @next/next/no-page-custom-font */}
+      <link href="https://fonts.googleapis.com/css2?family=Syncopate:wght@400;700&family=Manrope:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+
+      {/* Noise overlay */}
+      <div className="fixed inset-0 pointer-events-none z-[9000] opacity-[0.03]" style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")" }} />
+
+      {/* Preloader */}
+      <div className={`fixed inset-0 bg-black z-[10000] flex justify-center items-center transition-transform duration-700 ease-[cubic-bezier(0.76,0,0.24,1)] ${loaded ? "-translate-y-full" : ""}`}>
+        <div className={`transition-all duration-500 ${loaded ? "opacity-0 -translate-y-12" : ""}`} style={{ fontFamily: "'Syncopate', sans-serif", fontSize: "5vw", fontWeight: 600, color: "#fff" }}>
+          PROPI
+        </div>
+        <div className="absolute bottom-0 left-0 h-1 bg-white transition-all duration-1000 ease-in-out" style={{ width: loaded ? "100%" : "0%" }} />
       </div>
 
       {/* Nav */}
-      <header className="w-full max-w-[1440px] mx-auto px-6 md:px-16 py-6 flex items-center justify-between relative z-50">
-        <div className="flex items-center gap-2 font-bold text-xl tracking-tight" style={{ color: "#0A2B1D" }}>
-          <Building2 className="h-6 w-6" />
-          Propi
+      <nav className="fixed top-0 w-full p-6 md:p-8 flex justify-between items-center z-50 mix-blend-difference text-white">
+        <div className="font-semibold text-xl tracking-tighter" style={{ fontFamily: "'Syncopate', sans-serif" }}>PROPI</div>
+        <div className="hidden lg:flex items-center gap-10 text-xs uppercase tracking-widest">
+          <a href="#funciones" className="hover:text-gray-300 transition-colors">Funciones</a>
+          <a href="#app" className="hover:text-gray-300 transition-colors">App Movil</a>
+          <a href="#integraciones" className="hover:text-gray-300 transition-colors">Integraciones</a>
+          <a href="#faq" className="hover:text-gray-300 transition-colors">FAQ</a>
+          <div className="h-4 w-px bg-white/20" />
+          <Link href="/sign-in" className="hover:text-gray-300 transition-colors">Ingresar</Link>
+          <Link href="/sign-up" className="bg-white text-black px-5 py-2.5 rounded-full hover:bg-gray-200 transition-transform hover:scale-105 active:scale-95 duration-300">Empezar Gratis</Link>
         </div>
-        <nav className="hidden md:flex items-center gap-8 text-sm font-medium" style={{ color: "#6B7280" }}>
-          <a href="#features" className="hover:text-gray-900 transition-colors">Funciones</a>
-          <a href="#pwa" className="hover:text-gray-900 transition-colors">App Movil</a>
-          <a href="#integraciones" className="hover:text-gray-900 transition-colors">Integraciones</a>
-          <a href="#faq" className="hover:text-gray-900 transition-colors">FAQ</a>
-        </nav>
-        <div className="flex items-center gap-3">
-          <Link href="/sign-in" className="text-sm font-semibold hover:text-gray-900 transition-colors hidden md:block" style={{ color: "#6B7280" }}>
-            Ingresar
-          </Link>
-          <Link href="/sign-up" className="text-white px-6 py-2.5 rounded-full text-sm font-semibold hover:opacity-90 transition-all shadow-md" style={{ background: "#0A2B1D" }}>
-            Empezar Gratis
-          </Link>
-        </div>
-      </header>
+        <div className="lg:hidden text-xs uppercase tracking-widest">MENU</div>
+      </nav>
 
-      {/* Hero */}
-      <section className="w-full max-w-[1440px] mx-auto px-6 md:px-16 pt-16 md:pt-24 pb-20">
-        <div className="max-w-4xl mx-auto text-center">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold mb-8" style={{ background: "#E2F2E9", color: "#0A2B1D" }}>
-            <MapPin className="h-3.5 w-3.5" />
-            Hecho para el mercado inmobiliario venezolano
-          </div>
+      {/* Wrapper */}
+      <div className="relative z-10 shadow-[0_50px_100px_rgba(0,0,0,0.5)]" style={{ background: "#E3E1DC", marginBottom: "100vh" }}>
 
-          <h1 className="text-4xl md:text-[72px] leading-[1.05] font-extrabold tracking-tight mb-6" style={{ color: "#0A2B1D" }}>
-            Vende mas inmuebles
-            <br />
-            <span style={{ background: "linear-gradient(135deg, #10b981, #3b82f6)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
-              desde tu telefono.
-            </span>
-          </h1>
-
-          <p className="text-lg md:text-xl font-medium max-w-2xl mx-auto mb-10" style={{ color: "#6B7280" }}>
-            CRM inmobiliario con WhatsApp, Instagram, Facebook, inteligencia de mercado con IA, y publicacion en portales. Todo en una app que funciona hasta sin internet.
-          </p>
-
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
-            <Link href="/sign-up" className="text-white px-8 py-4 rounded-full text-base font-semibold hover:opacity-90 transition-all shadow-lg flex items-center gap-2" style={{ background: "#0A2B1D" }}>
-              Crear Cuenta Gratis
-              <ArrowUpRight className="h-4 w-4" />
-            </Link>
-            <Link href="/preview" className="px-8 py-4 rounded-full text-base font-semibold border-2 flex items-center gap-2 hover:bg-gray-50 transition-colors" style={{ borderColor: "#d1d5db", color: "#374151" }}>
-              Ver Demo
-              <ChevronRight className="h-4 w-4" />
-            </Link>
-          </div>
-
-          {/* Phone mockup */}
-          <div className="relative max-w-sm mx-auto">
-            <div className="rounded-[40px] border-[8px] overflow-hidden shadow-2xl relative" style={{ borderColor: "#1a1a1a", background: "#090A0F" }}>
-              {/* Status bar */}
-              <div className="h-8 flex items-center justify-between px-6 text-[10px] font-bold" style={{ background: "#090A0F", color: "#fff" }}>
-                <span>9:41</span>
-                <span className="flex items-center gap-1">
-                  <Globe className="h-3 w-3" />
-                  LTE
-                </span>
-              </div>
-              {/* App content mock - dark theme */}
-              <div className="p-4 space-y-3" style={{ background: "#090A0F" }}>
-                {/* Mini dashboard */}
-                <div className="rounded-2xl p-4" style={{ background: "#111218", border: "1px solid #1e1f26" }}>
-                  <div className="text-[10px] font-medium mb-1" style={{ color: "#6b7280" }}>Propiedades Activas</div>
-                  <div className="text-2xl font-extrabold text-white">47</div>
-                  <div className="flex items-center gap-1 mt-1">
-                    <TrendingUp className="h-3 w-3 text-green-400" />
-                    <span className="text-[9px] text-green-400 font-bold">+12% esta semana</span>
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="rounded-2xl p-3" style={{ background: "#111218", border: "1px solid #1e1f26" }}>
-                    <div className="flex items-center gap-1 text-[9px] font-bold mb-1" style={{ color: "#00FF55" }}>
-                      <DollarSign className="h-3 w-3" /> Ventas
-                    </div>
-                    <div className="text-lg font-extrabold text-white">$285K</div>
-                  </div>
-                  <div className="rounded-2xl p-3" style={{ background: "#111218", border: "1px solid #1e1f26" }}>
-                    <div className="flex items-center gap-1 text-[9px] font-bold text-blue-400 mb-1">
-                      <Users className="h-3 w-3" /> Leads
-                    </div>
-                    <div className="text-lg font-extrabold text-white">89</div>
-                  </div>
-                </div>
-                {/* Mini inbox */}
-                <div className="rounded-2xl p-3" style={{ background: "#111218", border: "1px solid #1e1f26" }}>
-                  <div className="text-[10px] font-bold mb-2 text-white">Inbox</div>
-                  {[
-                    { name: "Maria L.", msg: "Me interesa el apto en Altamira", platform: "whatsapp", color: "#25D366" },
-                    { name: "Carlos R.", msg: "Cuando podemos ver la casa?", platform: "instagram", color: "#E1306C" },
-                    { name: "Ana P.", msg: "Tiene disponible el local?", platform: "facebook", color: "#1877F2" },
-                  ].map((m, i) => (
-                    <div key={i} className="flex items-center gap-2 py-1.5">
-                      <div className="w-6 h-6 rounded-full flex items-center justify-center" style={{ background: `${m.color}20` }}>
-                        {m.platform === "whatsapp" ? <MessageCircle className="h-3 w-3" style={{ color: m.color }} /> :
-                         m.platform === "instagram" ? <Instagram className="h-3 w-3" style={{ color: m.color }} /> :
-                         <Facebook className="h-3 w-3" style={{ color: m.color }} />}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="text-[10px] font-bold truncate text-white">{m.name}</div>
-                        <div className="text-[9px] truncate" style={{ color: "#6b7280" }}>{m.msg}</div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              {/* Bottom nav */}
-              <div className="flex items-center justify-around py-2" style={{ background: "#111218", borderTop: "1px solid #1e1f26" }}>
-                {[
-                  { icon: MessageCircle, label: "Inbox", active: false },
-                  { icon: Users, label: "Contactos", active: false },
-                  { icon: Building2, label: "Inmuebles", active: true },
-                  { icon: Calendar, label: "Agenda", active: false },
-                  { icon: BarChart3, label: "Mas", active: false },
-                ].map((n, i) => (
-                  <div key={i} className="flex flex-col items-center gap-0.5" style={{ color: n.active ? "#00FF55" : "#6b7280" }}>
-                    <n.icon className="h-4 w-4" />
-                    <span className="text-[8px] font-semibold">{n.label}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-            {/* Floating badges */}
-            <div className="absolute -left-4 md:-left-16 top-[15%] bg-white/95 backdrop-blur-md px-4 py-3 rounded-2xl shadow-lg border border-white/50 flex items-center gap-3" style={{ transform: "rotate(-3deg)" }}>
-              <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: "#25D36615" }}>
-                <MessageCircle className="h-4 w-4" style={{ color: "#25D366" }} />
-              </div>
-              <div>
-                <div className="text-xs font-bold">WhatsApp + IG + FB</div>
-                <div className="text-[10px]" style={{ color: "#6B7280" }}>Inbox unificado</div>
-              </div>
-            </div>
-            <div className="absolute -right-4 md:-right-16 top-[40%] bg-white/95 backdrop-blur-md px-4 py-3 rounded-2xl shadow-lg border border-white/50 flex items-center gap-3" style={{ transform: "rotate(2deg)" }}>
-              <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: "#f9731615" }}>
-                <Sparkles className="h-4 w-4 text-orange-500" />
-              </div>
-              <div>
-                <div className="text-xs font-bold">Propi Magic</div>
-                <div className="text-[10px]" style={{ color: "#6B7280" }}>IA de mercado</div>
-              </div>
-            </div>
-            <div className="absolute -left-4 md:-left-12 bottom-[15%] bg-white/95 backdrop-blur-md px-4 py-3 rounded-2xl shadow-lg border border-white/50 flex items-center gap-3" style={{ transform: "rotate(1deg)" }}>
-              <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: "#10b98115" }}>
-                <CheckCircle2 className="h-4 w-4 text-green-500" />
-              </div>
-              <div>
-                <div className="text-xs font-bold">USD + Bs</div>
-                <div className="text-[10px]" style={{ color: "#6B7280" }}>Multi-moneda</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Features */}
-      <section id="features" className="w-full max-w-[1440px] mx-auto px-6 md:px-16 py-20">
-        <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-[44px] font-extrabold mb-4" style={{ color: "#0A2B1D" }}>
-            Todo lo que necesita<br />un asesor inmobiliario.
-          </h2>
-          <p className="text-base max-w-xl mx-auto" style={{ color: "#6B7280" }}>
-            9 modulos diseñados para el dia a dia del negocio inmobiliario en Venezuela. Rapido, directo, sin menus infinitos.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 max-w-5xl mx-auto">
-          {features.map((f) => (
-            <div key={f.title} className="bg-white rounded-[24px] p-6 border border-gray-100/80 hover:shadow-xl hover:-translate-y-1 transition-all duration-200 cursor-default">
-              <div className="w-11 h-11 rounded-2xl flex items-center justify-center mb-4" style={{ background: `${f.color}12` }}>
-                <f.icon className="h-5 w-5" style={{ color: f.color }} />
-              </div>
-              <div className="text-base font-bold mb-2" style={{ color: "#0A2B1D" }}>{f.title}</div>
-              <p className="text-sm leading-relaxed" style={{ color: "#6B7280" }}>{f.desc}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* PWA Section */}
-      <section id="pwa" className="w-full max-w-[1440px] mx-auto px-6 md:px-16 py-20">
-        <div className="rounded-[40px] p-8 md:p-16 relative overflow-hidden" style={{ background: "#0A2B1D" }}>
-          <div className="relative z-10">
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold mb-6" style={{ background: "rgba(255,255,255,0.1)", color: "#4ade80" }}>
-              <Smartphone className="h-3.5 w-3.5" />
-              Progressive Web App
-            </div>
-
-            <h2 className="text-3xl md:text-[44px] font-extrabold mb-4 text-white leading-tight">
-              Tu oficina<br />en el bolsillo.
-            </h2>
-            <p className="text-base mb-12 max-w-lg" style={{ color: "rgba(255,255,255,0.6)" }}>
-              Muestra propiedades a tus clientes desde el telefono. Agenda citas en el momento. Responde WhatsApp sin abrir otra app. Funciona hasta en el metro de Caracas.
-            </p>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 max-w-2xl">
-              {pwaFeatures.map((f) => (
-                <div key={f.title} className="rounded-2xl p-5" style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.08)" }}>
-                  <f.icon className="h-5 w-5 mb-3" style={{ color: "#4ade80" }} />
-                  <div className="text-sm font-bold text-white mb-1">{f.title}</div>
-                  <p className="text-xs leading-relaxed" style={{ color: "rgba(255,255,255,0.5)" }}>{f.desc}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="absolute top-[-20%] right-[-10%] w-[500px] h-[500px] rounded-full pointer-events-none" style={{ border: "1px solid rgba(74,222,128,0.1)" }} />
-          <div className="absolute bottom-[-30%] right-[5%] w-[400px] h-[400px] rounded-full pointer-events-none" style={{ border: "1px solid rgba(74,222,128,0.06)" }} />
-        </div>
-      </section>
-
-      {/* Integrations */}
-      <section id="integraciones" className="w-full max-w-[1440px] mx-auto px-6 md:px-16 py-20">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-[44px] font-extrabold mb-4" style={{ color: "#0A2B1D" }}>
-            Conectado con todo
-          </h2>
-          <p className="text-base max-w-xl mx-auto" style={{ color: "#6B7280" }}>
-            Publica, responde y mide desde un solo lugar. Sin copiar y pegar entre apps.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 max-w-4xl mx-auto">
-          {integrations.map((m) => (
-            <div key={m.label} className="bg-white rounded-[20px] p-5 border border-gray-100/80 hover:shadow-lg hover:-translate-y-1 transition-all duration-200">
-              <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-3" style={{ background: `${m.color}12` }}>
-                <m.icon className="h-5 w-5" style={{ color: m.color }} />
-              </div>
-              <div className="text-sm font-bold mb-1" style={{ color: "#0A2B1D" }}>{m.label}</div>
-              <p className="text-[11px] leading-relaxed" style={{ color: "#6B7280" }}>{m.desc}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Social proof */}
-      <section className="w-full max-w-[1440px] mx-auto px-6 md:px-16 py-16">
-        <div className="bg-white rounded-[32px] p-8 md:p-12 border border-gray-100/60 shadow-sm">
-          <div className="flex flex-col md:flex-row items-center gap-8">
-            <div className="flex -space-x-3">
-              {[1, 2, 3, 4, 5].map((i) => (
-                <div key={i} className="w-10 h-10 rounded-full border-2 border-white flex items-center justify-center text-xs font-bold text-white" style={{ background: ["#10b981", "#3b82f6", "#8b5cf6", "#f59e0b", "#ef4444"][i - 1] }}>
-                  {["ML", "CR", "AG", "PS", "JD"][i - 1]}
-                </div>
-              ))}
-            </div>
-            <div className="text-center md:text-left">
-              <div className="flex items-center justify-center md:justify-start gap-1 mb-1">
-                {[1, 2, 3, 4, 5].map((i) => (
-                  <Star key={i} className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                ))}
-              </div>
-              <p className="text-sm" style={{ color: "#6B7280" }}>
-                <span className="font-bold" style={{ color: "#0A2B1D" }}>&ldquo;Antes tenia los contactos en una libreta, las fotos en el telefono y los mensajes en 3 apps. Propi me junto todo.&rdquo;</span>
-                {" "} — Maria L., Asesora Inmobiliaria en Caracas
+        {/* Hero */}
+        <section ref={heroRef} className="h-screen relative flex flex-col items-center justify-center overflow-hidden pt-20">
+          <img src="https://hoirqrkdgbmvpwutwuwj.supabase.co/storage/v1/object/public/assets/assets/482e7b6a-168c-4d0d-b35d-0e2ff4014577_3840w.webp" className="hero-img absolute inset-0 w-full h-full object-cover brightness-50" alt="Hero" />
+          <div className="relative z-10 w-full px-6 flex flex-col items-center justify-center text-center text-white">
+            <h1 className="overflow-hidden mix-blend-difference" style={{ fontFamily: "'Syncopate', sans-serif", fontSize: "11vw", lineHeight: 1, letterSpacing: "-0.02em" }}>
+              <span className="hero-line block translate-y-full">VENDE MAS</span>
+            </h1>
+            <h1 className="overflow-hidden mix-blend-difference" style={{ fontFamily: "'Syncopate', sans-serif", fontSize: "11vw", lineHeight: 1, letterSpacing: "-0.02em" }}>
+              <span className="hero-line block translate-y-full">INMUEBLES</span>
+            </h1>
+            <div className="mt-8 md:mt-12 opacity-0 hero-fade flex flex-col items-center gap-8 max-w-3xl mx-auto">
+              <p className="text-xs md:text-sm uppercase tracking-[0.2em] md:tracking-[0.3em] font-normal leading-relaxed text-white/90 drop-shadow-md">
+                Hecho para el mercado inmobiliario venezolano.<br /><br />
+                <span className="opacity-80">CRM inmobiliario con WhatsApp, Instagram, Facebook, inteligencia de mercado con IA, y publicacion en portales. Todo en una app.</span>
               </p>
+              <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 w-full sm:w-auto">
+                <Link href="/sign-up" className="bg-white text-black px-8 py-4 rounded-full text-xs uppercase tracking-widest font-medium hover:bg-gray-200 hover:scale-105 active:scale-95 transition-all w-full sm:w-auto text-center shadow-lg">Crear Cuenta Gratis</Link>
+                <Link href="/preview" className="border border-white/40 bg-black/20 backdrop-blur-md text-white px-8 py-4 rounded-full text-xs uppercase tracking-widest font-medium hover:bg-white/20 hover:border-white transition-all w-full sm:w-auto text-center">Ver Demo</Link>
+              </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* FAQ */}
-      <section id="faq" className="w-full max-w-[800px] mx-auto px-6 py-20">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl md:text-[36px] font-extrabold mb-4" style={{ color: "#0A2B1D" }}>
-            Preguntas frecuentes
-          </h2>
-        </div>
-        <div>
-          {faqItems.map((item, idx) => (
-            <div key={idx} className="border-b border-gray-200 py-5">
-              <button className="w-full flex justify-between items-center text-left group" onClick={() => setOpenFaq(openFaq === idx ? -1 : idx)}>
-                <span className="font-bold text-base pr-4" style={{ color: "#0A2B1D" }}>{item.q}</span>
-                {openFaq === idx ? (
-                  <span className="w-7 h-7 rounded-full text-white flex items-center justify-center flex-shrink-0" style={{ background: "#0A2B1D" }}>
-                    <Minus className="h-3.5 w-3.5" />
-                  </span>
-                ) : (
-                  <span className="w-7 h-7 flex items-center justify-center flex-shrink-0 text-gray-400 group-hover:text-gray-800 transition-colors">
-                    <Plus className="h-4 w-4" />
-                  </span>
-                )}
-              </button>
-              {openFaq === idx && (
-                <p className="mt-3 text-sm leading-relaxed pr-12" style={{ color: "#6B7280" }}>{item.a}</p>
-              )}
+        {/* Intro */}
+        <section className="py-32 px-6 md:px-20 grid lg:grid-cols-2 gap-16 max-w-[1800px] mx-auto" style={{ background: "#E3E1DC" }}>
+          <div>
+            <h2 className="text-4xl md:text-5xl tracking-tight leading-tight" style={{ fontFamily: "'Syncopate', sans-serif" }}>
+              Todo lo que necesita <br /><span style={{ color: "#374336" }}>un asesor.</span>
+            </h2>
+          </div>
+          <div className="text-xl font-normal leading-relaxed text-gray-700">
+            <p className="mb-8">Modulos diseñados para el dia a dia del negocio inmobiliario. Rapido, directo y con las herramientas que realmente te ayudan a cerrar ventas.</p>
+            <div className="h-px w-full bg-black/10 my-8" />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 text-sm">
+              {[
+                { t: "Inbox Unificado", d: "Ten tus mensajes de clientes en un solo lugar." },
+                { t: "Multi-plataforma", d: "Publica en segundos en varias plataformas." },
+                { t: "Radar de Mercado", d: "Busqueda global en todo MercadoLibre." },
+                { t: "Analitica", d: "KPI tuyos y de tus publicaciones." },
+              ].map((f) => (
+                <div key={f.t}>
+                  <div className="font-medium text-black mb-1 uppercase tracking-widest text-xs">{f.t}</div>
+                  <div className="text-xs text-gray-500">{f.d}</div>
+                </div>
+              ))}
+              <div className="sm:col-span-2">
+                <div className="font-medium text-black mb-1 uppercase tracking-widest text-xs">Data Propietaria</div>
+                <div className="text-xs text-gray-500">KPI de propiedades con inteligencia de mercado.</div>
+              </div>
             </div>
-          ))}
-        </div>
-      </section>
+          </div>
+        </section>
 
-      {/* CTA */}
-      <section className="w-full max-w-[1440px] mx-auto px-6 md:px-16 py-16">
-        <div className="rounded-[40px] p-10 md:p-16 text-center" style={{ background: "#0A2B1D" }}>
-          <h2 className="text-3xl md:text-[44px] font-extrabold text-white mb-4 leading-tight">
-            Empieza a vender mas.<br />Hoy.
+        {/* Card Stack Section */}
+        <section className="py-[10vh] text-[#E3E1DC] relative" style={{ background: "#121212" }} id="funciones">
+          <div className="text-center mb-20 px-6">
+            <div className="text-xs uppercase tracking-widest mb-4 opacity-50">Herramientas Principales</div>
+            <h2 className="text-4xl md:text-6xl tracking-tight" style={{ fontFamily: "'Syncopate', sans-serif" }}>FUNCIONES</h2>
+          </div>
+
+          <div className="w-full max-w-[1400px] mx-auto relative pb-[10vh]">
+            {featureCards.map((card) => (
+              <div key={card.num} className="card-item sticky top-[10vh] h-[80vh] w-full flex items-center justify-center mb-[5vh]">
+                <div className="card-inner w-[90%] h-full rounded-3xl relative overflow-hidden grid grid-cols-1 md:grid-cols-[1fr_1.2fr] shadow-[0_25px_50px_-12px_rgba(0,0,0,0.7)]" style={{ background: "#1a1a1a", border: "1px solid rgba(255,255,255,0.05)" }}>
+                  <div className="p-8 md:p-16 flex flex-col justify-between z-10" style={{ background: "#1a1a1a" }}>
+                    <div>
+                      <div className="text-5xl mb-2 opacity-30 tracking-tight" style={{ fontFamily: "'Syncopate', sans-serif", color: "#E3E1DC" }}>{card.num}</div>
+                      <h3 className="text-2xl md:text-3xl font-semibold tracking-tight">{card.title}</h3>
+                      <p className="text-xs mt-4 opacity-70 uppercase tracking-widest">{card.tag}</p>
+                    </div>
+                    <div className="text-gray-400 font-normal">{card.desc}</div>
+                  </div>
+                  <div className="relative w-full h-full overflow-hidden">
+                    <img src={card.img} alt={card.title} className="w-full h-full object-cover brightness-75 hover:scale-105 transition-transform duration-[1.5s]" />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* More features grid */}
+          <div className="max-w-[1400px] mx-auto px-6 pb-32">
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {gridFeatures.map((f) => (
+                <div key={f.title} className="p-8 rounded-2xl border border-white/5 backdrop-blur-sm hover:border-white/20 transition-colors duration-300 group" style={{ background: "linear-gradient(to bottom, rgba(255,255,255,0.1), transparent)" }}>
+                  <Icon icon={f.icon} className="text-3xl mb-4 text-white opacity-70 group-hover:opacity-100 transition-opacity" />
+                  <h4 className="font-medium text-lg mb-2 text-white">{f.title}</h4>
+                  <p className="text-sm text-gray-400 font-normal leading-relaxed">{f.desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* PWA Section */}
+        <section className="py-32 px-6 md:px-20 border-b border-black/5" style={{ background: "#E3E1DC" }} id="app">
+          <div className="max-w-[1400px] mx-auto grid lg:grid-cols-2 gap-20 items-center">
+            {/* Phone mockup */}
+            <div className="text-white p-6 rounded-[3rem] w-full max-w-[340px] mx-auto h-[700px] shadow-2xl shadow-black/40 relative overflow-hidden flex flex-col border-[8px] border-gray-900" style={{ background: "#121212" }}>
+              <div className="flex justify-between text-xs mb-8 opacity-80 pt-2 px-2 font-medium">
+                <span>9:41</span>
+                <span className="flex gap-1.5 items-center">LTE</span>
+              </div>
+              <div className="grid grid-cols-2 gap-4 mb-8">
+                <div className="p-5 rounded-2xl border border-white/5" style={{ background: "linear-gradient(to br, rgba(255,255,255,0.1), rgba(255,255,255,0.05))" }}>
+                  <div className="text-xs uppercase tracking-widest opacity-60 mb-2">Activas</div>
+                  <div className="text-3xl tracking-tight" style={{ fontFamily: "'Syncopate', sans-serif" }}>47</div>
+                  <div className="text-[10px] text-green-400 mt-2 font-medium">+12% esta semana</div>
+                </div>
+                <div className="p-5 rounded-2xl border border-white/5" style={{ background: "linear-gradient(to br, rgba(255,255,255,0.1), rgba(255,255,255,0.05))" }}>
+                  <div className="text-xs uppercase tracking-widest opacity-60 mb-2">Ventas</div>
+                  <div className="text-3xl tracking-tight" style={{ fontFamily: "'Syncopate', sans-serif" }}>$285K</div>
+                  <div className="text-[10px] text-white/50 mt-2 font-medium">89 Leads nuevos</div>
+                </div>
+              </div>
+              <div className="text-xs uppercase tracking-widest opacity-60 mb-3 mt-2 px-1">Inbox Reciente</div>
+              <div className="space-y-3 flex-1 overflow-hidden">
+                {[
+                  { name: "Maria L.", msg: "Me interesa el apto en Altamira", color: "yellow" },
+                  { name: "Carlos R.", msg: "Cuando podemos ver la casa?", color: "green" },
+                  { name: "Ana P.", msg: "Tiene disponible el local?", color: "blue" },
+                ].map((m) => (
+                  <div key={m.name} className="bg-white/5 hover:bg-white/10 transition-colors p-4 rounded-xl flex items-center gap-3 border border-white/5 cursor-pointer">
+                    <div className={`w-10 h-10 rounded-full bg-${m.color}-500/20 flex items-center justify-center text-${m.color}-400 text-xs font-semibold`}>
+                      {m.name.split(" ").map((w) => w[0]).join("")}
+                    </div>
+                    <div>
+                      <div className="text-sm font-medium">{m.name}</div>
+                      <div className="text-xs opacity-60 mt-0.5 truncate w-[180px]">{m.msg}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="flex justify-between items-center px-6 pt-6 pb-2 border-t border-white/10 mt-auto">
+                {["inbox", "users-group-rounded", "home-2", "calendar"].map((i, idx) => (
+                  <Icon key={i} icon={`solar:${i}-linear`} className={`text-2xl ${idx === 0 ? "text-[#E3E1DC]" : "opacity-40"}`} />
+                ))}
+              </div>
+            </div>
+
+            {/* Description */}
+            <div>
+              <h2 className="text-4xl md:text-5xl tracking-tight leading-tight mb-8" style={{ fontFamily: "'Syncopate', sans-serif" }}>
+                Tu oficina <br /><span style={{ color: "#374336" }}>en el bolsillo.</span>
+              </h2>
+              <p className="text-gray-600 text-lg font-normal mb-12 max-w-xl">
+                Muestra propiedades a tus clientes desde el telefono. Agenda citas en el momento. Responde WhatsApp sin abrir otra app. Funciona hasta en el metro de Caracas.
+              </p>
+              <div className="space-y-10">
+                {pwaFeatures.map((f) => (
+                  <div key={f.title} className="flex gap-5 group">
+                    <Icon icon={f.icon} className="text-3xl shrink-0 group-hover:scale-110 transition-transform" style={{ color: "#374336" }} />
+                    <div>
+                      <h4 className="font-medium text-lg mb-1">{f.title}</h4>
+                      <p className="text-sm text-gray-500 font-normal leading-relaxed">{f.desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Integrations */}
+        <section className="py-32 px-6 border-b border-black/5 relative overflow-hidden" style={{ background: "#E3E1DC" }} id="integraciones">
+          <div className="absolute top-0 right-0 w-[50vw] h-[50vw] bg-white/40 rounded-full blur-[100px] pointer-events-none" />
+          <div className="max-w-[1400px] mx-auto relative z-10">
+            <div className="text-center mb-20">
+              <h2 className="text-4xl md:text-5xl tracking-tight" style={{ fontFamily: "'Syncopate', sans-serif" }}>Conectado con todo.</h2>
+              <p className="mt-6 text-gray-600 max-w-xl mx-auto text-lg font-normal">Publica, responde y mide desde un solo lugar. Sin copiar y pegar entre apps o pestanas.</p>
+            </div>
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {integrations.map((m) => (
+                <div key={m.title} className="p-8 rounded-3xl border border-black/5 bg-white/50 backdrop-blur-xl hover:bg-white hover:shadow-xl hover:-translate-y-2 transition-all duration-300 group cursor-pointer">
+                  {m.icon === "wasi" ? (
+                    <div className="w-10 h-10 bg-blue-600 text-white font-bold rounded-lg flex items-center justify-center text-xl mb-5 opacity-80 group-hover:opacity-100 transition-opacity">W</div>
+                  ) : (
+                    <Icon icon={m.icon} className="text-4xl mb-5 grayscale group-hover:grayscale-0 transition-all duration-300" />
+                  )}
+                  <h4 className="font-semibold text-xl mb-2 tracking-tight">{m.title}</h4>
+                  <p className="text-sm text-gray-600 leading-relaxed font-normal">{m.desc}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Testimonials */}
+        <section className="py-24 px-6 md:py-32 text-white relative overflow-hidden" style={{ background: "#121212" }}>
+          <div className="mb-16 text-center relative z-10">
+            <p className="text-xs uppercase text-gray-400 tracking-widest mb-3">Casos de Exito</p>
+            <h2 className="text-3xl sm:text-4xl md:text-5xl tracking-tight font-medium" style={{ fontFamily: "'Syncopate', sans-serif" }}>
+              Hablan los <span style={{ color: "#374336" }}>Expertos</span>
+            </h2>
+          </div>
+          <div className="relative flex items-center justify-center py-12 md:py-20 min-h-[450px]">
+            <div className="flex flex-col md:flex-row justify-center items-center h-full w-full max-w-[1200px] px-6">
+              {testimonials.map((t, i) => (
+                <div key={t.name} className={`relative w-full max-w-[340px] h-[340px] flex justify-center items-center rounded-2xl ${i === 0 ? "md:-mr-[50px] -mb-16 md:mb-0 -rotate-3 md:-rotate-12 z-10" : i === 1 ? "md:-mr-[50px] -mb-16 md:mb-0 rotate-0 md:-rotate-6 z-20" : "rotate-3 md:rotate-0 z-30"}`} style={{ background: `linear-gradient(rgba(255,255,255,${0.05 + i * 0.025}), transparent)`, border: "1px solid rgba(255,255,255,0.05)", boxShadow: "0 25px 25px rgba(0,0,0,0.5)", backdropFilter: "blur(10px)" }}>
+                  <div className="absolute inset-4 rounded-xl text-white shadow-2xl ring-1 ring-white/10 overflow-hidden flex flex-col" style={{ background: `#${["1a1a1a", "1f1f1f", "252525"][i]}` }}>
+                    <div className="p-6 flex-1 flex flex-col">
+                      <div className="inline-flex items-center justify-center h-8 w-8 rounded-lg bg-white/5 ring-1 ring-white/10 mb-4">
+                        <Icon icon="solar:quote-right-bold" className="text-base text-gray-400" />
+                      </div>
+                      <p className="text-sm leading-relaxed text-gray-300 mb-4 flex-1">&ldquo;{t.text}&rdquo;</p>
+                      <div className="pt-4 border-t border-white/10 flex items-center justify-between mt-auto">
+                        <div className="flex items-center gap-3">
+                          <img src={t.img} alt={t.name} className="h-8 w-8 rounded-full object-cover" />
+                          <div>
+                            <div className="text-xs font-semibold text-white">{t.name}</div>
+                            <div className="text-[10px] text-gray-400 uppercase tracking-widest mt-0.5">{t.role}</div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Icon icon="solar:star-bold" className="text-amber-400" />
+                          <span className="text-xs font-semibold">5.0</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* FAQ */}
+        <section className="py-32 px-6 border-t border-black/5" style={{ background: "rgba(255,255,255,0.5)" }} id="faq">
+          <div className="max-w-3xl mx-auto">
+            <h2 className="text-4xl md:text-5xl tracking-tight mb-16 text-center" style={{ fontFamily: "'Syncopate', sans-serif" }}>Preguntas Frecuentes</h2>
+            <div className="space-y-4">
+              {faqItems.map((item) => (
+                <details key={item.q} className="group bg-white/60 backdrop-blur-xl border border-black/5 rounded-2xl p-6 cursor-pointer hover:bg-white transition-colors duration-300 shadow-sm">
+                  <summary className="font-medium text-base md:text-lg flex justify-between items-center text-black list-none [&::-webkit-details-marker]:hidden">
+                    {item.q}
+                    <Icon icon="solar:alt-arrow-down-linear" className="group-open:rotate-180 transition-transform text-xl opacity-50" />
+                  </summary>
+                  <p className="mt-4 text-gray-600 text-sm font-normal leading-relaxed">{item.a}</p>
+                </details>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* CTA */}
+        <section className="py-40 text-center flex flex-col items-center justify-center relative z-10 border-t border-black/5" style={{ background: "linear-gradient(to bottom, rgba(255,255,255,0.5), #E3E1DC)" }}>
+          <h2 className="text-4xl md:text-6xl tracking-tight leading-tight mb-8" style={{ fontFamily: "'Syncopate', sans-serif" }}>
+            Empieza a vender mas.<br /><span style={{ color: "#374336" }}>Hoy.</span>
           </h2>
-          <p className="text-base mb-8 max-w-lg mx-auto" style={{ color: "rgba(255,255,255,0.6)" }}>
+          <div className="max-w-xl text-gray-600 font-normal mb-12 leading-relaxed text-lg px-6">
             Sin tarjeta de credito. Sin instalaciones. Abre, registrate y empieza a gestionar tu negocio inmobiliario desde el telefono.
-          </p>
-          <Link href="/sign-up" className="inline-flex items-center gap-2 text-base font-semibold px-8 py-4 rounded-full shadow-lg hover:opacity-90 transition-all" style={{ background: "#fff", color: "#0A2B1D" }}>
+          </div>
+          <Link href="/sign-up" className="px-10 py-5 rounded-full text-xs font-semibold uppercase tracking-widest hover:bg-black/80 hover:-translate-y-1 transition-all duration-300 shadow-2xl shadow-black/20" style={{ background: "#121212", color: "#fff" }}>
             Crear Cuenta Gratis
-            <ArrowUpRight className="h-4 w-4" />
           </Link>
-        </div>
-      </section>
+        </section>
+      </div>
 
-      {/* Footer */}
-      <footer className="w-full max-w-[1440px] mx-auto px-6 md:px-16 py-12">
-        <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="flex items-center gap-2 font-bold text-lg" style={{ color: "#0A2B1D" }}>
-            <Building2 className="h-5 w-5" />
-            Propi
+      {/* Footer (fixed behind) */}
+      <footer className="footer-sticky fixed bottom-0 left-0 w-full h-screen z-[1] flex flex-col justify-center items-center" style={{ background: "#111", color: "#fff" }}>
+        <img src="https://hoirqrkdgbmvpwutwuwj.supabase.co/storage/v1/object/public/assets/assets/1c6b6980-54e4-4d8c-9ff6-e09b844d7b01_3840w.webp" className="absolute inset-0 w-full h-full object-cover opacity-10 pointer-events-none" alt="" />
+        <div className="footer-content relative z-10 text-center">
+          <div className="text-xs uppercase tracking-[0.3em] mb-4 text-gray-400 font-normal">Revoluciona tus ventas</div>
+          <Link href="/" className="block hover:text-gray-400 transition-colors" style={{ fontFamily: "'Syncopate', sans-serif", fontSize: "min(10vw, 8vw)", letterSpacing: "-0.05em", lineHeight: 1 }}>
+            PROPI
+          </Link>
+          <div className="flex flex-wrap justify-center gap-6 md:gap-10 mt-12 text-xs uppercase tracking-widest text-gray-400 font-medium">
+            <a href="#funciones" className="hover:text-white transition-colors">Funciones</a>
+            <a href="#app" className="hover:text-white transition-colors">App Movil</a>
+            <a href="#integraciones" className="hover:text-white transition-colors">Integraciones</a>
+            <a href="#faq" className="hover:text-white transition-colors">FAQ</a>
           </div>
-          <div className="flex items-center gap-6 text-sm" style={{ color: "#6B7280" }}>
-            <a href="#features" className="hover:text-gray-900 transition-colors">Funciones</a>
-            <a href="#pwa" className="hover:text-gray-900 transition-colors">App Movil</a>
-            <a href="#integraciones" className="hover:text-gray-900 transition-colors">Integraciones</a>
-            <a href="#faq" className="hover:text-gray-900 transition-colors">FAQ</a>
-          </div>
-          <div className="text-xs" style={{ color: "#9ca3af" }}>
+          <div className="mt-24 text-xs text-gray-600 uppercase tracking-widest">
             2026 Propi. Hecho en Venezuela.
           </div>
         </div>
