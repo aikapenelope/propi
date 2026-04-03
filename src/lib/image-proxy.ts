@@ -8,5 +8,5 @@
 export function getPublicImageUrl(key: string): string {
   const baseUrl =
     process.env.NEXT_PUBLIC_APP_URL || "https://propi.aikalabs.cc";
-  return `${baseUrl}/api/images/${encodeURIComponent(key)}`;
+  return `${baseUrl}/api/images/${key}`;
 }
