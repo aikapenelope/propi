@@ -8,8 +8,11 @@ import {
   ExternalLink,
   ShoppingBag,
   Globe,
+  Loader2,
+  Zap,
 } from "lucide-react";
 import { updatePropertyLinks } from "@/server/actions/properties";
+import { publishPropertyToWasi } from "@/server/actions/wasi-publish";
 
 interface PublishSectionProps {
   propertyId: string;
@@ -27,6 +30,8 @@ interface PublishSectionProps {
   state: string | null;
   address: string | null;
   externalLinks: string[];
+  hasWasiToken: boolean;
+  wasiId?: string;
 }
 
 export function PublishSection(props: PublishSectionProps) {
@@ -142,19 +147,31 @@ export function PublishSection(props: PublishSectionProps) {
       {/* Portal buttons */}
       <div className="mb-5">
         <span className="text-xs text-muted-foreground block mb-2">
-          Abrir portal para publicar
+          Publicar en portales
         </span>
         <div className="flex flex-wrap gap-2">
-          <a
-            href="https://wasi.co/login"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-xs font-medium text-foreground hover:bg-muted transition-colors"
-          >
-            <ShoppingBag className="h-3.5 w-3.5 text-orange-500" />
-            Wasi
-            <ExternalLink className="h-3 w-3 opacity-40" />
-          </a>
+          {/* Wasi: auto-publish if token configured */}
+          {props.hasWasiToken ? (
+            props.wasiId ? (
+              <span className="inline-flex items-center gap-1.5 rounded-lg bg-green-500/10 border border-green-500/20 px-3 py-2 text-xs font-medium text-green-400">
+                <Check className="h-3.5 w-3.5" />
+                Wasi #{props.wasiId}
+              </span>
+            ) : (
+              <WasiPublishButton propertyId={props.propertyId} />
+            )
+          ) : (
+            <a
+              href="https://wasi.co/login"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-xs font-medium text-foreground hover:bg-muted transition-colors"
+            >
+              <ShoppingBag className="h-3.5 w-3.5 text-orange-500" />
+              Wasi (manual)
+              <ExternalLink className="h-3 w-3 opacity-40" />
+            </a>
+          )}
           <a
             href="https://www.mercadolibre.com.ve/publicar"
             target="_blank"
@@ -210,6 +227,49 @@ export function PublishSection(props: PublishSectionProps) {
           )}
         </button>
       </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Wasi auto-publish button (only shown when token is configured)
+// ---------------------------------------------------------------------------
+
+function WasiPublishButton({ propertyId }: { propertyId: string }) {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
+
+  async function handlePublish() {
+    setLoading(true);
+    setError(null);
+    try {
+      await publishPropertyToWasi(propertyId);
+      router.refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error al publicar");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="inline-flex flex-col gap-1">
+      <button
+        onClick={handlePublish}
+        disabled={loading}
+        className="inline-flex items-center gap-1.5 rounded-lg bg-orange-500 px-3 py-2 text-xs font-medium text-white hover:bg-orange-600 transition-colors disabled:opacity-50"
+      >
+        {loading ? (
+          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+        ) : (
+          <Zap className="h-3.5 w-3.5" />
+        )}
+        {loading ? "Publicando..." : "Publicar en Wasi"}
+      </button>
+      {error && (
+        <span className="text-[10px] text-red-400">{error}</span>
+      )}
     </div>
   );
 }

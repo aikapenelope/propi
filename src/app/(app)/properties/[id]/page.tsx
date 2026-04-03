@@ -11,6 +11,7 @@ import {
   Calendar,
 } from "lucide-react";
 import { getProperty, getImageUrl } from "@/server/actions/properties";
+import { getSocialAccount } from "@/server/actions/social-accounts";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { DeletePropertyButton } from "@/components/properties/delete-property-button";
 import { PropertyImageUpload } from "@/components/properties/property-image-upload";
@@ -66,17 +67,20 @@ export default async function PropertyDetailPage({
     notFound();
   }
 
-  // Resolve presigned URLs for images
-  const imagesWithUrls = await Promise.all(
-    property.images.map(async (img) => {
-      try {
-        const url = await getImageUrl(img.key);
-        return { ...img, url };
-      } catch {
-        return { ...img, url: undefined };
-      }
-    }),
-  );
+  // Resolve image URLs and check Wasi connection
+  const [imagesWithUrls, wasiAccount] = await Promise.all([
+    Promise.all(
+      property.images.map(async (img) => {
+        try {
+          const url = await getImageUrl(img.key);
+          return { ...img, url };
+        } catch {
+          return { ...img, url: undefined };
+        }
+      }),
+    ),
+    getSocialAccount("wasi"),
+  ]);
 
   return (
     <div className="p-4 md:p-6">
@@ -273,6 +277,8 @@ export default async function PropertyDetailPage({
           state={property.state}
           address={property.address}
           externalLinks={(property.externalLinks as string[] | null) || []}
+          hasWasiToken={!!wasiAccount}
+          wasiId={(property.externalIds as Record<string, string> | null)?.wasi}
         />
       </div>
     </div>
