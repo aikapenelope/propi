@@ -2,7 +2,7 @@
 
 import { db } from "@/lib/db";
 import { documents } from "@/server/schema";
-import { eq, desc } from "drizzle-orm";
+import { eq, and, desc } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import {
   PutObjectCommand,
@@ -11,13 +11,17 @@ import {
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { s3, DOCS_BUCKET } from "@/lib/s3";
+import { requireUserId } from "@/lib/auth-helper";
 
 // ---------------------------------------------------------------------------
 // Queries
 // ---------------------------------------------------------------------------
 
 export async function getDocuments() {
+  const userId = await requireUserId();
+
   return db.query.documents.findMany({
+    where: eq(documents.userId, userId),
     with: {
       contact: true,
       property: true,
@@ -34,7 +38,8 @@ export async function getDocumentUploadUrl(
   filename: string,
   contentType: string,
 ) {
-  const key = `documents/${Date.now()}-${filename}`;
+  const userId = await requireUserId();
+  const key = `${userId}/documents/${Date.now()}-${filename}`;
 
   const command = new PutObjectCommand({
     Bucket: DOCS_BUCKET,
@@ -69,6 +74,8 @@ export async function createDocument(data: {
   contactId?: string;
   propertyId?: string;
 }) {
+  const userId = await requireUserId();
+
   const [doc] = await db
     .insert(documents)
     .values({
@@ -80,6 +87,7 @@ export async function createDocument(data: {
       mimeType: data.mimeType ?? null,
       contactId: data.contactId || null,
       propertyId: data.propertyId || null,
+      userId,
     })
     .returning();
 
@@ -88,6 +96,8 @@ export async function createDocument(data: {
 }
 
 export async function deleteDocument(id: string, key: string) {
+  const userId = await requireUserId();
+
   await s3.send(
     new DeleteObjectCommand({
       Bucket: DOCS_BUCKET,
@@ -95,6 +105,8 @@ export async function deleteDocument(id: string, key: string) {
     }),
   );
 
-  await db.delete(documents).where(eq(documents.id, id));
+  await db
+    .delete(documents)
+    .where(and(eq(documents.id, id), eq(documents.userId, userId)));
   revalidatePath("/documents");
 }
