@@ -194,6 +194,27 @@ export default async function PublicPropertyPage(
               <div className="text-center text-xs opacity-40 mt-4">
                 Publicado en Propi
               </div>
+
+              {/* External portal links */}
+              {(() => {
+                const links = (property.externalLinks as string[] | null) || [];
+                return links.length > 0 ? (
+                  <div className="mt-4 pt-4 border-t border-white/10 space-y-2">
+                    <div className="text-xs uppercase tracking-widest opacity-60 mb-2">Ver en</div>
+                    {links.map((link, i) => (
+                      <a
+                        key={i}
+                        href={link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block text-xs text-center py-2 rounded-lg border border-white/10 hover:bg-white/5 transition-colors truncate px-3"
+                      >
+                        {new URL(link).hostname.replace("www.", "")}
+                      </a>
+                    ))}
+                  </div>
+                ) : null;
+              })()}
             </div>
           </div>
         </div>

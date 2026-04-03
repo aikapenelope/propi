@@ -61,6 +61,7 @@ interface PropertyFormProps {
     country: string | null;
     latitude: string | null;
     longitude: string | null;
+    externalLinks?: unknown;
   };
   selectedTagIds?: string[];
   availableTags: Tag[];
@@ -99,6 +100,11 @@ export function PropertyForm({
       state: (fd.get("state") as string) || undefined,
       zipCode: (fd.get("zipCode") as string) || undefined,
       country: (fd.get("country") as string) || undefined,
+      externalLinks: [
+        (fd.get("externalLink1") as string) || "",
+        (fd.get("externalLink2") as string) || "",
+        (fd.get("externalLink3") as string) || "",
+      ].filter(Boolean),
       tagIds,
     };
 
@@ -273,6 +279,27 @@ export function PropertyForm({
         selectedIds={tagIds}
         onToggle={toggleTag}
       />
+
+      {/* External Links */}
+      <div>
+        <label className="block text-sm font-medium text-foreground mb-2">Links de publicacion (opcional)</label>
+        <p className="text-xs text-muted-foreground mb-3">Links de tu propiedad en portales externos (Wasi, MercadoLibre, etc.)</p>
+        <div className="space-y-2">
+          {[1, 2, 3].map((i) => {
+            const links = (property?.externalLinks as string[] | null) || [];
+            return (
+              <input
+                key={i}
+                name={`externalLink${i}`}
+                type="url"
+                placeholder={i === 1 ? "https://wasi.co/..." : i === 2 ? "https://mercadolibre.com.ve/..." : "https://..."}
+                defaultValue={links[i - 1] || ""}
+                className={inputClass}
+              />
+            );
+          })}
+        </div>
+      </div>
 
       {/* Actions */}
       <div className="flex gap-3">
