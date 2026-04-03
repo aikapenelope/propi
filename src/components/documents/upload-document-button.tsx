@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Upload } from "lucide-react";
 import {
-  getDocumentUploadUrl,
+  getDocumentUploadKey,
   createDocument,
 } from "@/server/actions/documents";
 import { getContacts } from "@/server/actions/contacts";
@@ -51,13 +51,23 @@ export function UploadDocumentButton() {
     if (!file) return;
     setUploading(true);
     try {
-      const { url, key } = await getDocumentUploadUrl(file.name, file.type);
+      const { key } = await getDocumentUploadKey(file.name);
 
-      await fetch(url, {
-        method: "PUT",
-        body: file,
-        headers: { "Content-Type": file.type },
+      // Upload via server-side API route (MinIO is on private network)
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("key", key);
+      formData.append("bucket", "docs");
+
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
       });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "Upload failed");
+      }
 
       await createDocument({
         name: file.name,

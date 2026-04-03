@@ -3,7 +3,7 @@
 import { useState, useRef } from "react";
 import { Upload, X, ImageIcon } from "lucide-react";
 import {
-  getUploadUrl,
+  getUploadKey,
   addPropertyImage,
   deletePropertyImage,
 } from "@/server/actions/properties";
@@ -34,19 +34,30 @@ export function PropertyImageUpload({
 
     setUploading(true);
     try {
-      const { url, key } = await getUploadUrl(
-        propertyId,
-        file.name,
-        file.type,
-      );
+      // 1. Get the key from server (includes userId prefix)
+      const { key } = await getUploadKey(propertyId, file.name);
 
-      await fetch(url, {
-        method: "PUT",
-        body: file,
-        headers: { "Content-Type": file.type },
+      // 2. Upload file to server-side API route (which forwards to MinIO)
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("key", key);
+      formData.append("bucket", "media");
+
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
       });
 
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "Upload failed");
+      }
+
+      // 3. Save image record in DB
       await addPropertyImage(propertyId, key, file.name, images.length === 0);
+    } catch (err) {
+      console.error("Upload error:", err);
+      alert(err instanceof Error ? err.message : "Error al subir imagen");
     } finally {
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = "";

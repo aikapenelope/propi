@@ -4,7 +4,7 @@ import { db } from "@/lib/db";
 import { properties, propertyTags, propertyImages } from "@/server/schema";
 import { eq, ilike, or, desc, and, gte, lte, type SQL } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
-import { PutObjectCommand, DeleteObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
+import { DeleteObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { s3, MEDIA_BUCKET } from "@/lib/s3";
 import { requireUserId } from "@/lib/auth-helper";
@@ -240,24 +240,15 @@ export async function deleteProperty(id: string) {
 // Image upload (presigned URL for client-side upload to MinIO)
 // ---------------------------------------------------------------------------
 
-export async function getUploadUrl(
+/** Generate a MinIO key for a property image upload. */
+export async function getUploadKey(
   propertyId: string,
   filename: string,
-  contentType: string,
 ) {
   const userId = await requireUserId();
   await checkStorageQuota(userId);
   const key = `${userId}/properties/${propertyId}/${Date.now()}-${filename}`;
-
-  const command = new PutObjectCommand({
-    Bucket: MEDIA_BUCKET,
-    Key: key,
-    ContentType: contentType,
-  });
-
-  const url = await getSignedUrl(s3, command, { expiresIn: 600 });
-
-  return { url, key };
+  return { key };
 }
 
 export async function addPropertyImage(
