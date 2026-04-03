@@ -26,6 +26,7 @@ interface WasiPropertyData {
   area: string;
   address: string;
   id_country: number;
+  id_property_condition: number;
   observations: string;
 }
 
@@ -147,6 +148,7 @@ export async function publishToWasi(property: {
     area: property.area || "0",
     address: [property.address, property.city].filter(Boolean).join(", "),
     id_country: 4, // Venezuela
+    id_property_condition: 2, // Usado (1=Nuevo, 2=Usado, 3=En construccion)
     observations: property.description || "",
   };
 

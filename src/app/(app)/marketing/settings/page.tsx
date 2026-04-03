@@ -2,7 +2,6 @@ import { Instagram, Facebook, MessageCircle, Mail, ShoppingBag, Wallet, ChevronR
 import { getAllSocialAccounts } from "@/server/actions/social-accounts";
 import { formatDate } from "@/lib/utils";
 import { SocialAccountForm } from "@/components/marketing/social-account-form";
-import { MeliConnectButton } from "@/components/marketing/meli-connect-button";
 import { WasiConfigForm } from "@/components/marketing/wasi-config-form";
 
 export const dynamic = "force-dynamic";
@@ -10,19 +9,11 @@ export const dynamic = "force-dynamic";
 export default async function MarketingSettingsPage(props: {
   searchParams: Promise<{ ml_success?: string; ml_error?: string }>;
 }) {
-  const searchParams = await props.searchParams;
   const accounts = await getAllSocialAccounts();
   const igAccount = accounts.find((a) => a.platform === "instagram");
   const fbAccount = accounts.find((a) => a.platform === "facebook");
   const waAccount = accounts.find((a) => a.platform === "whatsapp");
-  const mlAccount = accounts.find((a) => a.platform === "mercadolibre");
   const wasiAccount = accounts.find((a) => a.platform === "wasi");
-
-  const mlAppId = process.env.ML_APP_ID;
-  const mlRedirectUri = `${process.env.NEXT_PUBLIC_APP_URL || "https://propi.aikalabs.cc"}/api/auth/mercadolibre/callback`;
-  const mlAuthBaseUrl = mlAppId
-    ? `https://auth.mercadolibre.com.ve/authorization?response_type=code&client_id=${mlAppId}&redirect_uri=${encodeURIComponent(mlRedirectUri)}`
-    : null;
 
   return (
     <div className="p-4 md:p-6">
@@ -87,7 +78,7 @@ export default async function MarketingSettingsPage(props: {
           <ChevronRight className="h-4 w-4 text-muted-foreground/40" />
         </a>
 
-        {/* MercadoLibre */}
+        {/* MercadoLibre (info only - no OAuth) */}
         <div className="rounded-lg border border-border p-4">
           <div className="mb-4 flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-yellow-500/10">
@@ -96,37 +87,25 @@ export default async function MarketingSettingsPage(props: {
             <div>
               <h2 className="font-semibold text-foreground">MercadoLibre</h2>
               <p className="text-xs text-muted-foreground">
-                {mlAccount
-                  ? `Conectado: ${mlAccount.accountName || mlAccount.platformAccountId}`
-                  : "No conectado"}
+                Analisis de mercado via Propi Magic
               </p>
             </div>
-            {mlAccount?.tokenExpiresAt && (
-              <span className="ml-auto text-xs text-muted-foreground">
-                Token expira: {formatDate(mlAccount.tokenExpiresAt)}
-              </span>
-            )}
           </div>
-
-          {searchParams.ml_success && (
-            <div className="mb-3 rounded-lg bg-green-50 p-3 text-sm text-green-700">
-              MercadoLibre conectado exitosamente.
-            </div>
-          )}
-          {searchParams.ml_error && (
-            <div className="mb-3 rounded-lg bg-red-50 p-3 text-sm text-red-600">
-              Error al conectar MercadoLibre: {searchParams.ml_error === "auth_denied" ? "Autorizacion denegada" : "Error en el intercambio de token"}
-            </div>
-          )}
-
-          <MeliConnectButton
-            authBaseUrl={mlAuthBaseUrl}
-            isConnected={!!mlAccount}
-          />
-          <p className="mt-3 text-xs text-muted-foreground">
-            Necesario para el Analisis de Mercado. Conecta tu cuenta de
-            MercadoLibre Venezuela para buscar propiedades similares.
-          </p>
+          <div className="rounded-lg bg-muted p-3 text-sm text-muted-foreground">
+            <p className="text-xs">
+              MercadoLibre se usa para inteligencia de mercado (Propi Magic).
+              Para publicar propiedades, hazlo directamente en{" "}
+              <a
+                href="https://www.mercadolibre.com.ve/publicar"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary hover:underline"
+              >
+                mercadolibre.com.ve
+              </a>{" "}
+              y pega el link en la propiedad.
+            </p>
+          </div>
         </div>
 
         {/* Wasi */}
