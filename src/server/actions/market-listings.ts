@@ -114,64 +114,11 @@ export async function getMarketKPIs(query: ParsedQuery) {
 // ---------------------------------------------------------------------------
 
 /** Total listings in DB */
-export async function getMarketTotalListings() {
-  const [result] = await db
-    .select({ total: count() })
-    .from(marketListings);
-  return result?.total ?? 0;
-}
 
 /** Listings by property type */
-export async function getMarketByType() {
-  return db
-    .select({
-      propertyType: marketListings.propertyType,
-      count: count(),
-    })
-    .from(marketListings)
-    .groupBy(marketListings.propertyType)
-    .orderBy(desc(count()));
-}
 
 /** Listings by operation (sale vs rent) */
-export async function getMarketByOperation() {
-  return db
-    .select({
-      operation: marketListings.operation,
-      count: count(),
-    })
-    .from(marketListings)
-    .groupBy(marketListings.operation);
-}
 
 /** Top 10 neighborhoods by avg price/m2 */
-export async function getTopNeighborhoods(limit = 10) {
-  return db
-    .select({
-      neighborhood: marketListings.neighborhood,
-      avgPriceM2: sql<number>`AVG(CAST(${marketListings.price} AS NUMERIC) / NULLIF(CAST(${marketListings.areaM2} AS NUMERIC), 0))`,
-      count: count(),
-    })
-    .from(marketListings)
-    .where(
-      and(
-        sql`CAST(${marketListings.areaM2} AS NUMERIC) > 0`,
-        sql`${marketListings.neighborhood} IS NOT NULL`,
-        sql`${marketListings.neighborhood} != ''`,
-      ),
-    )
-    .groupBy(marketListings.neighborhood)
-    .having(sql`COUNT(*) >= 3`)
-    .orderBy(desc(sql`AVG(CAST(${marketListings.price} AS NUMERIC) / NULLIF(CAST(${marketListings.areaM2} AS NUMERIC), 0))`))
-    .limit(limit);
-}
 
 /** New listings this week */
-export async function getNewListingsThisWeek() {
-  const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-  const [result] = await db
-    .select({ total: count() })
-    .from(marketListings)
-    .where(gte(marketListings.createdAt, weekAgo));
-  return result?.total ?? 0;
-}
