@@ -19,6 +19,7 @@ import {
   HelpCircle,
   AlertTriangle,
 } from "lucide-react";
+import { UnreadBadge } from "./unread-badge";
 import { cn } from "@/lib/utils";
 
 const navItems = [
@@ -67,7 +68,7 @@ function NavLink({ href, label, icon: Icon, collapsed, pathname }: { href: strin
   );
 }
 
-function SmallNavLink({ href, label, icon: Icon, collapsed, pathname }: { href: string; label: string; icon: React.ComponentType<{ className?: string }>; collapsed: boolean; pathname: string }) {
+function SmallNavLink({ href, label, icon: Icon, collapsed, pathname, badge }: { href: string; label: string; icon: React.ComponentType<{ className?: string }>; collapsed: boolean; pathname: string; badge?: React.ReactNode }) {
   const isActive = pathname === href || pathname.startsWith(href + "/");
   return (
     <Link
@@ -83,6 +84,7 @@ function SmallNavLink({ href, label, icon: Icon, collapsed, pathname }: { href: 
     >
       <Icon className="h-[18px] w-[18px] shrink-0" />
       {!collapsed && <span>{label}</span>}
+      {!collapsed && badge}
     </Link>
   );
 }
@@ -141,7 +143,13 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
         ))}
 
         {marketingItems.map((item) => (
-          <SmallNavLink key={item.href} {...item} collapsed={collapsed} pathname={pathname} />
+          <SmallNavLink
+            key={item.href}
+            {...item}
+            collapsed={collapsed}
+            pathname={pathname}
+            badge={item.href === "/marketing/inbox" ? <UnreadBadge /> : undefined}
+          />
         ))}
       </nav>
 
