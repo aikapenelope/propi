@@ -72,7 +72,6 @@ export async function GET(
           ? String(response.ContentLength)
           : "",
         "Cache-Control": "public, max-age=3600",
-        "Access-Control-Allow-Origin": "*",
       },
     });
   } catch (err) {

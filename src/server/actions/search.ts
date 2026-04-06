@@ -3,13 +3,14 @@
 import { db } from "@/lib/db";
 import { contacts, properties, appointments } from "@/server/schema";
 import { eq, and, ilike, or, desc } from "drizzle-orm";
+import { sanitizeLike } from "@/lib/sanitize";
 import { requireUserId } from "@/lib/auth-helper";
 
 export async function globalSearch(query: string) {
   if (!query || query.length < 2) return { contacts: [], properties: [], appointments: [] };
 
   const userId = await requireUserId();
-  const pattern = `%${query}%`;
+  const pattern = `%${sanitizeLike(query)}%`;
 
   const [matchedContacts, matchedProperties, matchedAppointments] =
     await Promise.all([

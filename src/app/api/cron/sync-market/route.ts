@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { socialAccounts } from "@/server/schema";
 import { eq } from "drizzle-orm";
-import { getMeliToken } from "@/lib/mercadolibre";
 import { marketSyncQueue } from "@/lib/queue";
 
 export const dynamic = "force-dynamic";
@@ -50,13 +49,10 @@ export async function GET(request: Request) {
 
   for (const account of mlAccounts) {
     try {
-      // Get fresh token for each user
-      const token = await getMeliToken(account.userId);
-
-      // Enqueue job (returns immediately, worker processes it)
+      // Enqueue job with userId only (worker fetches token at processing time)
       const job = await marketSyncQueue.add(
         "sync",
-        { userId: account.userId, token },
+        { userId: account.userId },
         { jobId: `sync-${account.userId}-${Date.now()}` },
       );
 

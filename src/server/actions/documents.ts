@@ -87,6 +87,12 @@ export async function createDocument(data: {
 export async function deleteDocument(id: string, key: string) {
   const userId = await requireUserId();
 
+  // Verify ownership BEFORE deleting from S3
+  const doc = await db.query.documents.findFirst({
+    where: and(eq(documents.id, id), eq(documents.userId, userId)),
+  });
+  if (!doc) throw new Error("Document not found");
+
   await s3.send(
     new DeleteObjectCommand({
       Bucket: DOCS_BUCKET,
@@ -96,6 +102,6 @@ export async function deleteDocument(id: string, key: string) {
 
   await db
     .delete(documents)
-    .where(and(eq(documents.id, id), eq(documents.userId, userId)));
+    .where(eq(documents.id, id));
   revalidatePath("/documents");
 }
