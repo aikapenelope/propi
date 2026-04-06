@@ -172,6 +172,9 @@ export function PublishSection(props: PublishSectionProps) {
             </a>
           )}
         </div>
+        <p className="text-[10px] text-muted-foreground mt-2">
+          Se publican las 4 fotos de Propi. Para agregar mas fotos, edita la propiedad directamente en el portal.
+        </p>
       </div>
 
       {/* Link inputs */}

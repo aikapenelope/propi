@@ -32,8 +32,8 @@ const navItems = [
 ];
 
 const intelligenceItems = [
-  { href: "/market-analysis", label: "Propi Magic", icon: Sparkles },
-  { href: "/market-analysis/kpis", label: "KPIs Mercado", icon: BarChart3 },
+  { href: "/market-analysis", label: "Propi Magic", icon: Sparkles, exact: true },
+  { href: "/market-analysis/kpis", label: "KPIs Mercado", icon: BarChart3, exact: true },
 ];
 
 const marketingItems = [
@@ -70,8 +70,8 @@ function NavLink({ href, label, icon: Icon, collapsed, pathname }: { href: strin
   );
 }
 
-function SmallNavLink({ href, label, icon: Icon, collapsed, pathname, badge }: { href: string; label: string; icon: React.ComponentType<{ className?: string }>; collapsed: boolean; pathname: string; badge?: React.ReactNode }) {
-  const isActive = pathname === href || pathname.startsWith(href + "/");
+function SmallNavLink({ href, label, icon: Icon, collapsed, pathname, badge, exact }: { href: string; label: string; icon: React.ComponentType<{ className?: string }>; collapsed: boolean; pathname: string; badge?: React.ReactNode; exact?: boolean }) {
+  const isActive = exact ? pathname === href : (pathname === href || pathname.startsWith(href + "/"));
   return (
     <Link
       href={href}
