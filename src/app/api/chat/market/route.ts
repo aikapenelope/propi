@@ -6,6 +6,7 @@ import {
   searchMarketListings,
   getMarketKPIs,
 } from "@/server/actions/market-listings";
+import { createMagicSearch } from "@/server/actions/magic-searches";
 import { auth } from "@clerk/nextjs/server";
 
 export const dynamic = "force-dynamic";
@@ -73,7 +74,26 @@ export async function POST(req: Request) {
     })),
   );
 
-  // 5. Stream Groq summary (text only, no numbers calculation)
+  // 5. Save search to DB for persistence
+  const zoneLabel = [
+    parsed.propertyType,
+    parsed.neighborhood || parsed.city || "Venezuela",
+  ]
+    .filter(Boolean)
+    .join(" en ");
+
+  const savedSearch = await createMagicSearch({
+    userId,
+    query: userQuery,
+    params: parsed as unknown as Record<string, unknown>,
+    kpis: kpis as unknown as Record<string, unknown>,
+    messages: [{ role: "user", content: userQuery }],
+    totalResults: kpis.total,
+    dedupResults: 0, // Updated later when zone page loads
+    label: zoneLabel,
+  });
+
+  // 6. Stream Groq summary (text only, no numbers calculation)
   const result = streamText({
     model: groq("llama-3.3-70b-versatile"),
     system: MARKET_SUMMARY_PROMPT,
@@ -106,6 +126,7 @@ export async function POST(req: Request) {
       "X-KPIs": Buffer.from(JSON.stringify(kpis)).toString("base64"),
       "X-Total": String(kpis.total),
       "X-Query": Buffer.from(JSON.stringify(parsed)).toString("base64"),
+      "X-Search-Id": savedSearch.id,
     },
   });
 }

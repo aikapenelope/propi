@@ -5,13 +5,14 @@ import { Sparkles, Send, Loader2, MapPin, ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { ListingCards } from "./listing-card";
 import { KPIBar } from "./kpi-bar";
+import { updateSearchMessages } from "@/server/actions/magic-searches";
 
 interface ChatMessage {
   role: "user" | "assistant";
   content: string;
   listings?: MarketListingData[];
   kpis?: KPIData;
-  zoneUrl?: string;
+  searchId?: string;
 }
 
 interface MarketListingData {
@@ -75,10 +76,10 @@ export function PropiMagicChat() {
         throw new Error(err.error || `Error ${res.status}`);
       }
 
-      // Extract listings and KPIs from headers
+      // Extract listings, KPIs, and search ID from headers
       let listings: MarketListingData[] = [];
       let kpis: KPIData | undefined;
-      let zoneUrl: string | undefined;
+      const searchId = res.headers.get("X-Search-Id") || undefined;
 
       const listingsHeader = res.headers.get("X-Listings");
       if (listingsHeader) {
@@ -94,21 +95,6 @@ export function PropiMagicChat() {
         } catch { /* malformed */ }
       }
 
-      // Build zone URL from parsed query
-      const queryHeader = res.headers.get("X-Query");
-      if (queryHeader) {
-        try {
-          const parsed = JSON.parse(atob(queryHeader));
-          const params = new URLSearchParams();
-          for (const [k, v] of Object.entries(parsed)) {
-            if (v != null && v !== "") params.set(k, String(v));
-          }
-          if (params.toString()) {
-            zoneUrl = `/market-analysis/zone?${params.toString()}`;
-          }
-        } catch { /* malformed */ }
-      }
-
       // Read stream
       const reader = res.body?.getReader();
       if (!reader) throw new Error("No response body");
@@ -119,7 +105,7 @@ export function PropiMagicChat() {
       // Add assistant message placeholder
       setMessages((prev) => [
         ...prev,
-        { role: "assistant", content: "", listings, kpis, zoneUrl },
+        { role: "assistant", content: "", listings, kpis, searchId },
       ]);
 
       while (true) {
@@ -133,9 +119,20 @@ export function PropiMagicChat() {
             content: fullText,
             listings,
             kpis,
+            searchId,
           };
           return updated;
         });
+      }
+
+      // Persist messages to DB
+      if (searchId) {
+        try {
+          await updateSearchMessages(searchId, [
+            { role: "user", content: userMessage },
+            { role: "assistant", content: fullText },
+          ]);
+        } catch { /* non-critical */ }
       }
     } catch (err) {
       setMessages((prev) => [
@@ -214,9 +211,9 @@ export function PropiMagicChat() {
                 )}
 
                 {/* Link to full zone results */}
-                {msg.zoneUrl && (
+                {msg.searchId && (
                   <Link
-                    href={msg.zoneUrl}
+                    href={`/market-analysis/zone?searchId=${msg.searchId}`}
                     className="inline-flex items-center gap-2 rounded-xl border border-primary/20 bg-primary/5 px-4 py-2.5 text-xs font-medium text-primary hover:bg-primary/10 transition-colors"
                   >
                     <MapPin className="h-3.5 w-3.5" />

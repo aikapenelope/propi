@@ -1,32 +1,67 @@
-import { Suspense } from "react";
 import { MapPin, Building2, DollarSign, TrendingUp, Bed, Bath, Car, ExternalLink, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { getZoneListings, getZoneKPIs } from "@/server/actions/zone-search";
+import { getMagicSearch } from "@/server/actions/magic-searches";
+import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
 
 /**
  * Zone results page - shows ALL deduplicated properties for a search.
- * Accessed from Propi Magic chat via "Ver todas las propiedades de esta zona".
- *
- * URL: /market-analysis/zone?neighborhood=Altamira&propertyType=Apartamento&...
+ * Can be accessed via:
+ *   1. /market-analysis/zone?searchId=<uuid> (from saved search)
+ *   2. /market-analysis/zone?neighborhood=Altamira&... (direct query params)
  */
 export default async function ZoneResultsPage(props: {
   searchParams: Promise<Record<string, string | undefined>>;
 }) {
   const sp = await props.searchParams;
 
-  const query = {
-    propertyType: sp.propertyType || undefined,
-    operation: sp.operation || undefined,
-    city: sp.city || undefined,
-    neighborhood: sp.neighborhood || undefined,
-    areaMin: sp.areaMin ? parseInt(sp.areaMin) : undefined,
-    areaMax: sp.areaMax ? parseInt(sp.areaMax) : undefined,
-    priceMin: sp.priceMin ? parseInt(sp.priceMin) : undefined,
-    priceMax: sp.priceMax ? parseInt(sp.priceMax) : undefined,
-    bedrooms: sp.bedrooms ? parseInt(sp.bedrooms) : undefined,
+  // Load from saved search if searchId provided
+  let query: {
+    propertyType?: string;
+    operation?: string;
+    city?: string;
+    neighborhood?: string;
+    areaMin?: number;
+    areaMax?: number;
+    priceMin?: number;
+    priceMax?: number;
+    bedrooms?: number;
   };
+  let savedLabel: string | null = null;
+  let savedDate: Date | null = null;
+
+  if (sp.searchId) {
+    const saved = await getMagicSearch(sp.searchId);
+    if (!saved) redirect("/market-analysis");
+    const p = saved.params as Record<string, unknown>;
+    query = {
+      propertyType: (p.propertyType as string) || undefined,
+      operation: (p.operation as string) || undefined,
+      city: (p.city as string) || undefined,
+      neighborhood: (p.neighborhood as string) || undefined,
+      areaMin: p.areaMin ? Number(p.areaMin) : undefined,
+      areaMax: p.areaMax ? Number(p.areaMax) : undefined,
+      priceMin: p.priceMin ? Number(p.priceMin) : undefined,
+      priceMax: p.priceMax ? Number(p.priceMax) : undefined,
+      bedrooms: p.bedrooms ? Number(p.bedrooms) : undefined,
+    };
+    savedLabel = saved.label;
+    savedDate = saved.createdAt;
+  } else {
+    query = {
+      propertyType: sp.propertyType || undefined,
+      operation: sp.operation || undefined,
+      city: sp.city || undefined,
+      neighborhood: sp.neighborhood || undefined,
+      areaMin: sp.areaMin ? parseInt(sp.areaMin) : undefined,
+      areaMax: sp.areaMax ? parseInt(sp.areaMax) : undefined,
+      priceMin: sp.priceMin ? parseInt(sp.priceMin) : undefined,
+      priceMax: sp.priceMax ? parseInt(sp.priceMax) : undefined,
+      bedrooms: sp.bedrooms ? parseInt(sp.bedrooms) : undefined,
+    };
+  }
 
   const zoneName = query.neighborhood || query.city || "Venezuela";
   const typeLabel = query.propertyType || "Propiedades";
@@ -48,10 +83,11 @@ export default async function ZoneResultsPage(props: {
         </Link>
         <div>
           <h1 className="text-xl font-bold text-foreground">
-            {typeLabel} en {zoneName}
+            {savedLabel || `${typeLabel} en ${zoneName}`}
           </h1>
           <p className="text-xs text-muted-foreground">
-            {listings.length} propiedades (duplicados eliminados) - Datos de MercadoLibre
+            {listings.length} propiedades (duplicados eliminados)
+            {savedDate && ` - Busqueda del ${new Date(savedDate).toLocaleDateString("es")}`}
           </p>
         </div>
       </div>
