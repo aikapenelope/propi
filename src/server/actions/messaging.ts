@@ -113,6 +113,16 @@ export async function sendMessage(conversationId: string, body: string) {
       break;
     }
     case "whatsapp": {
+      // Check 24h session window (Meta rejects free-form text after 24h)
+      const lastInbound = convo.lastInboundAt;
+      if (lastInbound) {
+        const hoursSinceInbound = (Date.now() - new Date(lastInbound).getTime()) / (1000 * 60 * 60);
+        if (hoursSinceInbound > 24) {
+          throw new Error(
+            "La ventana de 24 horas de WhatsApp ha expirado. Solo puedes enviar mensajes de plantilla (template) despues de 24 horas sin respuesta del cliente.",
+          );
+        }
+      }
       const result = await sendWhatsAppText(convo.participantExternalId, body);
       externalId = result.messages[0]?.id;
       break;
@@ -216,6 +226,7 @@ export async function storeInboundMessage(
     .update(conversations)
     .set({
       lastMessageAt: new Date(),
+      lastInboundAt: new Date(),
       unreadCount: sql`${conversations.unreadCount} + 1`,
     })
     .where(eq(conversations.id, conversationId));
@@ -226,6 +237,21 @@ export async function storeInboundMessage(
 // ---------------------------------------------------------------------------
 // Mark conversation as read (reset unread count)
 // ---------------------------------------------------------------------------
+
+/**
+ * Update outbound message status from Meta webhook (delivered, read, failed).
+ * Called from webhook handler, no auth context.
+ */
+export async function updateMessageStatus(externalId: string, status: string) {
+  const validStatuses = ["sent", "delivered", "read", "failed"];
+  const mappedStatus = validStatuses.includes(status) ? status : null;
+  if (!mappedStatus || !externalId) return;
+
+  await db
+    .update(messages)
+    .set({ status: mappedStatus as "sent" | "delivered" | "read" | "failed" })
+    .where(eq(messages.externalId, externalId));
+}
 
 export async function markConversationRead(conversationId: string) {
   const userId = await requireUserId();

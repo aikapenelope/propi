@@ -3,6 +3,7 @@ import { getAllSocialAccounts } from "@/server/actions/social-accounts";
 import { formatDate } from "@/lib/utils";
 import { SocialAccountForm } from "@/components/marketing/social-account-form";
 import { WasiConfigForm } from "@/components/marketing/wasi-config-form";
+import { TokenExpiryWarning } from "@/components/marketing/token-expiry-warning";
 
 export const dynamic = "force-dynamic";
 
@@ -122,8 +123,11 @@ export default async function MarketingSettingsPage(props: {
               </p>
             </div>
             {igAccount?.tokenExpiresAt && (
-              <span className="ml-auto text-xs text-muted-foreground">
-                Token expira: {formatDate(igAccount.tokenExpiresAt)}
+              <span className="ml-auto flex items-center gap-2">
+                <TokenExpiryWarning expiresAt={igAccount.tokenExpiresAt} />
+                <span className="text-xs text-muted-foreground">
+                  Token expira: {formatDate(igAccount.tokenExpiresAt)}
+                </span>
               </span>
             )}
           </div>
@@ -157,8 +161,11 @@ export default async function MarketingSettingsPage(props: {
               </p>
             </div>
             {fbAccount?.tokenExpiresAt && (
-              <span className="ml-auto text-xs text-muted-foreground">
-                Token expira: {formatDate(fbAccount.tokenExpiresAt)}
+              <span className="ml-auto flex items-center gap-2">
+                <TokenExpiryWarning expiresAt={fbAccount.tokenExpiresAt} />
+                <span className="text-xs text-muted-foreground">
+                  Token expira: {formatDate(fbAccount.tokenExpiresAt)}
+                </span>
               </span>
             )}
           </div>
@@ -192,8 +199,11 @@ export default async function MarketingSettingsPage(props: {
               </p>
             </div>
             {waAccount?.tokenExpiresAt && (
-              <span className="ml-auto text-xs text-muted-foreground">
-                Token expira: {formatDate(waAccount.tokenExpiresAt)}
+              <span className="ml-auto flex items-center gap-2">
+                <TokenExpiryWarning expiresAt={waAccount.tokenExpiresAt} />
+                <span className="text-xs text-muted-foreground">
+                  Token expira: {formatDate(waAccount.tokenExpiresAt)}
+                </span>
               </span>
             )}
           </div>

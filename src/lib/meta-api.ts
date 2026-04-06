@@ -50,9 +50,22 @@ export async function graphApiFetch<T>(
 
     if (!res.ok) {
       const err = data as GraphApiError;
-      throw new Error(
-        `Graph API error: ${err.error?.message || res.statusText}`,
-      );
+      const code = err.error?.code;
+      const message = err.error?.message || res.statusText;
+
+      // Handle specific Meta error codes
+      if (code === 190) {
+        throw new Error(
+          "Token de Meta expirado o invalido. Ve a Configuracion para reconectar tu cuenta.",
+        );
+      }
+      if (code === 4) {
+        throw new Error(
+          "Limite de API de Meta alcanzado. Intenta de nuevo en unos minutos.",
+        );
+      }
+
+      throw new Error(`Graph API error: ${message}`);
     }
 
     return data as T;
