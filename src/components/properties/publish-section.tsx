@@ -7,7 +7,6 @@ import {
   Check,
   ExternalLink,
   ShoppingBag,
-  Globe,
   Loader2,
   Zap,
 } from "lucide-react";
@@ -172,16 +171,6 @@ export function PublishSection(props: PublishSectionProps) {
               <ExternalLink className="h-3 w-3 opacity-40" />
             </a>
           )}
-          <a
-            href="https://www.mercadolibre.com.ve/publicar"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-xs font-medium text-foreground hover:bg-muted transition-colors"
-          >
-            <Globe className="h-3.5 w-3.5 text-yellow-500" />
-            MercadoLibre
-            <ExternalLink className="h-3 w-3 opacity-40" />
-          </a>
         </div>
       </div>
 
@@ -205,7 +194,7 @@ export function PublishSection(props: PublishSectionProps) {
                 i === 0
                   ? "https://wasi.co/..."
                   : i === 1
-                    ? "https://mercadolibre.com.ve/..."
+                    ? "https://inmuebles24.com/..."
                     : "https://..."
               }
               className="w-full rounded-lg border border-border bg-background px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-primary"

@@ -181,8 +181,8 @@ const sections: Section[] = [
         a: "Los tokens long-lived de Meta duran 60 dias. Cuando expiren, ve a Configuracion y actualiza el token. Propi te muestra la fecha de expiracion.",
       },
       {
-        q: "Como conectar MercadoLibre?",
-        a: "Ve a Configuracion > MercadoLibre > Conectar. Se abre MercadoLibre para autorizar. El token se renueva automaticamente cada 6 horas (no necesitas hacer nada).",
+        q: "Como funciona MercadoLibre en Propi?",
+        a: "Propi extrae datos de MercadoLibre Venezuela automaticamente para Propi Magic (inteligencia de mercado). No necesitas conectar tu cuenta. Los datos se sincronizan diariamente y se usan para calcular KPIs de precios, tendencias y comparables.",
       },
       {
         q: "Como conectar Wasi?",

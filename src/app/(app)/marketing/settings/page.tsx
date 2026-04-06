@@ -78,36 +78,6 @@ export default async function MarketingSettingsPage(props: {
           <ChevronRight className="h-4 w-4 text-muted-foreground/40" />
         </a>
 
-        {/* MercadoLibre (info only - no OAuth) */}
-        <div className="rounded-lg border border-border p-4">
-          <div className="mb-4 flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-yellow-500/10">
-              <ShoppingBag className="h-5 w-5 text-yellow-600" />
-            </div>
-            <div>
-              <h2 className="font-semibold text-foreground">MercadoLibre</h2>
-              <p className="text-xs text-muted-foreground">
-                Analisis de mercado via Propi Magic
-              </p>
-            </div>
-          </div>
-          <div className="rounded-lg bg-muted p-3 text-sm text-muted-foreground">
-            <p className="text-xs">
-              MercadoLibre se usa para inteligencia de mercado (Propi Magic).
-              Para publicar propiedades, hazlo directamente en{" "}
-              <a
-                href="https://www.mercadolibre.com.ve/publicar"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-primary hover:underline"
-              >
-                mercadolibre.com.ve
-              </a>{" "}
-              y pega el link en la propiedad.
-            </p>
-          </div>
-        </div>
-
         {/* Wasi */}
         <div className="rounded-lg border border-border p-4">
           <div className="mb-4 flex items-center gap-3">
