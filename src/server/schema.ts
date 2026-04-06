@@ -435,6 +435,8 @@ export const conversations = pgTable(
     /** Number of unread inbound messages */
     unreadCount: integer("unread_count").notNull().default(0),
     lastMessageAt: timestamp("last_message_at", { withTimezone: true }),
+    /** Last inbound message timestamp (for WhatsApp 24h window) */
+    lastInboundAt: timestamp("last_inbound_at", { withTimezone: true }),
     userId: text("user_id").notNull(),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()

@@ -146,6 +146,19 @@ async function handleWhatsAppWebhook(
   for (const entry of body.entry) {
     for (const change of entry.changes) {
       const value = change.value;
+
+      // Handle status updates (delivered, read, failed) for outbound messages
+      if (value.statuses && value.statuses.length > 0) {
+        for (const status of value.statuses) {
+          try {
+            const { updateMessageStatus } = await import("@/server/actions/messaging");
+            await updateMessageStatus(status.id, status.status);
+          } catch {
+            // Non-critical, don't block webhook
+          }
+        }
+      }
+
       if (!value.messages) continue;
 
       // Resolve user from phone_number_id
