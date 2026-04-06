@@ -1,9 +1,10 @@
 /**
  * Meta Graph API helper.
- * All calls go through this to centralize error handling and base URL.
+ * All calls go through this to centralize error handling, base URL, and timeouts.
  */
 
 const GRAPH_API_BASE = "https://graph.facebook.com/v21.0";
+const API_TIMEOUT_MS = 15_000; // 15 seconds
 
 export interface GraphApiError {
   error: {
@@ -38,15 +39,29 @@ export async function graphApiFetch<T>(
     fetchOptions.body = JSON.stringify(options.body);
   }
 
-  const res = await fetch(url.toString(), fetchOptions);
-  const data = await res.json();
+  // Timeout: abort after 15 seconds
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), API_TIMEOUT_MS);
+  fetchOptions.signal = controller.signal;
 
-  if (!res.ok) {
-    const err = data as GraphApiError;
-    throw new Error(
-      `Graph API error: ${err.error?.message || res.statusText}`,
-    );
+  try {
+    const res = await fetch(url.toString(), fetchOptions);
+    const data = await res.json();
+
+    if (!res.ok) {
+      const err = data as GraphApiError;
+      throw new Error(
+        `Graph API error: ${err.error?.message || res.statusText}`,
+      );
+    }
+
+    return data as T;
+  } catch (err) {
+    if (err instanceof Error && err.name === "AbortError") {
+      throw new Error(`Graph API timeout after ${API_TIMEOUT_MS}ms: ${path}`);
+    }
+    throw err;
+  } finally {
+    clearTimeout(timeout);
   }
-
-  return data as T;
 }

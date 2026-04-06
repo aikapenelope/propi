@@ -35,6 +35,7 @@ interface WasiPropertyData {
 // ---------------------------------------------------------------------------
 
 const WASI_API = "https://api.wasi.co/v1";
+const WASI_TIMEOUT_MS = 15_000;
 
 /** Map Propi property types to Wasi id_property_type */
 const WASI_TYPE_MAP: Record<string, number> = {
@@ -96,18 +97,31 @@ async function wasiFetch<T>(
 ): Promise<T> {
   const url = `${WASI_API}${path}?id_company=${creds.idCompany}&wasi_token=${creds.wasiToken}`;
 
-  const res = await fetch(url, {
-    method: options?.method || "GET",
-    headers: options?.body ? { "Content-Type": "application/json" } : {},
-    body: options?.body ? JSON.stringify(options.body) : undefined,
-  });
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), WASI_TIMEOUT_MS);
 
-  if (!res.ok) {
-    const err = await res.text().catch(() => "");
-    throw new Error(`Wasi API error ${res.status}: ${err}`);
+  try {
+    const res = await fetch(url, {
+      method: options?.method || "GET",
+      headers: options?.body ? { "Content-Type": "application/json" } : {},
+      body: options?.body ? JSON.stringify(options.body) : undefined,
+      signal: controller.signal,
+    });
+
+    if (!res.ok) {
+      const err = await res.text().catch(() => "");
+      throw new Error(`Wasi API error ${res.status}: ${err}`);
+    }
+
+    return res.json() as Promise<T>;
+  } catch (err) {
+    if (err instanceof Error && err.name === "AbortError") {
+      throw new Error(`Wasi API timeout after ${WASI_TIMEOUT_MS}ms: ${path}`);
+    }
+    throw err;
+  } finally {
+    clearTimeout(timeout);
   }
-
-  return res.json() as Promise<T>;
 }
 
 // ---------------------------------------------------------------------------
