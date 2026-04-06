@@ -13,21 +13,21 @@ const featureCards = [
     num: "01",
     title: "INBOX UNIFICADO",
     tag: "WhatsApp, IG, Facebook",
-    desc: "WhatsApp, Instagram DMs y Facebook Messenger en una sola pantalla. Responde a tus clientes sin cambiar de app.",
+    desc: "Imagina tener todos los mensajes de tus clientes en un solo lugar. Alguien te escribe por WhatsApp preguntando por un apartamento, otro te manda un DM en Instagram, y un tercero te contacta por Facebook. En vez de saltar entre 3 apps, abres Propi y respondes todo desde una sola pantalla. Nunca mas pierdes un lead por no ver un mensaje a tiempo.",
     img: "https://hoirqrkdgbmvpwutwuwj.supabase.co/storage/v1/object/public/assets/assets/0dccab47-16b0-4716-9e1a-b97f124e3031_1600w.webp",
   },
   {
     num: "02",
     title: "PROPI MAGIC (IA)",
     tag: "Inteligencia de Mercado",
-    desc: "Pregunta en español: 'Apartamentos en Altamira de 80m2'. La IA busca en MercadoLibre, analiza precios y te da el resumen.",
+    desc: "Tu cliente te pregunta: 'Cuanto vale un apartamento de 80m2 en Altamira?' En vez de buscar manualmente en MercadoLibre, le escribes eso mismo a Propi Magic. En segundos te da el precio promedio, la mediana, el rango, y un resumen profesional que puedes copiar y enviar. Datos reales, actualizados diariamente, calculados con SQL, no inventados por IA.",
     img: "https://hoirqrkdgbmvpwutwuwj.supabase.co/storage/v1/object/public/assets/assets/952269bf-60f5-48dc-afce-13953bead1eb_1600w.webp",
   },
   {
     num: "03",
     title: "PUBLICA EN PORTALES",
-    tag: "Sincronizacion a 1 click",
-    desc: "1 click para publicar en Wasi. Tus fotos se suben automaticamente. Sincroniza con portales inmobiliarios de Venezuela al instante.",
+    tag: "Wasi con 1 click",
+    desc: "Subiste las fotos, llenaste los datos de la propiedad, y ahora quieres publicarla en Wasi. En vez de abrir Wasi, copiar todo manualmente y subir las fotos de nuevo, tocas un boton en Propi. Los datos se envian automaticamente, las fotos se suben solas, y en segundos tu propiedad esta en linea. Si prefieres hacerlo manual, Propi te genera el texto listo para copiar y pegar.",
     img: "https://hoirqrkdgbmvpwutwuwj.supabase.co/storage/v1/object/public/assets/assets/aa5ed4de-1a7e-4bb7-b0ea-1a4c511663df_1600w.webp",
   },
 ];
@@ -53,7 +53,7 @@ const integrations = [
   { icon: "logos:facebook", title: "Facebook", desc: "Posts en tu pagina, comentarios, insights de visitas y nuevos seguidores de tus listados." },
   { icon: "logos:whatsapp-icon", title: "WhatsApp", desc: "Mensajes y templates via Meta Cloud API. Sin Twilio, sin costos extra por intermediarios." },
   { icon: "wasi", title: "Wasi", desc: "Publica propiedades con 1 click. Las galerias de fotos se suben y redimensionan automaticamente." },
-  { icon: "simple-icons:mercadolibre", title: "MercadoLibre", desc: "Analisis de mercado con IA. Obten precios, tendencias y comparables de tu zona." },
+  { icon: "simple-icons:mercadolibre", title: "MercadoLibre", desc: "Datos de mercado en tiempo real. Precios, tendencias y comparables para Propi Magic. No necesitas cuenta." },
   { icon: "simple-icons:resend", title: "Resend", desc: "Email marketing a segmentos personalizados. Disfruta de 3,000 emails gratis al mes." },
 ];
 
@@ -208,7 +208,6 @@ export default function LandingPage() {
               </p>
               <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 w-full sm:w-auto">
                 <Link href="/sign-up" className="bg-white text-black px-8 py-4 rounded-full text-xs uppercase tracking-widest font-medium hover:bg-gray-200 hover:scale-105 active:scale-95 transition-all w-full sm:w-auto text-center shadow-lg">Crear Cuenta Gratis</Link>
-                <Link href="/preview" className="border border-white/40 bg-black/20 backdrop-blur-md text-white px-8 py-4 rounded-full text-xs uppercase tracking-widest font-medium hover:bg-white/20 hover:border-white transition-all w-full sm:w-auto text-center">Ver Demo</Link>
               </div>
             </div>
           </div>
@@ -436,16 +435,63 @@ export default function LandingPage() {
         </section>
 
         {/* CTA */}
-        <section className="py-40 text-center flex flex-col items-center justify-center relative z-10 border-t border-black/5" style={{ background: "linear-gradient(to bottom, rgba(255,255,255,0.5), #E3E1DC)" }}>
-          <h2 className="text-4xl md:text-6xl tracking-tight leading-tight mb-8" style={{ fontFamily: "'Syncopate', sans-serif" }}>
+        <section className="py-32 text-center flex flex-col items-center justify-center relative z-10 border-t border-black/5" style={{ background: "linear-gradient(to bottom, rgba(255,255,255,0.5), #E3E1DC)" }}>
+          <h2 className="text-4xl md:text-6xl tracking-tight leading-tight mb-4" style={{ fontFamily: "'Syncopate', sans-serif" }}>
             Empieza a vender mas.<br /><span style={{ color: "#374336" }}>Hoy.</span>
           </h2>
-          <div className="max-w-xl text-gray-600 font-normal mb-12 leading-relaxed text-lg px-6">
-            Sin tarjeta de credito. Sin instalaciones. Abre, registrate y empieza a gestionar tu negocio inmobiliario desde el telefono.
+          <p className="text-gray-500 text-sm mb-12 px-6">Pago en bolivares a tasa BCV</p>
+
+          {/* Pricing card */}
+          <div className="w-full max-w-md mx-auto px-6 mb-12">
+            <div className="rounded-3xl p-8 text-left" style={{ background: "#121212", color: "#fff" }}>
+              <div className="text-xs uppercase tracking-widest opacity-50 mb-2">Plan Unico</div>
+              <div className="flex items-baseline gap-2 mb-6">
+                <span className="text-5xl font-bold" style={{ fontFamily: "'Syncopate', sans-serif" }}>$50</span>
+                <span className="text-sm opacity-50">/mes por usuario</span>
+              </div>
+              <div className="h-px bg-white/10 mb-6" />
+              <ul className="space-y-3 text-sm">
+                {[
+                  "Contactos y leads ilimitados",
+                  "Propiedades ilimitadas (4 fotos c/u)",
+                  "Inbox unificado: WhatsApp + Instagram + Facebook",
+                  "Propi Magic: inteligencia de mercado con IA",
+                  "KPIs de mercado: Caracas, Valencia, Maracaibo",
+                  "Publicacion en Wasi con 1 click",
+                  "Calendario y citas vinculadas",
+                  "Documentos y contratos en la nube",
+                  "Email marketing (3,000 emails/mes)",
+                  "Metricas de Instagram y Facebook",
+                  "Pagina publica para compartir propiedades",
+                  "App movil PWA (funciona sin internet)",
+                  "Soporte por WhatsApp",
+                ].map((item) => (
+                  <li key={item} className="flex items-start gap-2">
+                    <span className="text-green-400 mt-0.5">&#10003;</span>
+                    <span className="opacity-80">{item}</span>
+                  </li>
+                ))}
+              </ul>
+              <div className="h-px bg-white/10 my-6" />
+              <a
+                href={`https://wa.me/?text=${encodeURIComponent("Hola, quiero contratar Propi CRM ($50/mes). Mi nombre es: ")}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block w-full text-center py-4 rounded-full text-xs font-semibold uppercase tracking-widest transition-all hover:opacity-90"
+                style={{ background: "#25D366", color: "#fff" }}
+              >
+                Contratar por WhatsApp
+              </a>
+              <p className="text-center text-[10px] opacity-30 mt-4">
+                Pago mensual en bolivares a tasa BCV del dia. Sin contratos. Cancela cuando quieras.
+              </p>
+            </div>
           </div>
+
           <Link href="/sign-up" className="px-10 py-5 rounded-full text-xs font-semibold uppercase tracking-widest hover:bg-black/80 hover:-translate-y-1 transition-all duration-300 shadow-2xl shadow-black/20" style={{ background: "#121212", color: "#fff" }}>
             Crear Cuenta Gratis
           </Link>
+          <p className="text-xs text-gray-400 mt-4">Prueba gratis. Sin tarjeta de credito.</p>
         </section>
       </div>
 
