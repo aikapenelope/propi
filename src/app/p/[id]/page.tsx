@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 import { properties, propertyImages } from "@/server/schema";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import {
   Building2,
@@ -25,7 +25,7 @@ export default async function PublicPropertyPage(
   const { id } = await props.params;
 
   const property = await db.query.properties.findFirst({
-    where: eq(properties.id, id),
+    where: and(eq(properties.id, id), eq(properties.status, "active")),
     with: {
       images: { orderBy: [propertyImages.sortOrder] },
     },

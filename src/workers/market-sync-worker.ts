@@ -15,7 +15,7 @@ import { Worker } from "bullmq";
 import IORedis from "ioredis";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import * as schema from "../server/schema";
 
 // ---------------------------------------------------------------------------
@@ -173,8 +173,18 @@ const connection = new IORedis(REDIS_URL, {
 const worker = new Worker(
   "market-sync",
   async (job) => {
-    const { userId, token } = job.data as { userId: string; token: string };
+    const { userId } = job.data as { userId: string };
     console.log(`[market-sync] Processing job ${job.id} for user ${userId}`);
+
+    // Fetch token at processing time (not stored in Redis)
+    const account = await db.query.socialAccounts.findFirst({
+      where: and(
+        eq(schema.socialAccounts.platform, "mercadolibre"),
+        eq(schema.socialAccounts.userId, userId),
+      ),
+    });
+    if (!account) throw new Error(`No ML account for user ${userId}`);
+    const token = account.accessToken;
 
     const cutoff = new Date(Date.now() - TWELVE_MONTHS_MS);
     let totalInserted = 0;

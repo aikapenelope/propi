@@ -5,6 +5,7 @@ import { contacts, contactTags, tags } from "@/server/schema";
 import { eq, and, ilike, or, desc, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { requireUserId } from "@/lib/auth-helper";
+import { sanitizeLike } from "@/lib/sanitize";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -32,10 +33,10 @@ export async function getContacts(search?: string) {
       ? and(
           eq(contacts.userId, userId),
           or(
-            ilike(contacts.name, `%${search}%`),
-            ilike(contacts.email, `%${search}%`),
-            ilike(contacts.phone, `%${search}%`),
-            ilike(contacts.company, `%${search}%`),
+            ilike(contacts.name, `%${sanitizeLike(search)}%`),
+            ilike(contacts.email, `%${sanitizeLike(search)}%`),
+            ilike(contacts.phone, `%${sanitizeLike(search)}%`),
+            ilike(contacts.company, `%${sanitizeLike(search)}%`),
           ),
         )
       : eq(contacts.userId, userId),

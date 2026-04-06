@@ -51,10 +51,16 @@ export async function POST(request: NextRequest) {
     const expectedSig =
       "sha256=" +
       crypto.createHmac("sha256", appSecret).update(rawBody).digest("hex");
-    if (signature !== expectedSig) {
+    const sigBuf = Buffer.from(signature, "utf8");
+    const expectedBuf = Buffer.from(expectedSig, "utf8");
+    if (sigBuf.length !== expectedBuf.length || !crypto.timingSafeEqual(sigBuf, expectedBuf)) {
       console.error("Webhook signature mismatch");
       return NextResponse.json({ error: "Invalid signature" }, { status: 403 });
     }
+  } else if (appSecret) {
+    // META_APP_SECRET configured but no signature header = reject
+    console.error("Webhook missing X-Hub-Signature-256 header");
+    return NextResponse.json({ error: "Missing signature" }, { status: 403 });
   }
 
   // Dynamic imports to avoid DB initialization at build time

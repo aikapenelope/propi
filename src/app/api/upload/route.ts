@@ -43,6 +43,14 @@ export async function POST(request: Request) {
       );
     }
 
+    // Sanitize: reject keys with path traversal
+    if (key.includes("..") || key.includes("\0")) {
+      return NextResponse.json(
+        { error: "Invalid key" },
+        { status: 400 },
+      );
+    }
+
     // Max 10MB
     if (file.size > 10 * 1024 * 1024) {
       return NextResponse.json(

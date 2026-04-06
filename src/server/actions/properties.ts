@@ -5,6 +5,7 @@ import { properties, propertyTags, propertyImages } from "@/server/schema";
 import { eq, ilike, or, desc, and, gte, lte, type SQL } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { DeleteObjectCommand } from "@aws-sdk/client-s3";
+import { sanitizeLike } from "@/lib/sanitize";
 import { s3, MEDIA_BUCKET } from "@/lib/s3";
 import { requireUserId } from "@/lib/auth-helper";
 import { checkStorageQuota } from "@/lib/storage-quota";
@@ -55,9 +56,9 @@ export async function getProperties(filters: PropertyFilters = {}) {
 
   if (filters.search) {
     const searchCondition = or(
-      ilike(properties.title, `%${filters.search}%`),
-      ilike(properties.address, `%${filters.search}%`),
-      ilike(properties.city, `%${filters.search}%`),
+      ilike(properties.title, `%${sanitizeLike(filters.search)}%`),
+      ilike(properties.address, `%${sanitizeLike(filters.search)}%`),
+      ilike(properties.city, `%${sanitizeLike(filters.search)}%`),
     );
     if (searchCondition) conditions.push(searchCondition);
   }
