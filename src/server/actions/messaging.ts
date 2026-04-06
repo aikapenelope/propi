@@ -190,6 +190,15 @@ export async function storeInboundMessage(
   externalId?: string,
   metadata?: string,
 ) {
+  // Deduplication: skip if we already processed this message
+  if (externalId) {
+    const existing = await db.query.messages.findFirst({
+      where: eq(messages.externalId, externalId),
+      columns: { id: true },
+    });
+    if (existing) return existing;
+  }
+
   const [msg] = await db
     .insert(messages)
     .values({
