@@ -93,7 +93,7 @@ export async function publishPropertyToWasi(propertyId: string) {
     .set({
       externalIds: { ...externalIds, wasi: String(wasiPropertyId) },
     })
-    .where(eq(properties.id, propertyId));
+    .where(and(eq(properties.id, propertyId), eq(properties.userId, userId)));
 
   revalidatePath(`/properties/${propertyId}`);
 

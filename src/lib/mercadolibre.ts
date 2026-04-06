@@ -188,7 +188,12 @@ export async function getMeliToken(userIdOverride?: string): Promise<string> {
         tokenExpiresAt: tokens.expiresAt,
         metadata: { userId: tokens.userId },
       })
-      .where(eq(socialAccounts.platform, "mercadolibre"));
+      .where(
+        and(
+          eq(socialAccounts.platform, "mercadolibre"),
+          eq(socialAccounts.userId, userId),
+        ),
+      );
 
     return tokens.accessToken;
   }
