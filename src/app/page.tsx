@@ -254,13 +254,13 @@ export default function LandingPage() {
             {featureCards.map((card) => (
               <div key={card.num} className="card-item sticky top-[10vh] h-[80vh] w-full flex items-center justify-center mb-[5vh]">
                 <div className="card-inner w-[90%] h-full rounded-3xl relative overflow-hidden grid grid-cols-1 md:grid-cols-[1fr_1.2fr] shadow-[0_25px_50px_-12px_rgba(0,0,0,0.7)]" style={{ background: "#1a1a1a", border: "1px solid rgba(255,255,255,0.05)" }}>
-                  <div className="p-8 md:p-16 flex flex-col justify-between z-10" style={{ background: "#1a1a1a" }}>
+                  <div className="p-8 md:p-16 flex flex-col justify-start gap-6 z-10" style={{ background: "#1a1a1a" }}>
                     <div>
                       <div className="text-5xl mb-2 opacity-30 tracking-tight" style={{ fontFamily: "'Syncopate', sans-serif", color: "#E3E1DC" }}>{card.num}</div>
                       <h3 className="text-2xl md:text-3xl font-semibold tracking-tight">{card.title}</h3>
                       <p className="text-xs mt-4 opacity-70 uppercase tracking-widest">{card.tag}</p>
                     </div>
-                    <div className="text-gray-400 font-normal">{card.desc}</div>
+                    <div className="text-gray-300 font-normal text-base leading-relaxed">{card.desc}</div>
                   </div>
                   <div className="relative w-full h-full overflow-hidden">
                     <img src={card.img} alt={card.title} className="w-full h-full object-cover brightness-75 hover:scale-105 transition-transform duration-[1.5s]" />
