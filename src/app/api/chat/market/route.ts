@@ -105,6 +105,7 @@ export async function POST(req: Request) {
       "X-Listings": Buffer.from(listingsJson).toString("base64"),
       "X-KPIs": Buffer.from(JSON.stringify(kpis)).toString("base64"),
       "X-Total": String(kpis.total),
+      "X-Query": Buffer.from(JSON.stringify(parsed)).toString("base64"),
     },
   });
 }

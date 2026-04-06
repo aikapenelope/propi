@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Sparkles, Send, Loader2 } from "lucide-react";
+import { Sparkles, Send, Loader2, MapPin, ArrowRight } from "lucide-react";
+import Link from "next/link";
 import { ListingCards } from "./listing-card";
 import { KPIBar } from "./kpi-bar";
 
@@ -10,6 +11,7 @@ interface ChatMessage {
   content: string;
   listings?: MarketListingData[];
   kpis?: KPIData;
+  zoneUrl?: string;
 }
 
 interface MarketListingData {
@@ -76,6 +78,7 @@ export function PropiMagicChat() {
       // Extract listings and KPIs from headers
       let listings: MarketListingData[] = [];
       let kpis: KPIData | undefined;
+      let zoneUrl: string | undefined;
 
       const listingsHeader = res.headers.get("X-Listings");
       if (listingsHeader) {
@@ -91,6 +94,21 @@ export function PropiMagicChat() {
         } catch { /* malformed */ }
       }
 
+      // Build zone URL from parsed query
+      const queryHeader = res.headers.get("X-Query");
+      if (queryHeader) {
+        try {
+          const parsed = JSON.parse(atob(queryHeader));
+          const params = new URLSearchParams();
+          for (const [k, v] of Object.entries(parsed)) {
+            if (v != null && v !== "") params.set(k, String(v));
+          }
+          if (params.toString()) {
+            zoneUrl = `/market-analysis/zone?${params.toString()}`;
+          }
+        } catch { /* malformed */ }
+      }
+
       // Read stream
       const reader = res.body?.getReader();
       if (!reader) throw new Error("No response body");
@@ -101,7 +119,7 @@ export function PropiMagicChat() {
       // Add assistant message placeholder
       setMessages((prev) => [
         ...prev,
-        { role: "assistant", content: "", listings, kpis },
+        { role: "assistant", content: "", listings, kpis, zoneUrl },
       ]);
 
       while (true) {
@@ -193,6 +211,18 @@ export function PropiMagicChat() {
                 {/* Property cards */}
                 {msg.listings && msg.listings.length > 0 && (
                   <ListingCards listings={msg.listings} />
+                )}
+
+                {/* Link to full zone results */}
+                {msg.zoneUrl && (
+                  <Link
+                    href={msg.zoneUrl}
+                    className="inline-flex items-center gap-2 rounded-xl border border-primary/20 bg-primary/5 px-4 py-2.5 text-xs font-medium text-primary hover:bg-primary/10 transition-colors"
+                  >
+                    <MapPin className="h-3.5 w-3.5" />
+                    Ver todas las propiedades de esta zona
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </Link>
                 )}
               </div>
             )}
