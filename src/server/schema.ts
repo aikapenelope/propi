@@ -343,6 +343,7 @@ export const socialAccounts = pgTable("social_accounts", {
 }, (table) => [
   index("social_accounts_user_idx").on(table.userId),
   index("social_accounts_platform_user_idx").on(table.platform, table.userId),
+  index("social_accounts_platform_account_idx").on(table.platform, table.platformAccountId),
 ]);
 
 // ---------------------------------------------------------------------------
@@ -472,6 +473,7 @@ export const messages = pgTable(
   (table) => [
     index("messages_conversation_idx").on(table.conversationId),
     index("messages_created_idx").on(table.createdAt),
+    index("messages_external_id_idx").on(table.externalId),
   ],
 );
 
