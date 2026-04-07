@@ -4,6 +4,7 @@ import { formatDate } from "@/lib/utils";
 import { SocialAccountForm } from "@/components/marketing/social-account-form";
 import { WasiConfigForm } from "@/components/marketing/wasi-config-form";
 import { TokenExpiryWarning } from "@/components/marketing/token-expiry-warning";
+import { SetupGuide } from "@/components/marketing/setup-guide";
 
 export const dynamic = "force-dynamic";
 
@@ -144,6 +145,41 @@ export default async function MarketingSettingsPage(props: {
                 : undefined
             }
           />
+          <SetupGuide
+            title="Como obtener tu token de Instagram"
+            steps={[
+              {
+                text: "Tu cuenta de Instagram debe ser Profesional (Business o Creator). Si es personal, conviertela desde Instagram > Configuracion > Cuenta > Cambiar a cuenta profesional.",
+              },
+              {
+                text: "Tu cuenta de Instagram debe estar conectada a una Pagina de Facebook. Ve a Instagram > Configuracion > Cuenta > Cuentas vinculadas > Facebook.",
+              },
+              {
+                text: "Abre el Explorador de la Graph API de Meta. Inicia sesion con tu cuenta de Facebook.",
+                link: { url: "https://developers.facebook.com/tools/explorer/", label: "Abrir Graph API Explorer" },
+              },
+              {
+                text: "En la parte superior, selecciona tu aplicacion de Meta (o 'Meta App'). Si no tienes una, crea una en developers.facebook.com/apps.",
+                link: { url: "https://developers.facebook.com/apps/", label: "Crear App" },
+              },
+              {
+                text: "Haz click en 'Generate Access Token'. Selecciona los permisos: instagram_basic, instagram_manage_messages, pages_show_list, pages_manage_metadata.",
+              },
+              {
+                text: "Copia el token generado. Este es un token de corta duracion (1 hora).",
+              },
+              {
+                text: "Para extenderlo a 60 dias, abre el Depurador de Tokens, pega tu token, y haz click en 'Extend Access Token'.",
+                link: { url: "https://developers.facebook.com/tools/debug/accesstoken/", label: "Abrir Depurador de Tokens" },
+              },
+              {
+                text: "Para obtener tu Instagram Business Account ID, en el Graph API Explorer haz la consulta: me/accounts?fields=instagram_business_account. Copia el id que aparece.",
+              },
+              {
+                text: "Pega el Instagram Business Account ID en 'Platform Account ID' y el token extendido en 'Access Token' arriba. El token expira en 60 dias, Propi te avisara cuando falten 7 dias.",
+              },
+            ]}
+          />
         </div>
 
         {/* Facebook */}
@@ -181,6 +217,35 @@ export default async function MarketingSettingsPage(props: {
                   }
                 : undefined
             }
+          />
+          <SetupGuide
+            title="Como obtener tu token de Facebook"
+            steps={[
+              {
+                text: "Necesitas una Pagina de Facebook (no un perfil personal). Si no tienes una, creala desde facebook.com/pages/create.",
+                link: { url: "https://www.facebook.com/pages/create", label: "Crear Pagina" },
+              },
+              {
+                text: "Abre el Explorador de la Graph API de Meta e inicia sesion.",
+                link: { url: "https://developers.facebook.com/tools/explorer/", label: "Abrir Graph API Explorer" },
+              },
+              {
+                text: "Selecciona tu aplicacion de Meta en la parte superior.",
+              },
+              {
+                text: "Haz click en 'Generate Access Token'. Selecciona los permisos: pages_messaging, pages_manage_metadata, pages_show_list, pages_read_engagement.",
+              },
+              {
+                text: "Ahora necesitas un Page Access Token. En el Graph API Explorer, haz la consulta: me/accounts. Busca tu pagina en la lista y copia el 'access_token' y el 'id' de esa pagina.",
+              },
+              {
+                text: "El Page Access Token derivado de un token de larga duracion no expira. Para extender tu User Token primero, usa el Depurador de Tokens.",
+                link: { url: "https://developers.facebook.com/tools/debug/accesstoken/", label: "Abrir Depurador de Tokens" },
+              },
+              {
+                text: "Pega el Page ID en 'Platform Account ID' y el Page Access Token en 'Access Token' arriba.",
+              },
+            ]}
           />
         </div>
 
@@ -222,8 +287,43 @@ export default async function MarketingSettingsPage(props: {
           />
           <p className="mt-3 text-xs text-muted-foreground">
             El Platform Account ID es tu WhatsApp Business Phone Number ID.
-            Usa el mismo access token de Meta que para Instagram/Facebook.
           </p>
+          <SetupGuide
+            title="Como obtener tu token de WhatsApp"
+            steps={[
+              {
+                text: "Necesitas una cuenta de Meta Business Suite. Si no tienes una, creala en business.facebook.com.",
+                link: { url: "https://business.facebook.com/", label: "Abrir Meta Business Suite" },
+              },
+              {
+                text: "Ve al panel de WhatsApp en Meta for Developers. Si no tienes el producto WhatsApp agregado a tu app, agregalo desde el Dashboard de tu app.",
+                link: { url: "https://developers.facebook.com/apps/", label: "Abrir Apps" },
+              },
+              {
+                text: "En tu app > WhatsApp > API Setup, veras tu Phone Number ID y un token temporal. Copia el Phone Number ID.",
+                link: { url: "https://developers.facebook.com/docs/whatsapp/cloud-api/get-started/", label: "Ver guia oficial" },
+              },
+              {
+                text: "El token temporal dura 24 horas. Para un token permanente, crea un System User en Meta Business Suite > Settings > Business Settings > Users > System Users.",
+                link: { url: "https://business.facebook.com/settings/system-users/", label: "Abrir System Users" },
+              },
+              {
+                text: "Crea un System User con rol Admin. Luego haz click en 'Generate New Token', selecciona tu app, y marca los permisos: whatsapp_business_messaging, whatsapp_business_management.",
+              },
+              {
+                text: "Este token de System User no expira. Copialo.",
+              },
+              {
+                text: "Pega el Phone Number ID en 'Platform Account ID' y el System User Token en 'Access Token' arriba.",
+              },
+              {
+                text: "IMPORTANTE: No puedes usar tu numero personal de WhatsApp. Al registrar un numero en la Cloud API, se desconecta de la app de WhatsApp y ya no podras usarla con ese numero. Necesitas un numero dedicado para Propi.",
+              },
+              {
+                text: "Opciones de numero: (1) Compra un chip nuevo y usa ese numero. (2) Usa un numero de linea fija (la API acepta fijos, verifica por llamada de voz). (3) Usa un numero virtual. El numero que elijas sera el que tus clientes vean cuando les escribas.",
+              },
+            ]}
+          />
         </div>
 
         {/* Email (Resend) */}
