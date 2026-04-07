@@ -317,7 +317,10 @@ export default async function MarketingSettingsPage(props: {
                 text: "Pega el Phone Number ID en 'Platform Account ID' y el System User Token en 'Access Token' arriba.",
               },
               {
-                text: "Importante: el numero que uses no puede estar activo en la app de WhatsApp al mismo tiempo. Si quieres usar un numero nuevo, registralo desde el panel de WhatsApp de tu app.",
+                text: "IMPORTANTE: No puedes usar tu numero personal de WhatsApp. Al registrar un numero en la Cloud API, se desconecta de la app de WhatsApp y ya no podras usarla con ese numero. Necesitas un numero dedicado para Propi.",
+              },
+              {
+                text: "Opciones de numero: (1) Compra un chip nuevo y usa ese numero. (2) Usa un numero de linea fija (la API acepta fijos, verifica por llamada de voz). (3) Usa un numero virtual. El numero que elijas sera el que tus clientes vean cuando les escribas.",
               },
             ]}
           />
