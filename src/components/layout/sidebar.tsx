@@ -17,6 +17,7 @@ import {
   ChevronRight,
   Sparkles,
   BarChart3,
+  History,
   HelpCircle,
   AlertTriangle,
 } from "lucide-react";
@@ -34,6 +35,7 @@ const navItems = [
 const intelligenceItems = [
   { href: "/market-analysis", label: "Propi Magic", icon: Sparkles, exact: true },
   { href: "/market-analysis/kpis", label: "KPIs Mercado", icon: BarChart3, exact: true },
+  { href: "/market-analysis/searches", label: "Busquedas", icon: History, exact: true },
 ];
 
 const marketingItems = [

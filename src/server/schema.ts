@@ -639,3 +639,36 @@ export const marketListings = pgTable(
     index("market_listings_price_idx").on(table.price),
   ],
 );
+
+// ---------------------------------------------------------------------------
+// Magic Searches (Propi Magic chat history + zone results)
+// ---------------------------------------------------------------------------
+
+export const magicSearches = pgTable(
+  "magic_searches",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: text("user_id").notNull(),
+    /** The original user query text */
+    query: text("query").notNull(),
+    /** Parsed search parameters (JSON) */
+    params: jsonb("params").notNull(),
+    /** KPIs snapshot at search time */
+    kpis: jsonb("kpis"),
+    /** Chat messages (JSON array of {role, content}) */
+    messages: jsonb("messages").notNull().default([]),
+    /** Total results before dedup */
+    totalResults: integer("total_results"),
+    /** Results after dedup */
+    dedupResults: integer("dedup_results"),
+    /** Zone label for display */
+    label: text("label").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("magic_searches_user_idx").on(table.userId),
+    index("magic_searches_created_idx").on(table.createdAt),
+  ],
+);
