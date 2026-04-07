@@ -282,11 +282,11 @@ export async function cleanupOldMessages() {
     .where(lt(messages.createdAt, cutoff))
     .returning({ id: messages.id });
 
-  // Delete conversations that have no messages left
+  // Delete conversations that have no messages left (LEFT JOIN is faster than NOT IN)
   const emptyConvos = await db.execute(sql`
-    DELETE FROM conversations
-    WHERE id NOT IN (
-      SELECT DISTINCT conversation_id FROM messages
+    DELETE FROM conversations c
+    WHERE NOT EXISTS (
+      SELECT 1 FROM messages m WHERE m.conversation_id = c.id
     )
   `);
 
