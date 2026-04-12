@@ -8,11 +8,13 @@ import {
   Calendar,
   ArrowUpRight,
   Calculator,
+  CheckSquare,
 } from "lucide-react";
 import { getDashboardStats } from "@/server/actions/dashboard";
 import { getUpcomingAppointments } from "@/server/actions/appointments";
 import { formatDate } from "@/lib/utils";
 import { CommissionCalculator } from "@/components/dashboard/commission-calculator";
+import { TasksWidget } from "@/components/tasks/tasks-widget";
 
 export const dynamic = "force-dynamic";
 
@@ -455,6 +457,27 @@ export default async function DashboardPage() {
               ))}
             </div>
           </div>
+        </div>
+
+        {/* Tasks Widget */}
+        <div className="bg-[var(--card-bg)] border border-border rounded-2xl p-7 card-shadow">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <div className="w-7 h-7 rounded border border-primary/30 flex items-center justify-center bg-primary/10">
+                <CheckSquare className="h-4 w-4 text-primary" />
+              </div>
+              <h2 className="text-base font-semibold text-foreground">
+                Tareas Pendientes
+              </h2>
+            </div>
+            <Link
+              href="/tasks"
+              className="text-xs text-primary hover:underline flex items-center gap-1"
+            >
+              Ver todas <ArrowUpRight className="h-3 w-3" />
+            </Link>
+          </div>
+          <TasksWidget />
         </div>
 
         {/* Commission Calculator */}

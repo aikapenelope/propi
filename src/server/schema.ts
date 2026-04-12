@@ -692,6 +692,47 @@ export const contactNotesRelations = relations(contactNotes, ({ one }) => ({
 }));
 
 // ---------------------------------------------------------------------------
+// Tasks & Reminders
+// ---------------------------------------------------------------------------
+
+export const tasks = pgTable(
+  "tasks",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: text("user_id").notNull(),
+    title: varchar("title", { length: 500 }).notNull(),
+    contactId: uuid("contact_id").references(() => contacts.id, {
+      onDelete: "set null",
+    }),
+    propertyId: uuid("property_id").references(() => properties.id, {
+      onDelete: "set null",
+    }),
+    dueAt: timestamp("due_at", { withTimezone: true }),
+    completed: boolean("completed").notNull().default(false),
+    completedAt: timestamp("completed_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("tasks_user_idx").on(table.userId),
+    index("tasks_due_idx").on(table.dueAt),
+    index("tasks_completed_idx").on(table.completed),
+  ],
+);
+
+export const tasksRelations = relations(tasks, ({ one }) => ({
+  contact: one(contacts, {
+    fields: [tasks.contactId],
+    references: [contacts.id],
+  }),
+  property: one(properties, {
+    fields: [tasks.propertyId],
+    references: [properties.id],
+  }),
+}));
+
+// ---------------------------------------------------------------------------
 // Drip Campaigns (automated email sequences)
 // ---------------------------------------------------------------------------
 
