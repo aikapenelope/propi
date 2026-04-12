@@ -1,43 +1,84 @@
 # Propi
 
-CRM inmobiliario moderno para agentes y agencias. PWA instalable con gestion de contactos, propiedades, citas, documentos e inbox unificado de mensajeria (Instagram, Facebook, WhatsApp) via Meta Graph API.
+CRM inmobiliario para agentes venezolanos. PWA instalable con gestion de contactos, propiedades, citas, documentos, inteligencia de mercado con IA (Propi Magic), y publicacion en portales (Wasi).
 
 ## Stack
 
 | Capa | Tecnologia |
-|------|-----------|
+|------|-----------:|
 | Framework | Next.js 16 (App Router, Server Actions) |
 | Lenguaje | TypeScript (strict) |
 | UI | Tailwind CSS v4, Lucide icons |
 | Auth | Clerk v7 (modelo por seat) |
 | ORM | Drizzle ORM + postgres.js |
 | Storage | MinIO (S3-compatible) via AWS SDK |
-| PWA | Service worker manual (0 dependencias, offline, instalable) |
-| Mensajeria | Meta Graph API v21.0 (Instagram DMs + Facebook Messenger + WhatsApp Cloud API) |
-| Email | Nodemailer (SMTP) |
+| PWA | Service worker manual (offline, instalable) |
+| IA | Groq (Llama 3.3 70B) via Vercel AI SDK v6 |
+| Email | Resend (3,000 emails/mes gratis) |
+| Chat UI | chatscope/chat-ui-kit-react |
 
-## Arquitectura de Mensajeria
+## Modulos
 
-Un solo proveedor (Meta) para los 3 canales de chat. Mismo access token para todo:
+### CRM
+- **Dashboard** - KPIs, graficos por tipo/fuente, actividad reciente
+- **Contactos** - CRUD, busqueda, segmentacion por tags, tracking de fuente
+- **Propiedades** - 7 tipos, filtros, galeria (4 fotos), tags, pagina publica `/p/{id}`
+- **Calendario** - Citas vinculadas a contacto y propiedad
+- **Documentos** - Upload a MinIO, vinculacion a contacto/propiedad
+- **Busqueda Global** - Busca en contactos, propiedades y citas
+
+### Propi Magic (Inteligencia de Mercado)
+- **Chat con IA** - Busca propiedades en lenguaje natural ("Apartamentos en Altamira de 80m2")
+- **KPIs de mercado** - Precio promedio, mediana, min/max, precio/m2 (calculados con SQL)
+- **Busquedas guardadas** - Historial persistente en DB con chat y resultados
+- **Pagina de zona** - Todas las propiedades deduplicadas de una zona con grid y KPIs
+- **Deduplicacion** - DISTINCT ON (precio + area + titulo) elimina duplicados de MercadoLibre
+- **Datos** - MercadoLibre Venezuela (182k+ inmuebles), sync diario via cron worker
+
+### Marketing
+- **Instagram** - Acceso directo a publicar, DMs, metricas (asistido)
+- **Facebook** - Acceso directo a Business Suite, inbox, insights (asistido)
+- **TikTok** - Acceso directo a subir video, analiticas, inbox
+- **Email** - Campanas HTML a segmentos por tag via Resend
+- **Wasi** - Publicacion con 1 click (API directa, fotos se suben automaticamente)
+
+### Publicacion de Propiedades
+- **Wasi** - Auto-publish con API (1 click)
+- **Pagina publica** - `/p/{id}` para compartir por WhatsApp/redes
+- **Links externos** - Hasta 3 URLs a portales (Wasi, inmuebles24, etc)
+- **Texto generado** - Descripcion lista para copiar y pegar
+
+## Feature Flags
+
+| Flag | Default | Que controla |
+|------|---------|-------------|
+| `NEXT_PUBLIC_ENABLE_META_INBOX` | `false` | Inbox unificado (WA/IG/FB), token config, unread badge |
+
+Cuando se active el inbox (requiere Business Verification de Meta):
+- Inbox unificado con chatscope (WhatsApp + Instagram DMs + Facebook Messenger)
+- Configuracion de tokens de Meta en settings
+- Badge de mensajes no leidos en sidebar
+- Help sections de inbox y tokens
+
+## Base de Datos
+
+15 tablas + PgBouncer (6432) + PostgreSQL directo (5432):
 
 ```
-Instagram DMs  --\
-Facebook Msgs  ----> Meta Graph API ----> Webhook ----> DB ----> Inbox UI
-WhatsApp Msgs  --/   (mismo token)       /api/webhooks/meta     (unificado)
+contacts, contact_tags, tags, properties, property_images, property_tags,
+appointments, documents, social_accounts, email_campaigns, campaign_recipients,
+conversations, messages, market_listings, magic_searches
 ```
-
-- **Envio**: server action detecta el `platform` de la conversacion y llama al endpoint correcto de Meta
-- **Recepcion**: webhook unico `/api/webhooks/meta` parsea payloads de los 3 canales y guarda en tabla `messages`
-- **Sin Twilio**: WhatsApp usa Meta Cloud API directamente (mas barato, mismo token)
 
 ## Requisitos
 
 - Node.js 20+
-- PostgreSQL 16 (con pgvector)
-- MinIO o cualquier storage S3-compatible
-- Cuenta de Clerk (auth)
-- Meta Developer App (Instagram, Facebook, WhatsApp Cloud API)
-- SMTP server (opcional, para email marketing)
+- PostgreSQL 16
+- MinIO (S3-compatible)
+- Clerk (auth)
+- Groq API key (IA)
+- Resend API key (email, opcional)
+- MercadoLibre App ID + Secret (Propi Magic)
 
 ## Setup
 
@@ -47,156 +88,35 @@ cd propi
 npm install
 cp .env.example .env.local
 # Editar .env.local con tus credenciales
-npm run db:push
 npm run dev
 ```
 
-## Variables de Entorno
-
-```bash
-# Base de datos
-DATABASE_URL=postgresql://platform:PASSWORD@10.0.1.20:6432/propi
-
-# Clerk
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_...
-CLERK_SECRET_KEY=sk_test_...
-NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
-NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
-
-# MinIO / S3
-S3_ENDPOINT=http://10.0.1.20:9000
-S3_ACCESS_KEY=...
-S3_SECRET_KEY=...
-S3_MEDIA_BUCKET=propi-media
-S3_DOCS_BUCKET=propi-documents
-
-# SMTP (Email) - opcional
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=587
-SMTP_USER=tu@email.com
-SMTP_PASS=app-password
-SMTP_FROM=tu@email.com
-
-# Meta Webhook
-META_WEBHOOK_VERIFY_TOKEN=your-random-verify-token
-```
-
-Los tokens de Meta (Instagram, Facebook, WhatsApp) se configuran desde la UI en `/marketing/settings`, no en env vars.
-
-## Scripts
-
-| Comando | Descripcion |
-|---------|------------|
-| `npm run dev` | Servidor de desarrollo (Turbopack) |
-| `npm run build` | Build de produccion (standalone) |
-| `npm run start` | Iniciar en produccion |
-| `npm run lint` | Linter |
-| `npm run typecheck` | Verificar tipos |
-| `npm run db:push` | Sincronizar schema con la DB |
-| `npm run db:generate` | Generar migraciones |
-| `npm run db:migrate` | Ejecutar migraciones |
-| `npm run db:studio` | Abrir Drizzle Studio |
-
-## Arquitectura Web vs Mobile
-
-Web-first. La PWA mobile es un companion para el agente en campo.
-
-**Mobile bottom nav:** Inbox | Contactos | Inmuebles | Agenda | Mas...
-
-**Solo mobile:** Compartir propiedad por WA/IG/FB con un tap.
-
-**Solo web:** Dashboard completo, CRUD de propiedades, documentos, email marketing, publicar en IG/FB, metricas, configuracion, portales (futuro).
-
-Ver `docs/ARCHITECTURE.md` para la distribucion completa.
-
-## Modulos
-
-### CRM
-
-- **Dashboard** - KPIs, canales de marketing, calculadora de comisiones, actividad reciente
-- **Contactos** - CRUD, busqueda, segmentacion por tags, tracking de fuente
-- **Propiedades** - CRUD, 7 tipos, filtros, galeria de imagenes con MinIO, tags
-- **Calendario** - Citas vinculadas a contacto y propiedad, editar/eliminar
-- **Documentos** - Upload a MinIO, vinculacion a contacto/propiedad, descarga/eliminacion
-- **Busqueda Global** - Busca en contactos, propiedades y citas
-
-### Mensajeria (Inbox Unificado)
-
-- **Inbox** - UI completa con chatscope: ConversationList sidebar + ChatContainer con burbujas de chat
-- **Multi-canal** - Instagram DMs, Facebook Messenger, WhatsApp en una sola vista
-- **Filtros** - Filtrar por plataforma (IG/FB/WA) o ver todos
-- **Envio** - `sendMessage()` enruta al canal correcto segun la conversacion
-- **Recepcion** - Webhook `/api/webhooks/meta` recibe mensajes de los 3 canales
-- **Unread badges** - Conteo de no leidos por conversacion y total
-- **Mark as read** - Al abrir una conversacion se marca como leida
-- **Date separators** - Mensajes agrupados por dia (Hoy, Ayer, fecha)
-- **Deep-linking** - `/marketing/inbox/[id]` abre directamente una conversacion
-- **Auto-refresh** - Conversaciones se actualizan cada 30 segundos
-- **Responsive** - Sidebar se oculta en mobile al seleccionar conversacion
-- **Dark mode** - CSS overrides para chatscope que respetan el tema del sistema
-- **Retencion 90 dias** - `cleanupOldMessages()` elimina mensajes antiguos
-- **WhatsApp Cloud API** - Mensajes de texto y templates via Meta Graph API
-
-### Marketing
-
-- **Email** - Campanas HTML, enviar a segmentos por tag
-- **TikTok** - Acceso rapido via popup
-- **Configuracion** - Tokens de Meta (IG, FB, WA), info SMTP
-
-## Base de Datos
-
-14 tablas:
-
-```
-contacts            - Contactos/leads
-contact_tags        - M2M contactos <-> tags
-tags                - Etiquetas compartidas
-properties          - Listados de propiedades
-property_images     - Imagenes en MinIO
-property_tags       - M2M propiedades <-> tags
-appointments        - Citas
-documents           - Archivos en MinIO
-social_accounts     - Tokens de Instagram/Facebook/WhatsApp
-email_campaigns     - Campanas de email
-campaign_recipients - Destinatarios por campana
-conversations       - Conversaciones unificadas (IG/FB/WA)
-messages            - Mensajes de todas las conversaciones
-```
-
-## Estructura
-
-```
-src/
-  app/
-    (app)/              # Rutas autenticadas
-      calendar/         # Citas
-      contacts/         # Contactos
-      dashboard/        # Panel principal
-      documents/        # Documentos
-      marketing/        # Inbox, Instagram, Facebook, Email, TikTok, Settings
-      properties/       # Propiedades
-      search/           # Busqueda global
-    api/webhooks/meta/  # Webhook de Meta (IG/FB/WA)
-  components/           # Componentes React
-  lib/                  # DB, S3, Mailer, Meta API wrapper
-  server/
-    actions/            # Server Actions
-    schema.ts           # Schema Drizzle
-```
-
-## Modelo de Negocio
-
-- Sin tabla de agentes. Cada usuario de Clerk = un seat
-- Cobro por seat (usuario), no por agente registrado
-- Tokens de Meta se guardan en DB por usuario, no en env vars
+El schema se sincroniza automaticamente en cada deploy via `entrypoint.sh`.
 
 ## Infraestructura
 
 Hetzner Cloud via Coolify:
 
-- **App Plane** (10.0.1.30) - Next.js standalone
-- **Data Plane** (10.0.1.20) - PostgreSQL 16 + PgBouncer + Redis 7 + MinIO
-- **DB:** `propi` | **Redis DB:** 3 | **MinIO:** `propi-media`, `propi-documents`
+| Plano | Servidor | IP | Rol |
+|-------|----------|-----|-----|
+| Control | CX23 | 89.167.75.19 | Coolify, Traefik |
+| Data | CX33 | 10.0.1.20 | PostgreSQL, PgBouncer, Redis, MinIO |
+| App | CX33 | 10.0.1.30 | Next.js (Propi) + BullMQ worker |
+
+Acceso: Solo via Tailscale VPN (SSH publico bloqueado).
+
+## Documentacion
+
+| Documento | Contenido |
+|-----------|-----------|
+| `docs/META_CONFIGURATION.md` | Configuracion de webhooks y tokens de Meta |
+| `docs/META_MESSAGING_AUDIT.md` | Auditoria del flujo de mensajes |
+| `docs/META_ACCESS_MODEL.md` | Modelo de acceso (testers, limites, roadmap) |
+| `docs/MERCADOLIBRE_SETUP.md` | Tutorial de ML desde Argentina para Venezuela |
+
+## Precio
+
+$50/mes por usuario. Pago en bolivares a tasa BCV.
 
 ## Licencia
 

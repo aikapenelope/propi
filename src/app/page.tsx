@@ -11,9 +11,9 @@ import Image from "next/image";
 const featureCards = [
   {
     num: "01",
-    title: "INBOX UNIFICADO",
-    tag: "WhatsApp, IG, Facebook",
-    desc: "Imagina tener todos los mensajes de tus clientes en un solo lugar. Alguien te escribe por WhatsApp preguntando por un apartamento, otro te manda un DM en Instagram, y un tercero te contacta por Facebook. En vez de saltar entre 3 apps, abres Propi y respondes todo desde una sola pantalla. Nunca mas pierdes un lead por no ver un mensaje a tiempo.",
+    title: "TU CRM INMOBILIARIO",
+    tag: "Contactos, Propiedades, Citas",
+    desc: "Todo tu negocio inmobiliario en una sola app. Contactos con tags y fuente de origen, propiedades con fotos y filtros, citas vinculadas, documentos en la nube. Busca cualquier cosa con la busqueda global. Funciona en tu telefono como app nativa, sin descargar nada del App Store.",
     img: "https://hoirqrkdgbmvpwutwuwj.supabase.co/storage/v1/object/public/assets/assets/0dccab47-16b0-4716-9e1a-b97f124e3031_1600w.webp",
   },
   {
@@ -38,7 +38,7 @@ const gridFeatures = [
   { icon: "solar:calendar-mark-linear", title: "Calendario & Citas", desc: "Agenda visitas, vincula al contacto y la propiedad. Ve tus citas de la semana directamente en el dashboard." },
   { icon: "solar:document-text-linear", title: "Documentos", desc: "Contratos, escrituras, avaluos, planos. Todo vinculado al contacto y la propiedad. Descarga totalmente segura." },
   { icon: "solar:letter-opened-linear", title: "Email Marketing", desc: "Campanas HTML a segmentos por tag. Powered by Resend. 3,000 emails gratis al mes incluidos." },
-  { icon: "solar:chart-square-linear", title: "Metricas", desc: "Propiedades por tipo, contactos por fuente, comisiones. Metricas de alcance e interacciones de Meta." },
+  { icon: "solar:chart-square-linear", title: "Metricas", desc: "Propiedades por tipo, contactos por fuente, citas de la semana. Dashboard con graficos y KPIs de tu negocio." },
 ];
 
 const pwaFeatures = [
@@ -49,9 +49,9 @@ const pwaFeatures = [
 ];
 
 const integrations = [
-  { icon: "skill-icons:instagram", title: "Instagram", desc: "Publica fotos, responde DMs, ve metricas de alcance y engagement en tiempo real." },
-  { icon: "logos:facebook", title: "Facebook", desc: "Posts en tu pagina, comentarios, insights de visitas y nuevos seguidores de tus listados." },
-  { icon: "logos:whatsapp-icon", title: "WhatsApp", desc: "Mensajes y templates via Meta Cloud API. Sin Twilio, sin costos extra por intermediarios." },
+  { icon: "skill-icons:instagram", title: "Instagram", desc: "Publica fotos de propiedades, responde DMs y ve metricas. Acceso directo desde Propi." },
+  { icon: "logos:facebook", title: "Facebook", desc: "Publica en tu pagina, responde comentarios y ve insights. Acceso directo a Business Suite." },
+  { icon: "logos:whatsapp-icon", title: "WhatsApp", desc: "Comparte propiedades con un tap. Link directo con mensaje y fotos listas para enviar." },
   { icon: "wasi", title: "Wasi", desc: "Publica propiedades con 1 click. Las galerias de fotos se suben y redimensionan automaticamente." },
   { icon: "simple-icons:mercadolibre", title: "MercadoLibre", desc: "Datos de mercado en tiempo real. Precios, tendencias y comparables para Propi Magic. No necesitas cuenta." },
   { icon: "simple-icons:resend", title: "Resend", desc: "Email marketing a segmentos personalizados. Disfruta de 3,000 emails gratis al mes." },
@@ -59,14 +59,14 @@ const integrations = [
 
 const testimonials = [
   { name: "Carlos M.", role: "Broker Asociado", img: "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=150&q=80", text: "Publicar mis captaciones en todos los portales me tomaba horas. Con Propi, en segundos estoy en multiples plataformas. Ahorro tiempo valioso que dedico a cerrar tratos." },
-  { name: "Andrea V.", role: "Top Producer", img: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=150&q=80", text: "Tener WhatsApp, Instagram y Facebook en un solo lugar cambio mi embudo. Ya no pierdo leads, y los KPIs de mis publicaciones me dicen exactamente que propiedad enfocar." },
+  { name: "Andrea V.", role: "Top Producer", img: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=150&q=80", text: "Publicar en Wasi con un click y tener los KPIs de mercado al instante cambio mi forma de trabajar. Ya no pierdo tiempo copiando datos manualmente entre plataformas." },
   { name: "Roberto S.", role: "Director Comercial", img: "https://images.unsplash.com/photo-1556157382-97eda2d62296?auto=format&fit=crop&w=150&q=80", text: "La busqueda global en MercadoLibre y los KPIs con data propietaria me dan una ventaja injusta al tasar. Ahora defiendo mis exclusivas con datos reales del mercado." },
 ];
 
 const faqItems = [
   { q: "Necesito descargar algo del App Store?", a: "No. Propi es una PWA que se instala directamente desde el navegador. Abre propi.aikalabs.cc en Chrome o Safari, toca 'Agregar a pantalla de inicio' y listo." },
   { q: "Funciona en mi telefono?", a: "Si, Propi esta optimizado para funcionar sin problemas tanto en dispositivos Android como en iPhone, incluso en modelos de gama media o baja." },
-  { q: "Como se conecta con WhatsApp e Instagram?", a: "Utilizamos la API oficial de Meta. Simplemente vinculas tu cuenta de Facebook Business y recibiras todos los mensajes centralizados en el inbox de Propi." },
+  { q: "Como se conecta con WhatsApp e Instagram?", a: "Desde Propi tienes acceso directo a Instagram, Facebook y TikTok para publicar y responder mensajes. Tambien puedes compartir propiedades por WhatsApp con un tap desde cualquier listado." },
   { q: "Mis datos estan seguros?", a: "Completamente. Tus datos estan encriptados bajo HTTPS, con bases de datos privadas y sistemas de autenticacion de nivel bancario." },
   { q: "Puedo publicar en Wasi y MercadoLibre?", a: "La integracion con Wasi permite publicar propiedades con 1 solo click. MercadoLibre se utiliza actualmente a traves de nuestra IA para inteligencia de precios y mercado." },
   { q: "Que es Propi Magic?", a: "Es nuestra inteligencia artificial integrada. Le puedes pedir que analice precios en una zona especifica, te redacte la descripcion de una propiedad o responda preguntas basicas." },
