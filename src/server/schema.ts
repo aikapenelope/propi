@@ -692,9 +692,73 @@ export const contactNotesRelations = relations(contactNotes, ({ one }) => ({
 }));
 
 // ---------------------------------------------------------------------------
-// Magic Searches (Propi Magic chat history + zone results)
+// Drip Campaigns (automated email sequences)
 // ---------------------------------------------------------------------------
 
+export const dripSequences = pgTable(
+  "drip_sequences",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: text("user_id").notNull(),
+    name: varchar("name", { length: 255 }).notNull(),
+    /** JSON array of steps: [{ delayDays: number, subject: string, body: string }] */
+    steps: jsonb("steps").notNull().default([]),
+    active: boolean("active").notNull().default(true),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("drip_sequences_user_idx").on(table.userId),
+  ],
+);
+
+export const dripEnrollments = pgTable(
+  "drip_enrollments",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    sequenceId: uuid("sequence_id")
+      .notNull()
+      .references(() => dripSequences.id, { onDelete: "cascade" }),
+    contactId: uuid("contact_id")
+      .notNull()
+      .references(() => contacts.id, { onDelete: "cascade" }),
+    userId: text("user_id").notNull(),
+    currentStep: integer("current_step").notNull().default(0),
+    /** When the next step should be sent */
+    nextRunAt: timestamp("next_run_at", { withTimezone: true }),
+    status: varchar("status", { length: 20 }).notNull().default("active"),
+    completedAt: timestamp("completed_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("drip_enrollments_sequence_idx").on(table.sequenceId),
+    index("drip_enrollments_contact_idx").on(table.contactId),
+    index("drip_enrollments_next_run_idx").on(table.nextRunAt),
+    index("drip_enrollments_user_idx").on(table.userId),
+  ],
+);
+
+export const dripSequencesRelations = relations(dripSequences, ({ many }) => ({
+  enrollments: many(dripEnrollments),
+}));
+
+export const dripEnrollmentsRelations = relations(dripEnrollments, ({ one }) => ({
+  sequence: one(dripSequences, {
+    fields: [dripEnrollments.sequenceId],
+    references: [dripSequences.id],
+  }),
+  contact: one(contacts, {
+    fields: [dripEnrollments.contactId],
+    references: [contacts.id],
+  }),
+}));
+
+// ---------------------------------------------------------------------------
+// Magic Searches (Propi Magic chat history + zone results)
+// ---------------------------------------------------------------------------
 export const magicSearches = pgTable(
   "magic_searches",
   {
