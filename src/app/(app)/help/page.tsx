@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { ENABLE_META_INBOX } from "@/lib/feature-flags";
 import {
   HelpCircle,
   Smartphone,
@@ -33,7 +34,7 @@ interface Section {
   items: { q: string; a: string }[];
 }
 
-const sections: Section[] = [
+const allSections: Section[] = [
   {
     id: "getting-started",
     icon: Zap,
@@ -278,6 +279,10 @@ function AccordionItem({ q, a }: { q: string; a: string }) {
 
 export default function HelpCenterPage() {
   const [activeSection, setActiveSection] = useState("getting-started");
+
+  const sections = ENABLE_META_INBOX
+    ? allSections
+    : allSections.filter((s) => s.id !== "inbox" && s.id !== "tokens");
 
   return (
     <div className="max-w-[1200px] mx-auto px-3 md:px-8 py-4 md:py-6">
