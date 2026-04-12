@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { ENABLE_META_INBOX } from "@/lib/feature-flags";
 import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
@@ -38,14 +39,18 @@ const intelligenceItems = [
   { href: "/market-analysis/searches", label: "Busquedas", icon: History, exact: true },
 ];
 
-const marketingItems = [
-  { href: "/marketing/inbox", label: "Inbox", icon: MessageCircle },
+const allMarketingItems = [
+  { href: "/marketing/inbox", label: "Inbox", icon: MessageCircle, metaOnly: true },
   { href: "/marketing/instagram", label: "Instagram", icon: Instagram },
   { href: "/marketing/facebook", label: "Facebook", icon: Facebook },
   { href: "/marketing/email", label: "Email", icon: Mail },
   { href: "/marketing/tiktok", label: "TikTok", icon: Video },
   { href: "/marketing/settings", label: "Configuracion", icon: Settings },
 ];
+
+const marketingItems = ENABLE_META_INBOX
+  ? allMarketingItems
+  : allMarketingItems.filter((item) => !item.metaOnly);
 
 interface SidebarProps {
   collapsed: boolean;
@@ -152,7 +157,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
             {...item}
             collapsed={collapsed}
             pathname={pathname}
-            badge={item.href === "/marketing/inbox" ? <UnreadBadge /> : undefined}
+            badge={ENABLE_META_INBOX && item.href === "/marketing/inbox" ? <UnreadBadge /> : undefined}
           />
         ))}
       </nav>

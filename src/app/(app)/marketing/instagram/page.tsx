@@ -1,9 +1,11 @@
-import { Instagram, MessageCircle, Heart, Eye, AlertCircle, Settings, BarChart3 } from "lucide-react";
-import Link from "next/link";
-import { getIgMedia, getIgConversations } from "@/server/actions/instagram";
-import { IgInboxTabs } from "@/components/marketing/instagram/inbox-tabs";
+import { Instagram, ExternalLink, Info, Image, MessageCircle, BarChart3, Heart } from "lucide-react";
+import { ENABLE_META_INBOX } from "@/lib/feature-flags";
 
-export default async function InstagramPage() {
+// Dynamic import for API-connected version (only when Meta inbox enabled)
+async function InstagramAPIPage() {
+  const { getIgMedia, getIgConversations } = await import("@/server/actions/instagram");
+  const { IgInboxTabs } = await import("@/components/marketing/instagram/inbox-tabs");
+
   let media: Awaited<ReturnType<typeof getIgMedia>> = [];
   let conversations: Awaited<ReturnType<typeof getIgConversations>> = [];
   let error: string | null = null;
@@ -17,94 +19,125 @@ export default async function InstagramPage() {
     error = e instanceof Error ? e.message : "Error al conectar con Instagram";
   }
 
-  const hasData = media.length > 0;
-
   return (
     <div className="p-4 md:p-6">
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3">
-          <Instagram className="h-6 w-6 text-pink-500" />
-          <h1 className="text-2xl font-bold text-foreground">Instagram</h1>
-        </div>
-        <Link
-          href="/marketing/instagram/metrics"
-          className="flex items-center gap-1.5 rounded-lg bg-pink-500/10 px-3 py-2 text-xs font-medium text-pink-400 hover:bg-pink-500/20 transition-colors"
-        >
-          <BarChart3 className="h-3.5 w-3.5" />
-          Ver Metricas
-        </Link>
+      <div className="flex items-center gap-3 mb-6">
+        <Instagram className="h-6 w-6 text-pink-500" />
+        <h1 className="text-2xl font-bold text-foreground">Instagram</h1>
       </div>
-
-      {/* Alert banner */}
       {error && (
-        <div className="flex items-center gap-2 rounded-xl bg-amber-500/5 border border-amber-500/20 px-4 py-2.5 mb-6">
-          <AlertCircle className="h-4 w-4 text-amber-500 shrink-0" />
-          <p className="text-xs text-amber-400 flex-1">
-            Conecta tu cuenta de Instagram en{" "}
-            <Link href="/marketing/settings" className="underline font-medium">
-              Configuracion
-            </Link>{" "}
-            para ver datos reales.
-          </p>
-          <Link
-            href="/marketing/settings"
-            className="shrink-0 flex items-center gap-1 rounded-lg bg-amber-500/10 px-2.5 py-1 text-[10px] font-medium text-amber-400 hover:bg-amber-500/20 transition-colors"
-          >
-            <Settings className="h-3 w-3" />
-            Conectar
-          </Link>
+        <div className="rounded-lg border border-red-500/20 bg-red-500/5 p-4 mb-6 text-sm text-red-400">
+          {error}. Ve a Configuracion para conectar tu cuenta.
         </div>
       )}
-
-      {/* Quick stats */}
-      <div className="mb-6 grid gap-4 sm:grid-cols-3">
-        <div className="bg-[var(--card-bg)] border border-border rounded-2xl p-4 card-shadow">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Eye className="h-4 w-4" />
-            Posts recientes
-          </div>
-          <p className={`mt-1 text-xl font-bold ${hasData ? "text-foreground" : "text-muted-foreground/30"}`}>
-            {media.length}
-          </p>
-        </div>
-        <div className="bg-[var(--card-bg)] border border-border rounded-2xl p-4 card-shadow">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Heart className="h-4 w-4" />
-            Likes totales
-          </div>
-          <p className={`mt-1 text-xl font-bold ${hasData ? "text-foreground" : "text-muted-foreground/30"}`}>
-            {media.reduce((sum, m) => sum + (m.like_count || 0), 0)}
-          </p>
-        </div>
-        <div className="bg-[var(--card-bg)] border border-border rounded-2xl p-4 card-shadow">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <MessageCircle className="h-4 w-4" />
-            Conversaciones
-          </div>
-          <p className={`mt-1 text-xl font-bold ${hasData ? "text-foreground" : "text-muted-foreground/30"}`}>
-            {conversations.length}
-          </p>
-        </div>
-      </div>
-
-      {/* Tabs or placeholder */}
-      {hasData ? (
-        <IgInboxTabs media={media} conversations={conversations} />
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="bg-[var(--card-bg)] border border-border rounded-2xl p-4 card-shadow opacity-30">
-              <div className="flex gap-3">
-                <div className="w-14 h-14 shrink-0 rounded-xl bg-muted" />
-                <div className="flex-1 space-y-2">
-                  <div className="h-4 w-3/4 rounded bg-muted" />
-                  <div className="h-3 w-1/2 rounded bg-muted" />
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
+      <IgInboxTabs media={media} conversations={conversations} />
     </div>
   );
+}
+
+// Assisted publishing version (no API needed)
+function InstagramAssistedPage() {
+  return (
+    <div className="p-4 md:p-6">
+      <div className="flex items-center gap-3 mb-6">
+        <Instagram className="h-6 w-6 text-pink-500" />
+        <h1 className="text-2xl font-bold text-foreground">Instagram</h1>
+      </div>
+
+      <div className="max-w-xl space-y-6">
+        {/* Info card */}
+        <div className="rounded-lg border border-border bg-accent p-4">
+          <div className="flex items-start gap-3">
+            <Info className="h-5 w-5 shrink-0 text-pink-500 mt-0.5" />
+            <div className="text-sm text-foreground">
+              <p className="font-medium mb-1">Publica en Instagram desde aqui</p>
+              <p className="text-muted-foreground">
+                Usa estos accesos directos para publicar contenido, responder
+                mensajes y ver tus metricas en Instagram. Abre la app o el
+                sitio web directamente.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Launch buttons */}
+        <div className="grid gap-3 sm:grid-cols-2">
+          <AssistedButton
+            url="https://www.instagram.com/accounts/login/"
+            icon={<Instagram className="h-5 w-5 text-pink-500" />}
+            label="Abrir Instagram"
+            description="Inicia sesion y gestiona tu cuenta"
+          />
+          <AssistedButton
+            url="https://www.instagram.com/create/style/"
+            icon={<Image className="h-5 w-5 text-pink-500" />}
+            label="Crear Publicacion"
+            description="Sube fotos o reels desde el navegador"
+          />
+          <AssistedButton
+            url="https://www.instagram.com/direct/inbox/"
+            icon={<MessageCircle className="h-5 w-5 text-pink-500" />}
+            label="Mensajes Directos"
+            description="Responde DMs de clientes"
+          />
+          <AssistedButton
+            url="https://www.instagram.com/accounts/insights/"
+            icon={<BarChart3 className="h-5 w-5 text-pink-500" />}
+            label="Ver Metricas"
+            description="Alcance, impresiones y engagement"
+          />
+        </div>
+
+        {/* Tips */}
+        <div className="rounded-lg border border-border p-4 text-sm">
+          <p className="font-medium text-foreground mb-2">
+            Tips para realtors en Instagram
+          </p>
+          <ul className="space-y-1.5 text-muted-foreground text-xs">
+            <li className="flex items-start gap-2">
+              <Heart className="h-3 w-3 mt-0.5 text-pink-400 shrink-0" />
+              Publica fotos de propiedades con buena iluminacion y angulos amplios
+            </li>
+            <li className="flex items-start gap-2">
+              <Heart className="h-3 w-3 mt-0.5 text-pink-400 shrink-0" />
+              Usa Reels para tours virtuales de 30-60 segundos
+            </li>
+            <li className="flex items-start gap-2">
+              <Heart className="h-3 w-3 mt-0.5 text-pink-400 shrink-0" />
+              Responde DMs rapido: los clientes esperan respuesta en menos de 1 hora
+            </li>
+            <li className="flex items-start gap-2">
+              <Heart className="h-3 w-3 mt-0.5 text-pink-400 shrink-0" />
+              Usa la pagina publica de Propi (/p/id) como link en tu bio
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function AssistedButton({ url, icon, label, description }: { url: string; icon: React.ReactNode; label: string; description: string }) {
+  return (
+    <a
+      href={url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="flex items-center gap-3 rounded-xl border border-border p-4 hover:bg-muted/50 transition-colors group"
+    >
+      {icon}
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-medium text-foreground">{label}</p>
+        <p className="text-xs text-muted-foreground">{description}</p>
+      </div>
+      <ExternalLink className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+    </a>
+  );
+}
+
+export default async function InstagramPage() {
+  if (ENABLE_META_INBOX) {
+    return InstagramAPIPage();
+  }
+  return <InstagramAssistedPage />;
 }

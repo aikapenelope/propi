@@ -5,6 +5,7 @@ import { SocialAccountForm } from "@/components/marketing/social-account-form";
 import { WasiConfigForm } from "@/components/marketing/wasi-config-form";
 import { TokenExpiryWarning } from "@/components/marketing/token-expiry-warning";
 import { SetupGuide } from "@/components/marketing/setup-guide";
+import { ENABLE_META_INBOX } from "@/lib/feature-flags";
 
 export const dynamic = "force-dynamic";
 
@@ -109,6 +110,8 @@ export default async function MarketingSettingsPage(props: {
           />
         </div>
 
+        {ENABLE_META_INBOX && (
+          <>
         {/* Instagram */}
         <div className="rounded-lg border border-border p-4">
           <div className="mb-4 flex items-center gap-3">
@@ -325,6 +328,8 @@ export default async function MarketingSettingsPage(props: {
             ]}
           />
         </div>
+          </>
+        )}
 
         {/* Email (Resend) */}
         <div className="rounded-lg border border-border p-4">
