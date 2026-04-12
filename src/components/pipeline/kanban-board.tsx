@@ -14,12 +14,12 @@ import type { DragStartEvent, DragEndEvent, DragOverEvent } from "@dnd-kit/core"
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { KanbanColumn } from "./kanban-column";
 import { KanbanCard } from "./kanban-card";
+import { updateLeadStatus } from "@/server/actions/pipeline";
 import {
-  updateLeadStatus,
   LEAD_STATUS_CONFIG,
   LEAD_STATUSES,
-} from "@/server/actions/pipeline";
-import type { LeadStatus } from "@/server/actions/pipeline";
+} from "@/lib/pipeline-config";
+import type { LeadStatus } from "@/lib/pipeline-config";
 
 interface Contact {
   id: string;
