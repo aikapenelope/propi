@@ -10,6 +10,7 @@ import {
   Kanban,
   Calendar,
   FileText,
+  CheckSquare,
   Instagram,
   Facebook,
   MessageCircle,
@@ -32,6 +33,7 @@ const navItems = [
   { href: "/pipeline", label: "Pipeline", icon: Kanban },
   { href: "/properties", label: "Propiedades", icon: Building2 },
   { href: "/calendar", label: "Calendario", icon: Calendar },
+  { href: "/tasks", label: "Tareas", icon: CheckSquare },
   { href: "/documents", label: "Documentos", icon: FileText },
 ];
 
