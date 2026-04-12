@@ -7,6 +7,7 @@ import {
   LayoutDashboard,
   Users,
   Building2,
+  Kanban,
   Calendar,
   FileText,
   Instagram,
@@ -28,6 +29,7 @@ import { cn } from "@/lib/utils";
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/contacts", label: "Contactos", icon: Users },
+  { href: "/pipeline", label: "Pipeline", icon: Kanban },
   { href: "/properties", label: "Propiedades", icon: Building2 },
   { href: "/calendar", label: "Calendario", icon: Calendar },
   { href: "/documents", label: "Documentos", icon: FileText },

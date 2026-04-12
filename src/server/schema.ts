@@ -42,6 +42,17 @@ export const propertyStatusEnum = pgEnum("property_status", [
   "inactive",
 ]);
 
+/** Lead pipeline status */
+export const leadStatusEnum = pgEnum("lead_status", [
+  "new",
+  "contacted",
+  "qualified",
+  "showing",
+  "offer",
+  "closed",
+  "lost",
+]);
+
 /** Contact source: how the lead arrived */
 export const contactSourceEnum = pgEnum("contact_source", [
   "website",
@@ -105,6 +116,7 @@ export const contacts = pgTable(
     company: varchar("company", { length: 255 }),
     notes: text("notes"),
     source: contactSourceEnum("source").default("other"),
+    leadStatus: leadStatusEnum("lead_status").notNull().default("new"),
     userId: text("user_id").notNull(),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
@@ -118,6 +130,7 @@ export const contacts = pgTable(
     index("contacts_name_idx").on(table.name),
     index("contacts_email_idx").on(table.email),
     index("contacts_user_idx").on(table.userId),
+    index("contacts_lead_status_idx").on(table.leadStatus),
   ],
 );
 
