@@ -9,8 +9,10 @@ import {
   Pencil,
 } from "lucide-react";
 import { getContact } from "@/server/actions/contacts";
+import { getContactNotes } from "@/server/actions/contact-notes";
 import { formatDate } from "@/lib/utils";
 import { DeleteContactButton } from "@/components/contacts/delete-contact-button";
+import { ContactNotes } from "@/components/contacts/contact-notes";
 
 interface ContactDetailPageProps {
   params: Promise<{ id: string }>;
@@ -25,6 +27,8 @@ export default async function ContactDetailPage({
   if (!contact) {
     notFound();
   }
+
+  const notes = await getContactNotes(id);
 
   return (
     <div className="p-4 md:p-6">
@@ -180,6 +184,9 @@ export default async function ContactDetailPage({
             </p>
           )}
         </div>
+
+        {/* Notes timeline */}
+        <ContactNotes contactId={id} initialNotes={notes} />
       </div>
     </div>
   );
