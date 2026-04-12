@@ -500,6 +500,7 @@ export const contactsRelations = relations(contacts, ({ many }) => ({
   documents: many(documents),
   campaignRecipients: many(campaignRecipients),
   conversations: many(conversations),
+  notes: many(contactNotes),
 }));
 
 export const contactTagsRelations = relations(contactTags, ({ one }) => ({
@@ -654,6 +655,41 @@ export const marketListings = pgTable(
     index("market_listings_price_idx").on(table.price),
   ],
 );
+
+// ---------------------------------------------------------------------------
+// Magic Searches (Propi Magic chat history + zone results)
+// ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// Contact Notes (activity timeline per contact)
+// ---------------------------------------------------------------------------
+
+export const contactNotes = pgTable(
+  "contact_notes",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    contactId: uuid("contact_id")
+      .notNull()
+      .references(() => contacts.id, { onDelete: "cascade" }),
+    userId: text("user_id").notNull(),
+    content: text("content").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("contact_notes_contact_idx").on(table.contactId),
+    index("contact_notes_user_idx").on(table.userId),
+    index("contact_notes_created_idx").on(table.createdAt),
+  ],
+);
+
+export const contactNotesRelations = relations(contactNotes, ({ one }) => ({
+  contact: one(contacts, {
+    fields: [contactNotes.contactId],
+    references: [contacts.id],
+  }),
+}));
 
 // ---------------------------------------------------------------------------
 // Magic Searches (Propi Magic chat history + zone results)
