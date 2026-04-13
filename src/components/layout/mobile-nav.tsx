@@ -3,20 +3,28 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  MessageCircle,
+  CheckSquare,
   Users,
   Building2,
   Calendar,
   Menu,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ENABLE_META_INBOX } from "@/lib/feature-flags";
 
-const navItems = [
-  { href: "/marketing/inbox", label: "Inbox", icon: MessageCircle },
-  { href: "/contacts", label: "Contactos", icon: Users },
-  { href: "/properties", label: "Inmuebles", icon: Building2 },
-  { href: "/calendar", label: "Agenda", icon: Calendar },
-];
+const navItems = ENABLE_META_INBOX
+  ? [
+      { href: "/marketing/inbox", label: "Inbox", icon: CheckSquare },
+      { href: "/contacts", label: "Contactos", icon: Users },
+      { href: "/properties", label: "Inmuebles", icon: Building2 },
+      { href: "/calendar", label: "Agenda", icon: Calendar },
+    ]
+  : [
+      { href: "/tasks", label: "Tareas", icon: CheckSquare },
+      { href: "/contacts", label: "Contactos", icon: Users },
+      { href: "/properties", label: "Inmuebles", icon: Building2 },
+      { href: "/calendar", label: "Agenda", icon: Calendar },
+    ];
 
 interface MobileNavProps {
   onMorePress?: () => void;
