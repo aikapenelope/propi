@@ -7,9 +7,12 @@ import {
   FileText,
   Search,
   Sparkles,
+  Kanban,
+  CheckSquare,
   Instagram,
   Facebook,
   Mail,
+  Zap,
   Video,
   Settings,
   Building2,
@@ -19,11 +22,13 @@ import { cn } from "@/lib/utils";
 
 /**
  * Mobile drawer opened by "Mas..." in bottom nav or hamburger in top bar.
- * Contains everything NOT in the bottom nav: Dashboard, Docs, Search, Marketing.
+ * Contains everything NOT in the bottom nav: Dashboard, Pipeline, Tasks, Docs, Search, Marketing.
  */
 
 const quickItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/pipeline", label: "Pipeline", icon: Kanban },
+  { href: "/tasks", label: "Tareas", icon: CheckSquare },
   { href: "/market-analysis", label: "Propi Magic", icon: Sparkles },
   { href: "/documents", label: "Documentos", icon: FileText },
   { href: "/search", label: "Busqueda", icon: Search },
@@ -33,6 +38,7 @@ const marketingItems = [
   { href: "/marketing/instagram", label: "Instagram", icon: Instagram },
   { href: "/marketing/facebook", label: "Facebook", icon: Facebook },
   { href: "/marketing/email", label: "Email", icon: Mail },
+  { href: "/marketing/drip", label: "Secuencias", icon: Zap },
   { href: "/marketing/tiktok", label: "TikTok", icon: Video },
   { href: "/marketing/settings", label: "Configuracion", icon: Settings },
 ];
