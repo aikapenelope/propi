@@ -1,7 +1,7 @@
 # Propi - Roadmap de Implementacion
 
 ## Sprint 7: Layout responsive grado produccion
-**Estado: EN PROGRESO**
+**Estado: COMPLETADO**
 
 - Dashboard: grid fijo que no se mueve en web ni mobile
 - Todas las paginas: estructura estatica, no colapsa
@@ -11,74 +11,74 @@
 - Meta pages (IG metrics, FB insights): solo web, ocultas en mobile nav
 
 ## Sprint 8: Migrar email de Nodemailer a Resend
-- Reemplazar `src/lib/mailer.ts` (Nodemailer SMTP) por Resend SDK
+**Estado: COMPLETADO**
+
+- `src/lib/mailer.ts` usa Resend SDK
 - 1 env var: `RESEND_API_KEY` (gratis 3K emails/mes)
-- Mantener la misma interfaz de `sendEmail()` para no romper campanas
-- Quitar SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_FROM del .env
-- Actualizar settings page para mostrar Resend en vez de SMTP config
+- Misma interfaz `sendEmail()` para campanas y drip sequences
 
-## Sprint 9: Proxy de imagenes para Meta
-- Crear `/api/images/[key]/route.ts` que sirve imagenes de MinIO publicamente
-- Instagram publish: usar `https://propi.aikalabs.cc/api/images/{key}` como image_url
-- Facebook publish: igual
-- Las imagenes de publicaciones NO se guardan permanentemente
-- Las imagenes de propiedades SI se quedan hasta que el cliente las elimine
-- Cache-Control: public, max-age=86400 en el proxy
+## Sprint 9: Proxy de imagenes
+**Estado: COMPLETADO**
 
-## Sprint 10: Publicar en MercadoLibre con 1 click
-- Boton "Publicar en ML" en la card de cada propiedad
-- Ventana emergente (modal) con:
-  - Preview de la propiedad (titulo, precio, fotos)
-  - Selector de categoria ML (auto-detectada por tipo)
-  - Selector de plan/tipo de publicacion (gratis, clasica, premium)
-  - Ubicacion (auto-detectada por ciudad)
-  - Boton "Publicar"
-- Flujo backend:
-  1. Descargar imagenes de MinIO
-  2. Subir cada imagen a ML via `POST /pictures/items/upload` (multipart)
-  3. Crear listing con `POST /items` incluyendo picture_ids
-  4. Guardar `ml_item_id` en la propiedad para sincronizar despues
-- El JSON se transforma automaticamente del schema de Propi al formato ML
+- `/api/images/[...key]/route.ts` sirve imagenes de MinIO publicamente
+- Rate limit: 100 req/min por IP
+- Cache-first en service worker
+
+## Sprint 10: Publicar en MercadoLibre
+**Estado: DESCARTADO**
+
+No se publicara en MercadoLibre. ML se usa solo como fuente de datos
+para Propi Magic (market_listings via BullMQ worker).
 
 ## Sprint 11: Publicar en Wasi con 1 click
-- Boton "Publicar en Wasi" en la card de cada propiedad
-- Wasi usa API key (no OAuth): `id_company` + `wasi_token` en settings
-- Modal con:
-  - Preview de la propiedad
-  - Campos adicionales de Wasi (estrato, tipo de renta, disponibilidad)
-  - Boton "Publicar"
-- Flujo backend:
-  1. `POST api.wasi.co/v1/property/add` con datos mapeados
-  2. Subir imagenes via `POST api.wasi.co/v1/property/upload-image/{id}`
-  3. Sincronizar con portales: `POST api.wasi.co/v1/portal/send-property/{id}`
-  4. Guardar `wasi_property_id` en la propiedad
+**Estado: COMPLETADO**
 
-## Sprint 12: Dashboard de Meta completo (solo web)
-- Pagina `/marketing/instagram/metrics` rediseñada:
-  - KPIs: reach, impressions, profile_views, follower_count
-  - Posts recientes con metricas (engagement, saves, shares)
-  - Grafico de reach por dia (ultimos 30 dias)
-- Pagina `/marketing/facebook/insights` rediseñada:
-  - KPIs: page_views_total, page_engaged_users, page_daily_follows
-  - Posts recientes con metricas
-  - Fix: reemplazar `page_fans` (deprecado) por metricas actuales
-- Ambas paginas: solo visibles en web (no en mobile bottom nav)
-- Layout dark theme consistente con el dashboard principal
+- Boton "Publicar en Wasi" en detalle de propiedad (`publish-section.tsx`)
+- Backend: `wasi.ts` + `wasi-publish.ts` (crear propiedad, subir imagenes, sync portales)
+- Guarda `wasi_property_id` en `externalIds` de la propiedad
+- Indicador verde cuando ya esta publicada
+
+## Sprint 12: Dashboard de Meta completo
+**Estado: DESCARTADO**
+
+No se usara Meta API directamente. Las interacciones con Instagram,
+Facebook y WhatsApp seran por ventana emergente (links directos),
+no por API.
 
 ## Sprint 13: Wasi auth en settings
-- Seccion "Wasi" en `/marketing/settings`
+**Estado: COMPLETADO**
+
+- `wasi-config-form.tsx` en `/marketing/settings`
 - 2 campos: `id_company` y `wasi_token`
 - Se guardan en `social_accounts` (platform: "wasi")
-- No OAuth, no login, solo copiar/pegar desde el dashboard de Wasi
+
+## Sprint 14: Production hardening
+**Estado: COMPLETADO**
+
+- Migraciones versionadas con `drizzle-kit migrate` (reemplaza `push --force`)
+- PWA offline: `offline.html` + precache de `/dashboard` (SW v4)
+- Uploads: validacion MIME type + rate limit 20/min por usuario
+- Infra: passwords/SSH key estables, Redis noeviction para BullMQ
+
+## Sprint 15: Hardening de market actions
+**Estado: PENDIENTE**
+
+- Sanitizar inputs ILIKE en `market-listings.ts`, `market-kpis.ts`, `zone-search.ts`
+  (usar `sanitizeLike()` como ya se hace en `contacts.ts` y `properties.ts`)
+- Agregar `requireUserId()` a las server actions de market que no lo tienen
+  (`market-kpis.ts`, `market-listings.ts`, `zone-search.ts`)
+  Actualmente protegidas por middleware de Clerk pero sin auth explicita en la funcion
 
 ## Orden de ejecucion
 
-| Sprint | Prioridad | Dependencia |
-|--------|----------|-------------|
-| 7 | Alta | Ninguna |
-| 8 | Alta | Ninguna |
-| 9 | Alta | Ninguna |
-| 10 | Alta | Sprint 9 (proxy de imagenes para ML upload) |
-| 11 | Media | Sprint 13 (Wasi auth) |
-| 12 | Media | Ninguna |
-| 13 | Media | Ninguna |
+| Sprint | Estado | Notas |
+|--------|--------|-------|
+| 7 | Completado | Layout responsive |
+| 8 | Completado | Resend email |
+| 9 | Completado | Image proxy |
+| 10 | Descartado | ML solo como fuente de datos |
+| 11 | Completado | Wasi publish |
+| 12 | Descartado | No Meta API directa |
+| 13 | Completado | Wasi auth |
+| 14 | Completado | Production hardening |
+| 15 | Pendiente | Market actions hardening |

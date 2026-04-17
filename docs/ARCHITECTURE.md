@@ -51,11 +51,10 @@ Todo el CRM completo. El agente sentado en la oficina con pantalla grande:
 - **Facebook** - Publicar en pagina, insights, comentar
 - **Email** - Compositor de campanas HTML, enviar a segmentos
 - **TikTok** - Acceso rapido via popup
-- **Configuracion** - Tokens de Meta, SMTP
+- **Configuracion** - Tokens de Meta, Wasi credentials
 
-### Portales (solo web, futuro)
-- **Wasi** - Publicar propiedades
-- **MercadoLibre** - Publicar propiedades
+### Portales (solo web)
+- **Wasi** - Publicar propiedades con 1 click (implementado)
 
 ## Navegacion
 
@@ -118,4 +117,4 @@ El patron es claro: **mobile = comunicacion + consulta rapida**, **web = gestion
 - **DB:** PostgreSQL + Drizzle ORM
 - **Storage:** MinIO (S3-compatible)
 - **Messaging:** Meta Graph API (IG + FB + WA Cloud API)
-- **Email:** Nodemailer (SMTP)
+- **Email:** Resend (API, free tier 3K/mes)
