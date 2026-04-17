@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { Plus, Mail, Phone, Building } from "lucide-react";
+import { Mail, Phone, Building } from "lucide-react";
 import { getContacts } from "@/server/actions/contacts";
 import { formatDate } from "@/lib/utils";
+import { ContactsHeader } from "@/components/contacts/contacts-header";
 
 interface ContactsPageProps {
   searchParams: Promise<{ q?: string }>;
@@ -15,22 +16,8 @@ export default async function ContactsPage({
 
   return (
     <div className="p-4 md:p-6">
-      {/* Header */}
-      <div className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Contactos</h1>
-          <p className="text-sm text-muted-foreground">
-            {contactList.length} contacto{contactList.length !== 1 ? "s" : ""}
-          </p>
-        </div>
-        <Link
-          href="/contacts/new"
-          className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
-        >
-          <Plus className="h-4 w-4" />
-          <span className="hidden sm:inline">Nuevo Contacto</span>
-        </Link>
-      </div>
+      {/* Header with import button */}
+      <ContactsHeader count={contactList.length} />
 
       {/* Search */}
       <form className="mb-4">

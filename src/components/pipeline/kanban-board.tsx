@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import {
   DndContext,
   DragOverlay,
@@ -20,6 +20,7 @@ import {
   LEAD_STATUSES,
 } from "@/lib/pipeline-config";
 import type { LeadStatus } from "@/lib/pipeline-config";
+import { Search, X } from "lucide-react";
 
 interface Contact {
   id: string;
@@ -39,17 +40,33 @@ interface KanbanBoardProps {
 export function KanbanBoard({ initialData }: KanbanBoardProps) {
   const [columns, setColumns] = useState(initialData);
   const [activeCard, setActiveCard] = useState<Contact | null>(null);
+  const [search, setSearch] = useState("");
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 5 } }),
   );
 
+  // Filter contacts by search term across all columns
+  const filteredColumns = useMemo(() => {
+    if (!search.trim()) return columns;
+    const q = search.toLowerCase();
+    const result = {} as Record<LeadStatus, Contact[]>;
+    for (const status of LEAD_STATUSES) {
+      result[status] = columns[status].filter(
+        (c) =>
+          c.name.toLowerCase().includes(q) ||
+          c.email?.toLowerCase().includes(q) ||
+          c.phone?.includes(q) ||
+          c.company?.toLowerCase().includes(q),
+      );
+    }
+    return result;
+  }, [columns, search]);
+
   const findColumn = useCallback(
     (id: string): LeadStatus | null => {
-      // Check if id is a column id
       if (LEAD_STATUSES.includes(id as LeadStatus)) return id as LeadStatus;
-      // Find which column contains this card
       for (const status of LEAD_STATUSES) {
         if (columns[status].some((c) => c.id === id)) return status;
       }
@@ -95,47 +112,67 @@ export function KanbanBoard({ initialData }: KanbanBoardProps) {
     const newCol = findColumn(active.id as string);
     if (!newCol) return;
 
-    // Persist to DB
     try {
       await updateLeadStatus(active.id as string, newCol);
     } catch {
-      // Revert on error (reload)
       window.location.reload();
     }
   }
 
   return (
-    <DndContext
-      sensors={sensors}
-      collisionDetection={closestCorners}
-      onDragStart={handleDragStart}
-      onDragOver={handleDragOver}
-      onDragEnd={handleDragEnd}
-    >
-      <div className="flex gap-4 overflow-x-auto pb-4 min-h-[calc(100vh-10rem)]">
-        {LEAD_STATUSES.map((status) => (
-          <SortableContext
-            key={status}
-            items={columns[status].map((c) => c.id)}
-            strategy={verticalListSortingStrategy}
+    <>
+      {/* Search/filter bar */}
+      <div className="relative mb-4 max-w-sm">
+        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <input
+          type="text"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Buscar contacto en el pipeline..."
+          className="w-full rounded-lg border border-border bg-background pl-9 pr-8 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
+        />
+        {search && (
+          <button
+            onClick={() => setSearch("")}
+            className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
           >
-            <KanbanColumn
-              id={status}
-              title={LEAD_STATUS_CONFIG[status].label}
-              color={LEAD_STATUS_CONFIG[status].color}
-              count={columns[status].length}
-            >
-              {columns[status].map((contact) => (
-                <KanbanCard key={contact.id} contact={contact} />
-              ))}
-            </KanbanColumn>
-          </SortableContext>
-        ))}
+            <X className="h-4 w-4" />
+          </button>
+        )}
       </div>
 
-      <DragOverlay>
-        {activeCard ? <KanbanCard contact={activeCard} isOverlay /> : null}
-      </DragOverlay>
-    </DndContext>
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCorners}
+        onDragStart={handleDragStart}
+        onDragOver={handleDragOver}
+        onDragEnd={handleDragEnd}
+      >
+        <div className="flex gap-4 overflow-x-auto pb-4 min-h-[calc(100vh-12rem)]">
+          {LEAD_STATUSES.map((status) => (
+            <SortableContext
+              key={status}
+              items={filteredColumns[status].map((c) => c.id)}
+              strategy={verticalListSortingStrategy}
+            >
+              <KanbanColumn
+                id={status}
+                title={LEAD_STATUS_CONFIG[status].label}
+                color={LEAD_STATUS_CONFIG[status].color}
+                count={filteredColumns[status].length}
+              >
+                {filteredColumns[status].map((contact) => (
+                  <KanbanCard key={contact.id} contact={contact} />
+                ))}
+              </KanbanColumn>
+            </SortableContext>
+          ))}
+        </div>
+
+        <DragOverlay>
+          {activeCard ? <KanbanCard contact={activeCard} isOverlay /> : null}
+        </DragOverlay>
+      </DndContext>
+    </>
   );
 }
