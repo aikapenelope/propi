@@ -1,20 +1,23 @@
-// Propi Service Worker v3
+// Propi Service Worker v4
 // Strategies:
 //   - Static assets (_next/static, icons, fonts): cache-first (immutable, hashed filenames)
 //   - App pages (HTML): network-first (always fresh data, cache as offline fallback)
 //   - API calls: network-only (never cache)
-//   - /api/images: cache with short TTL (1 hour, not 24)
+//   - /api/images: cache-first (property photos)
+//   - Offline: dedicated offline.html page with retry button
 
-const CACHE_VERSION = "propi-v3";
+const CACHE_VERSION = "propi-v4";
 
-// App shell pages to precache on install
+// Precache: offline page + app shell entry point + icons
 const PRECACHE_URLS = [
+  "/offline.html",
+  "/dashboard",
   "/manifest.json",
   "/icons/icon-192.png",
   "/icons/icon-512.png",
 ];
 
-// Install: precache essential static files only
+// Install: precache essential files so they're available offline immediately
 self.addEventListener("install", (event) => {
   event.waitUntil(
     caches
@@ -79,7 +82,7 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Image proxy: cache-first with 1 hour TTL
+  // Image proxy: cache-first (property photos don't change)
   if (url.pathname.startsWith("/api/images/")) {
     event.respondWith(
       caches.match(request).then((cached) => {
@@ -95,7 +98,7 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // App pages (HTML): network-first
+  // App pages (HTML): network-first with offline fallback
   // Always fetch fresh data from server. Only use cache when offline.
   event.respondWith(
     fetch(request)
@@ -109,8 +112,8 @@ self.addEventListener("fetch", (event) => {
       .catch(() => {
         return caches.match(request).then((cached) => {
           if (cached) return cached;
-          // Offline fallback: try cached landing page
-          return caches.match("/");
+          // Offline fallback: show dedicated offline page
+          return caches.match("/offline.html");
         });
       })
   );
