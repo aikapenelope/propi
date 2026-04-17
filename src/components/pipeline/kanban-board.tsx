@@ -4,7 +4,7 @@ import { useState, useCallback, useMemo } from "react";
 import {
   DndContext,
   DragOverlay,
-  closestCorners,
+  closestCenter,
   PointerSensor,
   TouchSensor,
   useSensor,
@@ -64,9 +64,13 @@ export function KanbanBoard({ initialData }: KanbanBoardProps) {
     return result;
   }, [columns, search]);
 
+  // Find which column a card or column ID belongs to.
+  // Searches the full (unfiltered) columns so drag works even during search.
   const findColumn = useCallback(
     (id: string): LeadStatus | null => {
+      // Direct column ID match
       if (LEAD_STATUSES.includes(id as LeadStatus)) return id as LeadStatus;
+      // Search all columns for a card with this ID
       for (const status of LEAD_STATUSES) {
         if (columns[status].some((c) => c.id === id)) return status;
       }
@@ -74,6 +78,13 @@ export function KanbanBoard({ initialData }: KanbanBoardProps) {
     },
     [columns],
   );
+
+  // Resolve the target column from a drag event's "over" element.
+  // The over element can be either a column ID or a card ID inside a column.
+  function resolveOverColumn(overId: string): LeadStatus | null {
+    if (LEAD_STATUSES.includes(overId as LeadStatus)) return overId as LeadStatus;
+    return findColumn(overId);
+  }
 
   function handleDragStart(event: DragStartEvent) {
     const { active } = event;
@@ -89,7 +100,7 @@ export function KanbanBoard({ initialData }: KanbanBoardProps) {
     if (!over) return;
 
     const activeCol = findColumn(active.id as string);
-    const overCol = findColumn(over.id as string);
+    const overCol = resolveOverColumn(over.id as string);
 
     if (!activeCol || !overCol || activeCol === overCol) return;
 
@@ -97,6 +108,7 @@ export function KanbanBoard({ initialData }: KanbanBoardProps) {
       const activeItems = [...prev[activeCol]];
       const overItems = [...prev[overCol]];
       const activeIndex = activeItems.findIndex((c) => c.id === active.id);
+      if (activeIndex === -1) return prev;
       const [moved] = activeItems.splice(activeIndex, 1);
       moved.leadStatus = overCol;
       overItems.push(moved);
@@ -143,7 +155,7 @@ export function KanbanBoard({ initialData }: KanbanBoardProps) {
 
       <DndContext
         sensors={sensors}
-        collisionDetection={closestCorners}
+        collisionDetection={closestCenter}
         onDragStart={handleDragStart}
         onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}
