@@ -1,13 +1,34 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { Upload, FileText, Loader2, Check, AlertTriangle, X } from "lucide-react";
+import { Upload, FileText, Loader2, Check, AlertTriangle, X, Smartphone } from "lucide-react";
 import {
   parseCSV,
   parseVCard,
   importContacts,
 } from "@/server/actions/import-contacts";
 import type { ImportedContact, ImportResult } from "@/server/actions/import-contacts";
+
+// Contact Picker API type declarations (Chrome Android 80+)
+interface ContactPickerContact {
+  name?: string[];
+  tel?: string[];
+  email?: string[];
+}
+
+interface ContactsManager {
+  select(
+    properties: string[],
+    options?: { multiple?: boolean },
+  ): Promise<ContactPickerContact[]>;
+  getProperties(): Promise<string[]>;
+}
+
+declare global {
+  interface Navigator {
+    contacts?: ContactsManager;
+  }
+}
 
 type Step = "upload" | "preview" | "importing" | "done";
 
@@ -24,6 +45,13 @@ export function ImportContactsDialog({
   const [error, setError] = useState<string | null>(null);
   const [fileName, setFileName] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
+
+  // Detect Contact Picker API (Chrome Android 80+).
+  // Computed once per render — no effect needed since navigator doesn't change.
+  const hasContactPicker =
+    typeof window !== "undefined" &&
+    "contacts" in navigator &&
+    "ContactsManager" in window;
 
   if (!open) return null;
 
@@ -67,6 +95,40 @@ export function ImportContactsDialog({
       setStep("preview");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error al leer el archivo");
+    }
+  }
+
+  /** Import contacts directly from the phone's contact list (Chrome Android). */
+  async function handlePickFromDevice() {
+    if (!navigator.contacts) return;
+    setError(null);
+
+    try {
+      const picked = await navigator.contacts.select(
+        ["name", "tel", "email"],
+        { multiple: true },
+      );
+
+      if (picked.length === 0) return;
+
+      const contacts: ImportedContact[] = picked
+        .filter((c) => c.name?.[0])
+        .map((c) => ({
+          name: c.name![0],
+          phone: c.tel?.[0] || undefined,
+          email: c.email?.[0] || undefined,
+        }));
+
+      if (contacts.length === 0) {
+        setError("No se encontraron contactos con nombre.");
+        return;
+      }
+
+      setFileName(`${contacts.length} contactos del telefono`);
+      setParsed(contacts);
+      setStep("preview");
+    } catch {
+      // User cancelled the picker — do nothing
     }
   }
 
@@ -126,6 +188,17 @@ export function ImportContactsDialog({
                   if (file) handleFile(file);
                 }}
               />
+
+              {/* Contact Picker API: native phone contact selector (Chrome Android) */}
+              {hasContactPicker && (
+                <button
+                  onClick={handlePickFromDevice}
+                  className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-border bg-muted px-4 py-3 text-sm font-medium text-foreground transition-colors hover:bg-muted/80"
+                >
+                  <Smartphone className="h-4 w-4 text-primary" />
+                  Importar desde contactos del telefono
+                </button>
+              )}
 
               {error && (
                 <div className="mt-3 flex items-start gap-2 rounded-lg bg-red-500/10 p-3 text-xs text-red-400">
