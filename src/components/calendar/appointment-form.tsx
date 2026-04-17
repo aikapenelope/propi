@@ -40,6 +40,7 @@ interface AppointmentFormProps {
   };
   contacts: Contact[];
   properties: Property[];
+  defaultDate?: Date;
 }
 
 function toLocalDatetime(date: Date): string {
@@ -52,6 +53,7 @@ export function AppointmentForm({
   appointment,
   contacts,
   properties,
+  defaultDate,
 }: AppointmentFormProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -118,7 +120,11 @@ export function AppointmentForm({
             type="datetime-local"
             required
             defaultValue={
-              appointment ? toLocalDatetime(appointment.startsAt) : ""
+              appointment
+                ? toLocalDatetime(appointment.startsAt)
+                : defaultDate
+                  ? toLocalDatetime(defaultDate)
+                  : ""
             }
             className={inputClass}
           />
@@ -133,7 +139,11 @@ export function AppointmentForm({
             type="datetime-local"
             required
             defaultValue={
-              appointment ? toLocalDatetime(appointment.endsAt) : ""
+              appointment
+                ? toLocalDatetime(appointment.endsAt)
+                : defaultDate
+                  ? toLocalDatetime(new Date(defaultDate.getTime() + 60 * 60 * 1000))
+                  : ""
             }
             className={inputClass}
           />

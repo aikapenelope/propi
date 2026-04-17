@@ -110,7 +110,6 @@ export function BigCalendarView({ events }: BigCalendarViewProps) {
         eventPropGetter={eventStyleGetter}
         messages={messages}
         culture="es"
-        style={{ height: "calc(100vh - 10rem)" }}
         popup
         tooltipAccessor={(event) =>
           [
@@ -124,10 +123,18 @@ export function BigCalendarView({ events }: BigCalendarViewProps) {
         }
       />
       <style>{`
+        .big-calendar-wrapper {
+          height: calc(100vh - 10rem);
+          min-height: 500px;
+        }
+        .big-calendar-wrapper .rbc-calendar {
+          height: 100%;
+        }
         .big-calendar-wrapper .rbc-toolbar {
           flex-wrap: wrap;
           gap: 0.5rem;
           margin-bottom: 1rem;
+          padding: 0;
         }
         .big-calendar-wrapper .rbc-toolbar button {
           border-radius: 0.5rem;
@@ -148,12 +155,19 @@ export function BigCalendarView({ events }: BigCalendarViewProps) {
           color: var(--primary-foreground);
           border-color: var(--primary);
         }
+        .big-calendar-wrapper .rbc-toolbar-label {
+          font-weight: 600;
+          font-size: 1rem;
+          color: var(--foreground);
+          text-transform: capitalize;
+        }
         .big-calendar-wrapper .rbc-header {
           padding: 0.5rem;
           font-size: 0.75rem;
           font-weight: 600;
           color: var(--muted-foreground);
           border-bottom: 1px solid var(--border);
+          text-transform: capitalize;
         }
         .big-calendar-wrapper .rbc-month-view,
         .big-calendar-wrapper .rbc-time-view {
@@ -181,6 +195,9 @@ export function BigCalendarView({ events }: BigCalendarViewProps) {
           color: var(--primary);
           font-weight: 500;
         }
+        .big-calendar-wrapper .rbc-event {
+          font-size: 0.75rem;
+        }
         .big-calendar-wrapper .rbc-time-slot {
           border-color: var(--border);
         }
@@ -199,6 +216,38 @@ export function BigCalendarView({ events }: BigCalendarViewProps) {
         }
         .big-calendar-wrapper .rbc-current-time-indicator {
           background: var(--primary);
+        }
+        /* Mobile: force day view to be usable */
+        @media (max-width: 640px) {
+          .big-calendar-wrapper {
+            height: calc(100vh - 8rem);
+            min-height: 400px;
+          }
+          .big-calendar-wrapper .rbc-toolbar {
+            font-size: 0.75rem;
+            gap: 0.25rem;
+          }
+          .big-calendar-wrapper .rbc-toolbar button {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+          }
+          .big-calendar-wrapper .rbc-toolbar-label {
+            font-size: 0.875rem;
+            width: 100%;
+            text-align: center;
+            order: -1;
+          }
+          .big-calendar-wrapper .rbc-month-row {
+            min-height: 3.5rem;
+          }
+          .big-calendar-wrapper .rbc-event {
+            font-size: 0.625rem;
+            padding: 1px 3px;
+          }
+          .big-calendar-wrapper .rbc-date-cell {
+            font-size: 0.75rem;
+            padding: 0.125rem 0.25rem;
+          }
         }
       `}</style>
     </div>
