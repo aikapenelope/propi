@@ -4,6 +4,8 @@ import { db } from "@/lib/db";
 import { marketListings } from "@/server/schema";
 import { sql, and, gte, ilike, count } from "drizzle-orm";
 import type { SQL } from "drizzle-orm";
+import { requireUserId } from "@/lib/auth-helper";
+import { sanitizeLike } from "@/lib/sanitize";
 
 /**
  * Search all market listings for a zone with deduplication.
@@ -31,15 +33,15 @@ function buildConditions(query: ZoneQuery): SQL[] {
   conditions.push(gte(marketListings.publishedAt, cutoff));
 
   if (query.propertyType) {
-    conditions.push(ilike(marketListings.propertyType, `%${query.propertyType}%`));
+    conditions.push(ilike(marketListings.propertyType, `%${sanitizeLike(query.propertyType)}%`));
   }
   if (query.operation) {
-    conditions.push(ilike(marketListings.operation, `%${query.operation}%`));
+    conditions.push(ilike(marketListings.operation, `%${sanitizeLike(query.operation)}%`));
   }
   if (query.neighborhood) {
-    conditions.push(ilike(marketListings.neighborhood, `%${query.neighborhood}%`));
+    conditions.push(ilike(marketListings.neighborhood, `%${sanitizeLike(query.neighborhood)}%`));
   } else if (query.city) {
-    conditions.push(ilike(marketListings.city, `%${query.city}%`));
+    conditions.push(ilike(marketListings.city, `%${sanitizeLike(query.city)}%`));
   }
   if (query.areaMin) {
     conditions.push(sql`CAST(${marketListings.areaM2} AS NUMERIC) >= ${query.areaMin}`);
@@ -65,6 +67,7 @@ function buildConditions(query: ZoneQuery): SQL[] {
  * Dedup strategy: group by (normalized title prefix + price + area) and keep newest.
  */
 export async function getZoneListings(query: ZoneQuery) {
+  await requireUserId();
   const conditions = buildConditions(query);
   const where = conditions.length > 0 ? and(...conditions) : undefined;
 
@@ -117,6 +120,7 @@ export async function getZoneListings(query: ZoneQuery) {
  * Get KPIs for the full zone (not limited to 20).
  */
 export async function getZoneKPIs(query: ZoneQuery) {
+  await requireUserId();
   const conditions = buildConditions(query);
   const where = conditions.length > 0 ? and(...conditions) : undefined;
 
