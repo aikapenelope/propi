@@ -93,13 +93,19 @@ export async function deleteDocument(id: string, key: string) {
   });
   if (!doc) throw new Error("Document not found");
 
-  await s3.send(
-    new DeleteObjectCommand({
-      Bucket: DOCS_BUCKET,
-      Key: key,
-    }),
-  );
+  // Delete from MinIO (don't fail if the file doesn't exist)
+  try {
+    await s3.send(
+      new DeleteObjectCommand({
+        Bucket: DOCS_BUCKET,
+        Key: key,
+      }),
+    );
+  } catch (err) {
+    console.error("MinIO delete error (continuing):", err);
+  }
 
+  // Always delete from DB even if MinIO fails
   await db
     .delete(documents)
     .where(eq(documents.id, id));

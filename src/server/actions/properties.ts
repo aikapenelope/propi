@@ -261,9 +261,29 @@ export async function updateProperty(id: string, data: PropertyFormData) {
 
 export async function deleteProperty(id: string) {
   const userId = await requireUserId();
+
+  // Fetch images BEFORE deleting the property (cascade will remove DB rows)
+  const images = await db.query.propertyImages.findMany({
+    where: eq(propertyImages.propertyId, id),
+    columns: { key: true },
+  });
+
+  // Delete property (cascades to property_images, property_tags in DB)
   await db
     .delete(properties)
     .where(and(eq(properties.id, id), eq(properties.userId, userId)));
+
+  // Clean up image files from MinIO (don't fail if some are missing)
+  for (const img of images) {
+    try {
+      await s3.send(
+        new DeleteObjectCommand({ Bucket: MEDIA_BUCKET, Key: img.key }),
+      );
+    } catch {
+      // File may already be gone — continue with the rest
+    }
+  }
+
   revalidatePath("/properties");
   revalidateTag(`dashboard-${userId}`, "max");
 }
