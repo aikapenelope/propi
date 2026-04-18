@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useMemo } from "react";
 import { Calendar, dateFnsLocalizer } from "react-big-calendar";
-import type { View } from "react-big-calendar";
+import type { View, Components } from "react-big-calendar";
 import { format, parse, startOfWeek, getDay } from "date-fns";
 import { es } from "date-fns/locale";
 import { useRouter } from "next/navigation";
@@ -46,6 +46,14 @@ export function BigCalendarView({ events }: BigCalendarViewProps) {
   const [date, setDate] = useState(new Date());
   const router = useRouter();
 
+  const navigateToNewAppointment = useCallback(
+    (start: Date) => {
+      const dateStr = format(start, "yyyy-MM-dd'T'HH:mm");
+      router.push(`/calendar/new?date=${dateStr}`);
+    },
+    [router],
+  );
+
   const handleSelectEvent = useCallback(
     (event: CalendarEvent) => {
       router.push(`/calendar/${event.id}/edit`);
@@ -55,10 +63,31 @@ export function BigCalendarView({ events }: BigCalendarViewProps) {
 
   const handleSelectSlot = useCallback(
     ({ start }: { start: Date }) => {
-      const dateStr = format(start, "yyyy-MM-dd'T'HH:mm");
-      router.push(`/calendar/new?date=${dateStr}`);
+      navigateToNewAppointment(start);
     },
-    [router],
+    [navigateToNewAppointment],
+  );
+
+  // Custom wrapper that makes day cells tappable on touch devices (PWA).
+  // react-big-calendar's default onSelectSlot requires a long press on mobile,
+  // which is not intuitive. This wrapper adds a simple click/tap handler.
+  const components: Components<CalendarEvent> = useMemo(
+    () => ({
+      dateCellWrapper: ({ children, value }: { children?: React.ReactNode; value: Date }) => (
+        <div
+          role="button"
+          tabIndex={0}
+          onClick={() => navigateToNewAppointment(value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") navigateToNewAppointment(value);
+          }}
+          style={{ flex: 1, display: "flex" }}
+        >
+          {children}
+        </div>
+      ),
+    }),
+    [navigateToNewAppointment],
   );
 
   const eventStyleGetter = useCallback((event: CalendarEvent) => {
@@ -107,6 +136,8 @@ export function BigCalendarView({ events }: BigCalendarViewProps) {
         onSelectEvent={handleSelectEvent}
         onSelectSlot={handleSelectSlot}
         selectable
+        longPressThreshold={10}
+        components={components}
         eventPropGetter={eventStyleGetter}
         messages={messages}
         culture="es"
