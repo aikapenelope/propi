@@ -62,3 +62,37 @@
 | PostgreSQL | 200 max_connections, PgBouncer 500 client | ~1600 usuarios |
 | Redis | 1GB noeviction | Miles de jobs |
 | market_listings | ~2KB/listing | Sin limite practico |
+
+## Pendiente: Configurar cron jobs en Coolify
+
+El codigo tiene 3 cron endpoints listos pero **no estan activados** en Coolify.
+Requieren la env var `CRON_SECRET` configurada en Propi y cron jobs en Coolify.
+
+| Cron | Endpoint | Frecuencia | Que hace |
+|------|----------|------------|----------|
+| Sync MercadoLibre | `/api/cron/sync-market` | Diario (4am) | Encola jobs en BullMQ para sincronizar listings de ML. Alimenta Propi Magic y KPIs de mercado. |
+| Drip campaigns | `/api/cron/process-drips` | Cada hora | Envia emails automaticos de secuencias drip a contactos enrollados. |
+| Cleanup mensajes | `/api/cron/cleanup-messages` | Semanal (dom 3am) | Elimina mensajes de conversaciones con mas de 90 dias. |
+
+### Para activar:
+
+1. En Coolify, agregar env var `CRON_SECRET` a Propi (cualquier string aleatorio largo)
+2. Configurar cron jobs en Coolify que ejecuten:
+
+```bash
+# Sync MercadoLibre (diario)
+curl -s -H "Authorization: Bearer $CRON_SECRET" https://propi.aikalabs.cc/api/cron/sync-market
+
+# Drip campaigns (cada hora)
+curl -s -H "Authorization: Bearer $CRON_SECRET" https://propi.aikalabs.cc/api/cron/process-drips
+
+# Cleanup mensajes (semanal)
+curl -s -H "Authorization: Bearer $CRON_SECRET" https://propi.aikalabs.cc/api/cron/cleanup-messages
+```
+
+### Nota sobre el worker de BullMQ
+
+El sync de MercadoLibre tambien requiere que el **worker container** este corriendo.
+Deployar `Dockerfile.worker` como segundo servicio en Coolify apuntando al mismo repo.
+Env vars necesarias: `REDIS_URL`, `DATABASE_URL`.
+

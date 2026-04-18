@@ -6,7 +6,7 @@ import IORedis from "ioredis";
  * Uses the same Redis instance as the Data Plane (DB 3 for Propi).
  *
  * BullMQ requires maxmemory-policy=noeviction on Redis.
- * Our Redis doesn't set maxmemory, so all keys are retained (safe).
+ * Redis is configured with --maxmemory 1gb --maxmemory-policy noeviction.
  */
 
 const REDIS_URL = process.env.REDIS_URL || "redis://:password@10.0.1.20:6379/3";
