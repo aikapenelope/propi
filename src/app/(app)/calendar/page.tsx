@@ -4,10 +4,10 @@ import { getAppointments } from "@/server/actions/appointments";
 import { BigCalendarView } from "@/components/calendar/big-calendar-view";
 
 export default async function CalendarPage() {
-  // Fetch a wide range (current year) so the calendar has data for navigation
+  // Fetch 6 months before and after today so the user can navigate freely
   const now = new Date();
-  const from = new Date(now.getFullYear(), 0, 1);
-  const to = new Date(now.getFullYear(), 11, 31, 23, 59, 59);
+  const from = new Date(now.getFullYear(), now.getMonth() - 6, 1);
+  const to = new Date(now.getFullYear(), now.getMonth() + 7, 0, 23, 59, 59);
   const appointmentList = await getAppointments(from, to);
 
   // Map to the format react-big-calendar expects
