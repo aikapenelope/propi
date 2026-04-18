@@ -3,6 +3,8 @@ import { Users, Building2, Calendar } from "lucide-react";
 import { globalSearch } from "@/server/actions/search";
 import { formatDate } from "@/lib/utils";
 
+export const dynamic = "force-dynamic";
+
 interface SearchPageProps {
   searchParams: Promise<{ q?: string }>;
 }

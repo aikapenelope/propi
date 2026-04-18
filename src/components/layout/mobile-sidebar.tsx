@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useCallback } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -22,7 +23,8 @@ import { cn } from "@/lib/utils";
 
 /**
  * Mobile drawer opened by "Mas..." in bottom nav or hamburger in top bar.
- * Slides in from the left with animation. Includes safe area padding.
+ * Uses CSS transitions for smooth slide-in/out animation.
+ * Width is capped at 80vw to prevent overflow on small screens.
  */
 
 const quickItems = [
@@ -51,32 +53,49 @@ interface MobileSidebarProps {
 export function MobileSidebar({ open, onClose }: MobileSidebarProps) {
   const pathname = usePathname();
 
-  // Always render when open so CSS transitions work.
-  // The translate-x transition handles the slide animation.
-  if (!open) return null;
+  // Close on Escape key
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    },
+    [onClose],
+  );
+
+  useEffect(() => {
+    if (open) {
+      document.addEventListener("keydown", handleKeyDown);
+      // Prevent body scroll when drawer is open
+      document.body.style.overflow = "hidden";
+    }
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      document.body.style.overflow = "";
+    };
+  }, [open, handleKeyDown]);
 
   return (
     <>
-      {/* Backdrop */}
+      {/* Backdrop — always rendered, opacity controlled by open state */}
       <div
         className={cn(
-          "fixed inset-0 z-40 bg-black/60 backdrop-blur-sm md:hidden transition-opacity duration-200",
-          open ? "opacity-100" : "opacity-0",
+          "fixed inset-0 z-40 bg-black/60 md:hidden transition-opacity duration-200",
+          open ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none",
         )}
         onClick={onClose}
         aria-hidden="true"
       />
 
-      {/* Drawer */}
+      {/* Drawer — always rendered, position controlled by translate */}
       <aside
         className={cn(
-          "fixed left-0 top-0 z-50 flex h-screen w-72 flex-col bg-background border-r border-border shadow-2xl md:hidden transition-transform duration-200 ease-out",
+          "fixed left-0 top-0 z-50 flex h-full w-[80vw] max-w-[280px] flex-col bg-background border-r border-border shadow-2xl md:hidden transition-transform duration-200 ease-out will-change-transform",
           open ? "translate-x-0" : "-translate-x-full",
         )}
         style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}
+        aria-hidden={!open}
       >
         {/* Header */}
-        <div className="flex h-14 items-center justify-between border-b border-border px-4">
+        <div className="flex h-14 items-center justify-between border-b border-border px-4 shrink-0">
           <div className="flex items-center gap-2">
             <div className="flex gap-[2px] items-center h-5">
               <div className="w-[2px] h-2 bg-foreground rounded-full opacity-60" />
@@ -98,7 +117,6 @@ export function MobileSidebar({ open, onClose }: MobileSidebarProps) {
 
         {/* Navigation */}
         <nav className="flex-1 overflow-y-auto px-3 py-3">
-          {/* Quick access */}
           <div className="space-y-0.5">
             {quickItems.map((item) => {
               const isActive =
@@ -122,7 +140,6 @@ export function MobileSidebar({ open, onClose }: MobileSidebarProps) {
             })}
           </div>
 
-          {/* Marketing section */}
           <div className="mt-5 mb-2 px-3">
             <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/50">
               Marketing
@@ -153,7 +170,7 @@ export function MobileSidebar({ open, onClose }: MobileSidebarProps) {
         </nav>
 
         {/* Footer */}
-        <div className="border-t border-border px-3 py-3" style={{ paddingBottom: "env(safe-area-inset-bottom, 0.75rem)" }}>
+        <div className="border-t border-border px-3 py-3 shrink-0" style={{ paddingBottom: "env(safe-area-inset-bottom, 0.75rem)" }}>
           <Link
             href="/help"
             onClick={onClose}

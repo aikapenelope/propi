@@ -4,6 +4,8 @@ import { getContacts } from "@/server/actions/contacts";
 import { formatDate } from "@/lib/utils";
 import { ContactsHeader } from "@/components/contacts/contacts-header";
 
+export const dynamic = "force-dynamic";
+
 interface ContactsPageProps {
   searchParams: Promise<{ q?: string }>;
 }

@@ -2,6 +2,8 @@ import { FileText, User, Building2 } from "lucide-react";
 import { getDocuments } from "@/server/actions/documents";
 import { formatDate } from "@/lib/utils";
 import { UploadDocumentButton } from "@/components/documents/upload-document-button";
+
+export const dynamic = "force-dynamic";
 import { DocumentActions } from "@/components/documents/document-actions";
 
 const typeLabels: Record<string, string> = {
