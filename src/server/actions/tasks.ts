@@ -125,6 +125,21 @@ export async function toggleTask(taskId: string) {
 }
 
 // ---------------------------------------------------------------------------
+// Update task notes
+// ---------------------------------------------------------------------------
+
+export async function updateTaskNotes(taskId: string, notes: string) {
+  const userId = await requireUserId();
+
+  await db
+    .update(tasks)
+    .set({ notes: notes.trim() || null })
+    .where(and(eq(tasks.id, taskId), eq(tasks.userId, userId)));
+
+  revalidatePath("/tasks");
+}
+
+// ---------------------------------------------------------------------------
 // Delete task
 // ---------------------------------------------------------------------------
 
