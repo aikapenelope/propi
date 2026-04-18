@@ -2,6 +2,7 @@
 
 import { db } from "@/lib/db";
 import { contacts } from "@/server/schema";
+import { eq } from "drizzle-orm";
 import { requireUserId } from "@/lib/auth-helper";
 import { revalidatePath } from "next/cache";
 
@@ -150,11 +151,38 @@ export async function importContacts(
   const userId = await requireUserId();
   let imported = 0;
   let skipped = 0;
+  const duplicates = 0;
   const errors: string[] = [];
+
+  // Load existing contacts for duplicate detection (by email or phone)
+  const existing = await db.query.contacts.findMany({
+    where: eq(contacts.userId, userId),
+    columns: { email: true, phone: true },
+  });
+
+  const existingEmails = new Set(
+    existing.map((c) => c.email?.toLowerCase()).filter(Boolean),
+  );
+  const existingPhones = new Set(
+    existing.map((c) => c.phone?.replace(/\D/g, "")).filter(Boolean),
+  );
 
   for (const contact of parsed) {
     try {
       if (!contact.name || contact.name.length < 2) {
+        skipped++;
+        continue;
+      }
+
+      // Skip duplicates: match by email or phone (normalized)
+      const emailNorm = contact.email?.toLowerCase();
+      const phoneNorm = contact.phone?.replace(/\D/g, "");
+
+      if (emailNorm && existingEmails.has(emailNorm)) {
+        skipped++;
+        continue;
+      }
+      if (phoneNorm && phoneNorm.length >= 7 && existingPhones.has(phoneNorm)) {
         skipped++;
         continue;
       }
@@ -168,6 +196,11 @@ export async function importContacts(
         leadStatus: "new",
         userId,
       });
+
+      // Track newly imported contacts to avoid duplicates within the same batch
+      if (emailNorm) existingEmails.add(emailNorm);
+      if (phoneNorm && phoneNorm.length >= 7) existingPhones.add(phoneNorm);
+
       imported++;
     } catch (err) {
       errors.push(
@@ -179,7 +212,7 @@ export async function importContacts(
   revalidatePath("/contacts");
   revalidatePath("/pipeline");
 
-  return { imported, skipped, errors };
+  return { imported, skipped: skipped + duplicates, errors };
 }
 
 // ---------------------------------------------------------------------------

@@ -217,6 +217,47 @@ export function BigCalendarView({ events }: BigCalendarViewProps) {
         .big-calendar-wrapper .rbc-current-time-indicator {
           background: var(--primary);
         }
+        /* Agenda view styling */
+        .big-calendar-wrapper .rbc-agenda-view {
+          border: 1px solid var(--border);
+          border-radius: 0.75rem;
+          overflow: hidden;
+        }
+        .big-calendar-wrapper .rbc-agenda-view table {
+          border: none;
+        }
+        .big-calendar-wrapper .rbc-agenda-table thead th {
+          padding: 0.5rem 0.75rem;
+          font-size: 0.75rem;
+          font-weight: 600;
+          color: var(--muted-foreground);
+          border-bottom: 1px solid var(--border);
+          text-transform: capitalize;
+        }
+        .big-calendar-wrapper .rbc-agenda-table tbody td {
+          padding: 0.5rem 0.75rem;
+          font-size: 0.8125rem;
+          color: var(--foreground);
+          border-bottom: 1px solid var(--border);
+        }
+        .big-calendar-wrapper .rbc-agenda-date-cell {
+          white-space: nowrap;
+          text-transform: capitalize;
+        }
+        .big-calendar-wrapper .rbc-agenda-time-cell {
+          white-space: nowrap;
+          color: var(--muted-foreground);
+          font-size: 0.75rem;
+        }
+        .big-calendar-wrapper .rbc-agenda-event-cell {
+          cursor: pointer;
+        }
+        .big-calendar-wrapper .rbc-agenda-empty {
+          padding: 2rem;
+          text-align: center;
+          color: var(--muted-foreground);
+          font-size: 0.875rem;
+        }
         /* Mobile: force day view to be usable */
         @media (max-width: 640px) {
           .big-calendar-wrapper {
