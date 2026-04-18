@@ -226,10 +226,121 @@ worker.on("failed", (job, err) => {
   console.error(`[market-sync] Job ${job?.id} failed:`, err.message);
 });
 
+// ---------------------------------------------------------------------------
+// Email Campaign Worker
+// ---------------------------------------------------------------------------
+
+interface EmailJobData {
+  campaignId: string;
+  userId: string;
+  recipients: { id: string; email: string }[];
+  subject: string;
+  htmlBody: string;
+}
+
+/** Minimal Resend client for the worker (no Next.js imports). */
+async function workerSendEmail(to: string, subject: string, html: string, from: string) {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) throw new Error("RESEND_API_KEY not configured");
+
+  const res = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ from, to: [to], subject, html }),
+  });
+
+  if (!res.ok) {
+    const err = await res.text().catch(() => "");
+    throw new Error(`Resend error ${res.status}: ${err}`);
+  }
+}
+
+const emailWorker = new Worker(
+  "email-campaign",
+  async (job) => {
+    const data = job.data as EmailJobData;
+    console.log(
+      `[email-campaign] Processing campaign ${data.campaignId}: ${data.recipients.length} recipients`,
+    );
+
+    const from = process.env.MAIL_FROM || "Propi <noreply@propi.aikalabs.cc>";
+    let sentCount = 0;
+    let failedCount = 0;
+
+    for (const recipient of data.recipients) {
+      try {
+        await workerSendEmail(recipient.email, data.subject, data.htmlBody, from);
+
+        await db
+          .insert(schema.campaignRecipients)
+          .values({
+            campaignId: data.campaignId,
+            contactId: recipient.id,
+            status: "delivered",
+            sentAt: new Date(),
+          });
+
+        sentCount++;
+      } catch (err) {
+        console.error(`[email-campaign] Failed for ${recipient.email}:`, err);
+
+        await db
+          .insert(schema.campaignRecipients)
+          .values({
+            campaignId: data.campaignId,
+            contactId: recipient.id,
+            status: "failed",
+          });
+
+        failedCount++;
+      }
+
+      await job.updateProgress(
+        Math.round(((sentCount + failedCount) / data.recipients.length) * 100),
+      );
+    }
+
+    // Update campaign final status
+    await db
+      .update(schema.emailCampaigns)
+      .set({
+        status: failedCount === data.recipients.length ? "failed" : "sent",
+        sentCount,
+        failedCount,
+        sentAt: new Date(),
+      })
+      .where(eq(schema.emailCampaigns.id, data.campaignId));
+
+    console.log(
+      `[email-campaign] Done: ${sentCount} sent, ${failedCount} failed`,
+    );
+
+    return { sentCount, failedCount };
+  },
+  {
+    connection,
+    concurrency: 1, // Send one campaign at a time to respect Resend rate limits
+  },
+);
+
+emailWorker.on("completed", (job) => {
+  console.log(`[email-campaign] Job ${job.id} completed`);
+});
+
+emailWorker.on("failed", (job, err) => {
+  console.error(`[email-campaign] Job ${job?.id} failed:`, err.message);
+});
+
+// ---------------------------------------------------------------------------
 // Graceful shutdown
+// ---------------------------------------------------------------------------
+
 async function shutdown() {
-  console.log("[market-sync] Shutting down...");
-  await worker.close();
+  console.log("[workers] Shutting down...");
+  await Promise.all([worker.close(), emailWorker.close()]);
   await connection.quit();
   process.exit(0);
 }
@@ -237,4 +348,4 @@ async function shutdown() {
 process.on("SIGINT", shutdown);
 process.on("SIGTERM", shutdown);
 
-console.log("[market-sync] Worker started, waiting for jobs...");
+console.log("[workers] Started: market-sync + email-campaign");

@@ -1,6 +1,9 @@
 # Worker container for BullMQ background jobs.
 # Runs separately from the Next.js app container.
 # Deploy as a second service in Coolify pointing to the same repo.
+#
+# Required env vars: REDIS_URL, DATABASE_URL
+# For email campaigns: RESEND_API_KEY, MAIL_FROM
 
 ARG NODE_VERSION=22-slim
 

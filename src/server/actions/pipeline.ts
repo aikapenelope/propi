@@ -2,40 +2,42 @@
 
 import { db } from "@/lib/db";
 import { contacts } from "@/server/schema";
-import { eq, and } from "drizzle-orm";
+import { eq, and, desc } from "drizzle-orm";
 import { requireUserId } from "@/lib/auth-helper";
 import { revalidatePath } from "next/cache";
 import type { LeadStatus } from "@/lib/pipeline-config";
+import { LEAD_STATUSES } from "@/lib/pipeline-config";
 
 // ---------------------------------------------------------------------------
 // Get contacts grouped by lead status (for Kanban)
 // ---------------------------------------------------------------------------
 
+/** Max contacts per pipeline column. Prevents loading 10K+ contacts at once. */
+const PIPELINE_COLUMN_LIMIT = 100;
+
 export async function getPipelineContacts() {
   const userId = await requireUserId();
 
-  const allContacts = await db.query.contacts.findMany({
-    where: eq(contacts.userId, userId),
-    with: { contactTags: { with: { tag: true } } },
-    orderBy: (contacts, { desc }) => [desc(contacts.updatedAt)],
-  });
+  // Query each status in parallel with a per-column limit instead of
+  // loading every contact and grouping in JS. With 7 statuses * 100 limit
+  // the max is 700 contacts vs unbounded before.
+  const results = await Promise.all(
+    LEAD_STATUSES.map((status) =>
+      db.query.contacts.findMany({
+        where: and(
+          eq(contacts.userId, userId),
+          eq(contacts.leadStatus, status),
+        ),
+        with: { contactTags: { with: { tag: true } } },
+        orderBy: [desc(contacts.updatedAt)],
+        limit: PIPELINE_COLUMN_LIMIT,
+      }),
+    ),
+  );
 
-  // Group by leadStatus
-  const grouped: Record<LeadStatus, typeof allContacts> = {
-    new: [],
-    contacted: [],
-    qualified: [],
-    showing: [],
-    offer: [],
-    closed: [],
-    lost: [],
-  };
-
-  for (const contact of allContacts) {
-    const status = (contact.leadStatus as LeadStatus) || "new";
-    if (grouped[status]) {
-      grouped[status].push(contact);
-    }
+  const grouped = {} as Record<LeadStatus, (typeof results)[number]>;
+  for (let i = 0; i < LEAD_STATUSES.length; i++) {
+    grouped[LEAD_STATUSES[i]] = results[i];
   }
 
   return grouped;
