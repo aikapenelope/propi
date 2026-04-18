@@ -1,22 +1,13 @@
 "use client";
 
-import { useState, useCallback, useMemo } from "react";
-import { Calendar, dateFnsLocalizer } from "react-big-calendar";
-import type { View, Components } from "react-big-calendar";
-import { format, parse, startOfWeek, getDay } from "date-fns";
-import { es } from "date-fns/locale";
+import { useCallback } from "react";
+import FullCalendar from "@fullcalendar/react";
+import dayGridPlugin from "@fullcalendar/daygrid";
+import timeGridPlugin from "@fullcalendar/timegrid";
+import interactionPlugin from "@fullcalendar/interaction";
+import listPlugin from "@fullcalendar/list";
 import { useRouter } from "next/navigation";
-import "react-big-calendar/lib/css/react-big-calendar.css";
-
-const locales = { es };
-
-const localizer = dateFnsLocalizer({
-  format,
-  parse,
-  startOfWeek: () => startOfWeek(new Date(), { locale: es }),
-  getDay,
-  locales,
-});
+import type { EventClickArg, DateSelectArg } from "@fullcalendar/core";
 
 interface CalendarEvent {
   id: string;
@@ -36,289 +27,239 @@ interface BigCalendarViewProps {
 const statusColors: Record<string, string> = {
   scheduled: "#3b82f6",
   confirmed: "#22c55e",
-  completed: "#94a3b8",
+  completed: "#6b7280",
   cancelled: "#ef4444",
   no_show: "#f59e0b",
 };
 
+const statusLabels: Record<string, string> = {
+  scheduled: "Programada",
+  confirmed: "Confirmada",
+  completed: "Completada",
+  cancelled: "Cancelada",
+  no_show: "No asistio",
+};
+
 export function BigCalendarView({ events }: BigCalendarViewProps) {
-  const [view, setView] = useState<View>("month");
-  const [date, setDate] = useState(new Date());
   const router = useRouter();
 
-  const navigateToNewAppointment = useCallback(
-    (start: Date) => {
-      const dateStr = format(start, "yyyy-MM-dd'T'HH:mm");
+  const handleDateSelect = useCallback(
+    (selectInfo: DateSelectArg) => {
+      const dateStr = selectInfo.start.toISOString().slice(0, 16);
       router.push(`/calendar/new?date=${dateStr}`);
+      selectInfo.view.calendar.unselect();
     },
     [router],
   );
 
-  const handleSelectEvent = useCallback(
-    (event: CalendarEvent) => {
-      router.push(`/calendar/${event.id}/edit`);
+  const handleEventClick = useCallback(
+    (clickInfo: EventClickArg) => {
+      router.push(`/calendar/${clickInfo.event.id}/edit`);
     },
     [router],
   );
 
-  const handleSelectSlot = useCallback(
-    ({ start }: { start: Date }) => {
-      navigateToNewAppointment(start);
+  const fcEvents = events.map((e) => ({
+    id: e.id,
+    title: e.title,
+    start: e.start,
+    end: e.end,
+    backgroundColor: statusColors[e.status] || "#3b82f6",
+    borderColor: statusColors[e.status] || "#3b82f6",
+    extendedProps: {
+      status: e.status,
+      contactName: e.contactName,
+      propertyTitle: e.propertyTitle,
+      location: e.location,
     },
-    [navigateToNewAppointment],
-  );
-
-  // Custom wrapper that makes day cells tappable on touch devices (PWA).
-  // react-big-calendar's default onSelectSlot requires a long press on mobile,
-  // which is not intuitive. This wrapper adds a simple click/tap handler.
-  const components: Components<CalendarEvent> = useMemo(
-    () => ({
-      dateCellWrapper: ({ children, value }: { children?: React.ReactNode; value: Date }) => (
-        <div
-          role="button"
-          tabIndex={0}
-          onClick={() => navigateToNewAppointment(value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") navigateToNewAppointment(value);
-          }}
-          style={{ flex: 1, display: "flex" }}
-        >
-          {children}
-        </div>
-      ),
-    }),
-    [navigateToNewAppointment],
-  );
-
-  const eventStyleGetter = useCallback((event: CalendarEvent) => {
-    const color = statusColors[event.status] || "#3b82f6";
-    return {
-      style: {
-        backgroundColor: color,
-        borderRadius: "6px",
-        border: "none",
-        color: "#fff",
-        fontSize: "12px",
-        padding: "2px 6px",
-      },
-    };
-  }, []);
-
-  const messages = useMemo(
-    () => ({
-      today: "Hoy",
-      previous: "Anterior",
-      next: "Siguiente",
-      month: "Mes",
-      week: "Semana",
-      day: "Dia",
-      agenda: "Agenda",
-      date: "Fecha",
-      time: "Hora",
-      event: "Cita",
-      noEventsInRange: "No hay citas en este periodo.",
-      showMore: (total: number) => `+${total} mas`,
-    }),
-    [],
-  );
+  }));
 
   return (
-    <div className="big-calendar-wrapper">
-      <Calendar
-        localizer={localizer}
-        events={events}
-        startAccessor="start"
-        endAccessor="end"
-        view={view}
-        onView={setView}
-        date={date}
-        onNavigate={setDate}
-        onSelectEvent={handleSelectEvent}
-        onSelectSlot={handleSelectSlot}
-        selectable
-        longPressThreshold={10}
-        components={components}
-        eventPropGetter={eventStyleGetter}
-        messages={messages}
-        culture="es"
-        popup
-        tooltipAccessor={(event) =>
-          [
-            event.title,
-            event.contactName ? `Contacto: ${event.contactName}` : null,
-            event.propertyTitle ? `Propiedad: ${event.propertyTitle}` : null,
-            event.location ? `Lugar: ${event.location}` : null,
-          ]
-            .filter(Boolean)
-            .join("\n")
-        }
+    <div className="propi-calendar">
+      <FullCalendar
+        plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin]}
+        initialView="dayGridMonth"
+        headerToolbar={{
+          left: "prev,next today",
+          center: "title",
+          right: "dayGridMonth,timeGridWeek,timeGridDay,listWeek",
+        }}
+        locale="es"
+        buttonText={{
+          today: "Hoy",
+          month: "Mes",
+          week: "Semana",
+          day: "Dia",
+          list: "Agenda",
+        }}
+        events={fcEvents}
+        selectable={true}
+        selectMirror={true}
+        dayMaxEvents={3}
+        weekends={true}
+        select={handleDateSelect}
+        eventClick={handleEventClick}
+        nowIndicator={true}
+        height="auto"
+        contentHeight="auto"
+        slotMinTime="06:00:00"
+        slotMaxTime="22:00:00"
+        allDaySlot={false}
+        slotDuration="00:30:00"
+        longPressDelay={100}
+        eventContent={(eventInfo) => (
+          <div className="overflow-hidden px-1 py-0.5">
+            <div className="truncate text-[11px] font-medium">
+              {eventInfo.event.title}
+            </div>
+            {eventInfo.view.type !== "dayGridMonth" &&
+              eventInfo.event.extendedProps.contactName && (
+                <div className="truncate text-[10px] opacity-75">
+                  {eventInfo.event.extendedProps.contactName}
+                </div>
+              )}
+          </div>
+        )}
+        eventDidMount={(info) => {
+          const props = info.event.extendedProps;
+          const parts = [
+            info.event.title,
+            statusLabels[props.status] || props.status,
+            props.contactName ? `Contacto: ${props.contactName}` : null,
+            props.propertyTitle ? `Propiedad: ${props.propertyTitle}` : null,
+            props.location ? `Lugar: ${props.location}` : null,
+          ].filter(Boolean);
+          info.el.title = parts.join("\n");
+        }}
       />
+
       <style>{`
-        .big-calendar-wrapper {
-          height: calc(100vh - 10rem);
-          min-height: 500px;
+        .propi-calendar {
+          --fc-border-color: var(--border);
+          --fc-button-bg-color: transparent;
+          --fc-button-border-color: var(--border);
+          --fc-button-text-color: var(--foreground);
+          --fc-button-hover-bg-color: var(--muted);
+          --fc-button-hover-border-color: var(--border);
+          --fc-button-active-bg-color: var(--primary);
+          --fc-button-active-border-color: var(--primary);
+          --fc-button-active-text-color: var(--primary-foreground);
+          --fc-today-bg-color: color-mix(in srgb, var(--primary) 6%, transparent);
+          --fc-neutral-bg-color: var(--muted);
+          --fc-page-bg-color: transparent;
+          --fc-event-text-color: #fff;
+          --fc-list-event-hover-bg-color: var(--muted);
+          --fc-now-indicator-color: var(--primary);
         }
-        .big-calendar-wrapper .rbc-calendar {
-          height: 100%;
+        .propi-calendar .fc {
+          font-family: inherit;
         }
-        .big-calendar-wrapper .rbc-toolbar {
+        .propi-calendar .fc-toolbar {
           flex-wrap: wrap;
           gap: 0.5rem;
-          margin-bottom: 1rem;
-          padding: 0;
+          margin-bottom: 1rem !important;
         }
-        .big-calendar-wrapper .rbc-toolbar button {
-          border-radius: 0.5rem;
-          border: 1px solid var(--border);
-          background: transparent;
-          color: var(--foreground);
-          padding: 0.375rem 0.75rem;
-          font-size: 0.8125rem;
-          font-weight: 500;
-          cursor: pointer;
-          transition: background 0.15s;
-        }
-        .big-calendar-wrapper .rbc-toolbar button:hover {
-          background: var(--muted);
-        }
-        .big-calendar-wrapper .rbc-toolbar button.rbc-active {
-          background: var(--primary);
-          color: var(--primary-foreground);
-          border-color: var(--primary);
-        }
-        .big-calendar-wrapper .rbc-toolbar-label {
+        .propi-calendar .fc-toolbar-title {
+          font-size: 1rem !important;
           font-weight: 600;
-          font-size: 1rem;
           color: var(--foreground);
           text-transform: capitalize;
         }
-        .big-calendar-wrapper .rbc-header {
+        .propi-calendar .fc-button {
+          border-radius: 0.5rem !important;
+          padding: 0.375rem 0.75rem !important;
+          font-size: 0.8125rem !important;
+          font-weight: 500 !important;
+          box-shadow: none !important;
+          transition: background 0.15s, color 0.15s;
+        }
+        .propi-calendar .fc-button:focus {
+          box-shadow: none !important;
+        }
+        .propi-calendar .fc-button-group > .fc-button {
+          border-radius: 0 !important;
+        }
+        .propi-calendar .fc-button-group > .fc-button:first-child {
+          border-radius: 0.5rem 0 0 0.5rem !important;
+        }
+        .propi-calendar .fc-button-group > .fc-button:last-child {
+          border-radius: 0 0.5rem 0.5rem 0 !important;
+        }
+        .propi-calendar .fc-scrollgrid {
+          border-radius: 0.75rem;
+          overflow: hidden;
+        }
+        .propi-calendar .fc-col-header-cell {
           padding: 0.5rem;
           font-size: 0.75rem;
           font-weight: 600;
           color: var(--muted-foreground);
-          border-bottom: 1px solid var(--border);
           text-transform: capitalize;
         }
-        .big-calendar-wrapper .rbc-month-view,
-        .big-calendar-wrapper .rbc-time-view {
-          border: 1px solid var(--border);
-          border-radius: 0.75rem;
-          overflow: hidden;
-        }
-        .big-calendar-wrapper .rbc-day-bg + .rbc-day-bg,
-        .big-calendar-wrapper .rbc-month-row + .rbc-month-row {
-          border-color: var(--border);
-        }
-        .big-calendar-wrapper .rbc-off-range-bg {
-          background: var(--muted);
-        }
-        .big-calendar-wrapper .rbc-today {
-          background: color-mix(in srgb, var(--primary) 8%, transparent);
-        }
-        .big-calendar-wrapper .rbc-date-cell {
+        .propi-calendar .fc-daygrid-day-number {
           padding: 0.25rem 0.5rem;
           font-size: 0.8125rem;
           color: var(--foreground);
         }
-        .big-calendar-wrapper .rbc-show-more {
+        .propi-calendar .fc-daygrid-day.fc-day-other .fc-daygrid-day-number {
+          color: var(--muted-foreground);
+          opacity: 0.5;
+        }
+        .propi-calendar .fc-event {
+          border-radius: 4px !important;
+          border: none !important;
+          cursor: pointer;
+        }
+        .propi-calendar .fc-daygrid-more-link {
           font-size: 0.75rem;
           color: var(--primary);
           font-weight: 500;
         }
-        .big-calendar-wrapper .rbc-event {
-          font-size: 0.75rem;
+        .propi-calendar .fc-timegrid-slot {
+          height: 2.5rem;
         }
-        .big-calendar-wrapper .rbc-time-slot {
-          border-color: var(--border);
-        }
-        .big-calendar-wrapper .rbc-timeslot-group {
-          border-color: var(--border);
-        }
-        .big-calendar-wrapper .rbc-time-header-content {
-          border-color: var(--border);
-        }
-        .big-calendar-wrapper .rbc-time-content {
-          border-color: var(--border);
-        }
-        .big-calendar-wrapper .rbc-label {
+        .propi-calendar .fc-timegrid-slot-label {
           font-size: 0.75rem;
           color: var(--muted-foreground);
         }
-        .big-calendar-wrapper .rbc-current-time-indicator {
-          background: var(--primary);
-        }
-        /* Agenda view styling */
-        .big-calendar-wrapper .rbc-agenda-view {
-          border: 1px solid var(--border);
-          border-radius: 0.75rem;
-          overflow: hidden;
-        }
-        .big-calendar-wrapper .rbc-agenda-view table {
-          border: none;
-        }
-        .big-calendar-wrapper .rbc-agenda-table thead th {
-          padding: 0.5rem 0.75rem;
-          font-size: 0.75rem;
-          font-weight: 600;
-          color: var(--muted-foreground);
-          border-bottom: 1px solid var(--border);
-          text-transform: capitalize;
-        }
-        .big-calendar-wrapper .rbc-agenda-table tbody td {
-          padding: 0.5rem 0.75rem;
+        .propi-calendar .fc-list-event-title {
           font-size: 0.8125rem;
-          color: var(--foreground);
-          border-bottom: 1px solid var(--border);
         }
-        .big-calendar-wrapper .rbc-agenda-date-cell {
-          white-space: nowrap;
+        .propi-calendar .fc-list-day-cushion {
+          background: var(--muted) !important;
           text-transform: capitalize;
         }
-        .big-calendar-wrapper .rbc-agenda-time-cell {
-          white-space: nowrap;
-          color: var(--muted-foreground);
-          font-size: 0.75rem;
-        }
-        .big-calendar-wrapper .rbc-agenda-event-cell {
-          cursor: pointer;
-        }
-        .big-calendar-wrapper .rbc-agenda-empty {
-          padding: 2rem;
+        .propi-calendar .fc-list-empty {
+          background: transparent;
           text-align: center;
+          padding: 2rem;
           color: var(--muted-foreground);
-          font-size: 0.875rem;
         }
-        /* Mobile: force day view to be usable */
+        /* Mobile */
         @media (max-width: 640px) {
-          .big-calendar-wrapper {
-            height: calc(100vh - 8rem);
-            min-height: 400px;
-          }
-          .big-calendar-wrapper .rbc-toolbar {
-            font-size: 0.75rem;
+          .propi-calendar .fc-toolbar {
             gap: 0.25rem;
           }
-          .big-calendar-wrapper .rbc-toolbar button {
-            padding: 0.25rem 0.5rem;
-            font-size: 0.75rem;
-          }
-          .big-calendar-wrapper .rbc-toolbar-label {
-            font-size: 0.875rem;
+          .propi-calendar .fc-toolbar-title {
+            font-size: 0.875rem !important;
             width: 100%;
             text-align: center;
             order: -1;
           }
-          .big-calendar-wrapper .rbc-month-row {
-            min-height: 3.5rem;
+          .propi-calendar .fc-button {
+            padding: 0.25rem 0.5rem !important;
+            font-size: 0.75rem !important;
           }
-          .big-calendar-wrapper .rbc-event {
-            font-size: 0.625rem;
-            padding: 1px 3px;
-          }
-          .big-calendar-wrapper .rbc-date-cell {
+          .propi-calendar .fc-daygrid-day-number {
             font-size: 0.75rem;
             padding: 0.125rem 0.25rem;
+          }
+          .propi-calendar .fc-event {
+            font-size: 0.625rem;
+          }
+          .propi-calendar .fc-col-header-cell {
+            font-size: 0.625rem;
+            padding: 0.25rem;
           }
         }
       `}</style>
