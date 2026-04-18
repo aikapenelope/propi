@@ -653,6 +653,8 @@ export const marketListings = pgTable(
     index("market_listings_city_hood_idx").on(table.city, table.neighborhood),
     index("market_listings_published_idx").on(table.publishedAt),
     index("market_listings_price_idx").on(table.price),
+    /** Composite index for KPI queries that filter by city + type + operation + neighborhood */
+    index("market_listings_kpi_idx").on(table.city, table.propertyType, table.operation, table.neighborhood),
   ],
 );
 
@@ -829,3 +831,8 @@ export const magicSearches = pgTable(
     index("magic_searches_created_idx").on(table.createdAt),
   ],
 );
+
+export const magicSearchesRelations = relations(magicSearches, () => ({
+  // No FKs — userId is a Clerk ID, not a DB reference.
+  // Relation block exists so Drizzle query builder recognizes the table.
+}));
