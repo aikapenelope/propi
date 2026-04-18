@@ -264,9 +264,9 @@ export const appointments = pgTable(
     /** Location (address or virtual link) */
     location: text("location"),
     /** Linked contact (optional) */
-    contactId: uuid("contact_id").references(() => contacts.id),
+    contactId: uuid("contact_id").references(() => contacts.id, { onDelete: "set null" }),
     /** Linked property (optional) */
-    propertyId: uuid("property_id").references(() => properties.id),
+    propertyId: uuid("property_id").references(() => properties.id, { onDelete: "set null" }),
     userId: text("user_id").notNull(),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
@@ -303,9 +303,9 @@ export const documents = pgTable(
     /** MIME type */
     mimeType: varchar("mime_type", { length: 255 }),
     /** Linked contact (optional) */
-    contactId: uuid("contact_id").references(() => contacts.id),
+    contactId: uuid("contact_id").references(() => contacts.id, { onDelete: "set null" }),
     /** Linked property (optional) */
-    propertyId: uuid("property_id").references(() => properties.id),
+    propertyId: uuid("property_id").references(() => properties.id, { onDelete: "set null" }),
     userId: text("user_id").notNull(),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
@@ -378,7 +378,7 @@ export const emailCampaigns = pgTable(
     subject: varchar("subject", { length: 500 }).notNull(),
     htmlBody: text("html_body").notNull(),
     /** Send to contacts with this tag (segment) */
-    tagId: uuid("tag_id").references(() => tags.id),
+    tagId: uuid("tag_id").references(() => tags.id, { onDelete: "set null" }),
     status: campaignStatusEnum("status").notNull().default("draft"),
     sentCount: integer("sent_count").default(0),
     failedCount: integer("failed_count").default(0),
@@ -441,7 +441,7 @@ export const conversations = pgTable(
     /** Platform-specific conversation/thread ID */
     externalId: varchar("external_id", { length: 500 }),
     /** Linked CRM contact (optional, matched by phone/name) */
-    contactId: uuid("contact_id").references(() => contacts.id),
+    contactId: uuid("contact_id").references(() => contacts.id, { onDelete: "set null" }),
     /** Name of the external participant */
     participantName: varchar("participant_name", { length: 255 }),
     /** Platform user ID of the external participant */
