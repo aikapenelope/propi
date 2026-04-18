@@ -6,7 +6,7 @@ import IORedis from "ioredis";
  * Uses the same Redis instance as the Data Plane (DB 3 for Propi).
  *
  * BullMQ requires maxmemory-policy=noeviction on Redis.
- * Our Redis doesn't set maxmemory, so all keys are retained (safe).
+ * Redis is configured with --maxmemory 1gb --maxmemory-policy noeviction.
  */
 
 const REDIS_URL = process.env.REDIS_URL || "redis://:password@10.0.1.20:6379/3";
@@ -30,5 +30,16 @@ export const marketSyncQueue = new Queue("market-sync", {
     backoff: { type: "exponential", delay: 5000 },
     removeOnComplete: { count: 100 },
     removeOnFail: { count: 500 },
+  },
+});
+
+/** Queue for email campaign sends (offloaded from request to avoid timeout) */
+export const emailCampaignQueue = new Queue("email-campaign", {
+  connection: redisConnection,
+  defaultJobOptions: {
+    attempts: 3,
+    backoff: { type: "exponential", delay: 10_000 },
+    removeOnComplete: { count: 50 },
+    removeOnFail: { count: 200 },
   },
 });

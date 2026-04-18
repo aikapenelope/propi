@@ -3,13 +3,11 @@
 import { db } from "@/lib/db";
 import {
   emailCampaigns,
-  campaignRecipients,
   contacts,
   contactTags,
 } from "@/server/schema";
 import { eq, and, desc } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
-import { sendEmail, getMailFrom } from "@/lib/mailer";
 import { requireUserId } from "@/lib/auth-helper";
 
 // ---------------------------------------------------------------------------
@@ -66,7 +64,7 @@ export async function createEmailCampaign(data: {
 }
 
 // ---------------------------------------------------------------------------
-// Send campaign
+// Send campaign (enqueues to BullMQ, returns immediately)
 // ---------------------------------------------------------------------------
 
 export async function sendEmailCampaign(campaignId: string) {
@@ -85,7 +83,7 @@ export async function sendEmailCampaign(campaignId: string) {
     throw new Error("Solo se pueden enviar campanas en estado borrador.");
   }
 
-  // Get recipients: user's contacts with email, filtered by tag if set
+  // Resolve recipients now so we can validate before enqueuing
   let recipientContacts: { id: string; email: string | null; name: string }[];
 
   if (campaign.tagId) {
@@ -113,49 +111,20 @@ export async function sendEmailCampaign(campaignId: string) {
     .set({ status: "sending" })
     .where(and(eq(emailCampaigns.id, campaignId), eq(emailCampaigns.userId, userId)));
 
-  const from = getMailFrom();
-  let sentCount = 0;
-  let failedCount = 0;
-
-  for (const contact of recipientContacts) {
-    try {
-      await sendEmail({
-        from,
-        to: contact.email!,
-        subject: campaign.subject,
-        html: campaign.htmlBody,
-      });
-
-      await db.insert(campaignRecipients).values({
-        campaignId,
-        contactId: contact.id,
-        status: "delivered",
-        sentAt: new Date(),
-      });
-
-      sentCount++;
-    } catch {
-      await db.insert(campaignRecipients).values({
-        campaignId,
-        contactId: contact.id,
-        status: "failed",
-      });
-
-      failedCount++;
-    }
-  }
-
-  // Update campaign status
-  await db
-    .update(emailCampaigns)
-    .set({
-      status: failedCount === recipientContacts.length ? "failed" : "sent",
-      sentCount,
-      failedCount,
-      sentAt: new Date(),
-    })
-    .where(eq(emailCampaigns.id, campaignId));
+  // Enqueue to BullMQ — the worker handles the actual sending.
+  // This returns in ~1ms instead of blocking for N * sendEmail() calls.
+  const { emailCampaignQueue } = await import("@/lib/queue");
+  await emailCampaignQueue.add("send", {
+    campaignId,
+    userId,
+    recipients: recipientContacts.map((c) => ({
+      id: c.id,
+      email: c.email!,
+    })),
+    subject: campaign.subject,
+    htmlBody: campaign.htmlBody,
+  });
 
   revalidatePath("/marketing/email");
-  return { sentCount, failedCount, total: recipientContacts.length };
+  return { enqueued: true, total: recipientContacts.length };
 }

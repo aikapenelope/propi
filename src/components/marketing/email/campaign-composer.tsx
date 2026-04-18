@@ -56,7 +56,7 @@ export function CampaignComposer({ tags }: { tags: Tag[] }) {
       });
       const res = await sendEmailCampaign(campaign.id);
       setResult(
-        `Enviados: ${res.sentCount}/${res.total}. Fallidos: ${res.failedCount}.`,
+        `Campana enviandose a ${res.total} contactos en segundo plano.`,
       );
       setTimeout(() => router.push("/marketing/email"), 2000);
     } catch (err) {
