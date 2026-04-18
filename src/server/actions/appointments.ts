@@ -3,7 +3,7 @@
 import { db } from "@/lib/db";
 import { appointments } from "@/server/schema";
 import { eq, and, gte, lte, type SQL } from "drizzle-orm";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { requireUserId } from "@/lib/auth-helper";
 
 // ---------------------------------------------------------------------------
@@ -99,6 +99,7 @@ export async function createAppointment(data: AppointmentFormData) {
     .returning();
 
   revalidatePath("/calendar");
+  revalidateTag(`dashboard-${userId}`, "max");
   return appointment;
 }
 
@@ -125,6 +126,7 @@ export async function updateAppointment(
     .returning();
 
   revalidatePath("/calendar");
+  revalidateTag(`dashboard-${userId}`, "max");
   return appointment;
 }
 
@@ -134,4 +136,5 @@ export async function deleteAppointment(id: string) {
     .delete(appointments)
     .where(and(eq(appointments.id, id), eq(appointments.userId, userId)));
   revalidatePath("/calendar");
+  revalidateTag(`dashboard-${userId}`, "max");
 }

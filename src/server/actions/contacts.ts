@@ -3,7 +3,7 @@
 import { db } from "@/lib/db";
 import { contacts, contactTags, tags } from "@/server/schema";
 import { eq, and, ilike, or, desc, sql } from "drizzle-orm";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { requireUserId } from "@/lib/auth-helper";
 import { sanitizeLike } from "@/lib/sanitize";
 
@@ -107,6 +107,7 @@ export async function createContact(data: ContactFormData) {
   }
 
   revalidatePath("/contacts");
+  revalidateTag(`dashboard-${userId}`, "max");
   return contact;
 }
 
@@ -139,6 +140,7 @@ export async function updateContact(id: string, data: ContactFormData) {
 
   revalidatePath("/contacts");
   revalidatePath(`/contacts/${id}`);
+  revalidateTag(`dashboard-${userId}`, "max");
   return contact;
 }
 

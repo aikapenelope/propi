@@ -3,7 +3,7 @@
 import { db } from "@/lib/db";
 import { properties, propertyTags, propertyImages } from "@/server/schema";
 import { eq, ilike, or, desc, and, gte, lte, type SQL } from "drizzle-orm";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { DeleteObjectCommand } from "@aws-sdk/client-s3";
 import { sanitizeLike } from "@/lib/sanitize";
 import { s3, MEDIA_BUCKET } from "@/lib/s3";
@@ -180,6 +180,7 @@ export async function createProperty(data: PropertyFormData) {
   }
 
   revalidatePath("/properties");
+  revalidateTag(`dashboard-${userId}`, "max");
   return property;
 }
 
@@ -206,6 +207,7 @@ export async function updatePropertyStatus(
     .where(and(eq(properties.id, id), eq(properties.userId, userId)));
   revalidatePath(`/properties/${id}`);
   revalidatePath("/properties");
+  revalidateTag(`dashboard-${userId}`, "max");
 }
 
 export async function updateProperty(id: string, data: PropertyFormData) {
@@ -252,6 +254,7 @@ export async function updateProperty(id: string, data: PropertyFormData) {
   }
 
   revalidatePath("/properties");
+  revalidateTag(`dashboard-${userId}`, "max");
   revalidatePath(`/properties/${id}`);
   return property;
 }
@@ -262,6 +265,7 @@ export async function deleteProperty(id: string) {
     .delete(properties)
     .where(and(eq(properties.id, id), eq(properties.userId, userId)));
   revalidatePath("/properties");
+  revalidateTag(`dashboard-${userId}`, "max");
 }
 
 // ---------------------------------------------------------------------------
