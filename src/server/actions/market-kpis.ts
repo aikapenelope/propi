@@ -3,6 +3,8 @@
 import { db } from "@/lib/db";
 import { marketListings } from "@/server/schema";
 import { sql, and, gte, ilike, count, desc } from "drizzle-orm";
+import { requireUserId } from "@/lib/auth-helper";
+import { sanitizeLike } from "@/lib/sanitize";
 
 /**
  * Market intelligence KPIs by city.
@@ -14,7 +16,7 @@ const TWELVE_MONTHS = 365 * 24 * 60 * 60 * 1000;
 
 function cityFilter(city: string) {
   return and(
-    ilike(marketListings.city, `%${city}%`),
+    ilike(marketListings.city, `%${sanitizeLike(city)}%`),
     gte(marketListings.publishedAt, new Date(Date.now() - TWELVE_MONTHS)),
   );
 }
@@ -24,6 +26,7 @@ function cityFilter(city: string) {
 // ---------------------------------------------------------------------------
 
 export async function getCityOverview(city: string) {
+  await requireUserId();
   const where = cityFilter(city);
 
   const [stats] = await db
@@ -47,6 +50,7 @@ export async function getCityOverview(city: string) {
 // ---------------------------------------------------------------------------
 
 export async function getPricePerM2ByNeighborhood(city: string) {
+  await requireUserId();
   const where = cityFilter(city);
 
   return db
@@ -75,6 +79,7 @@ export async function getPricePerM2ByNeighborhood(city: string) {
 // ---------------------------------------------------------------------------
 
 export async function getPriceTrendByMonth(city: string) {
+  await requireUserId();
   const where = cityFilter(city);
 
   return db
@@ -94,6 +99,7 @@ export async function getPriceTrendByMonth(city: string) {
 // ---------------------------------------------------------------------------
 
 export async function getInventoryByType(city: string) {
+  await requireUserId();
   const where = cityFilter(city);
 
   return db
@@ -113,6 +119,7 @@ export async function getInventoryByType(city: string) {
 // ---------------------------------------------------------------------------
 
 export async function getPriceDistribution(city: string) {
+  await requireUserId();
   const where = cityFilter(city);
 
   return db
@@ -144,6 +151,7 @@ export async function getPriceDistribution(city: string) {
 // ---------------------------------------------------------------------------
 
 export async function getWeeklyNewListings(city: string) {
+  await requireUserId();
   const eightWeeksAgo = new Date(Date.now() - 8 * 7 * 24 * 60 * 60 * 1000);
 
   return db
@@ -167,6 +175,7 @@ export async function getWeeklyNewListings(city: string) {
 // ---------------------------------------------------------------------------
 
 export async function getTopSellers(city: string) {
+  await requireUserId();
   const where = cityFilter(city);
 
   return db
@@ -192,6 +201,7 @@ export async function getTopSellers(city: string) {
 // ---------------------------------------------------------------------------
 
 export async function getConditionBreakdown(city: string) {
+  await requireUserId();
   const where = cityFilter(city);
 
   return db

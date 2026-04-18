@@ -4,6 +4,8 @@ import { db } from "@/lib/db";
 import { marketListings } from "@/server/schema";
 import { sql, and, gte, lte, ilike, eq, desc, count } from "drizzle-orm";
 import type { ParsedQuery } from "@/lib/market-parser";
+import { requireUserId } from "@/lib/auth-helper";
+import { sanitizeLike } from "@/lib/sanitize";
 
 // ---------------------------------------------------------------------------
 // Search
@@ -14,18 +16,19 @@ export async function searchMarketListings(
   query: ParsedQuery,
   limit = 20,
 ) {
+  await requireUserId();
   const conditions = [];
 
   if (query.propertyType) {
-    conditions.push(ilike(marketListings.propertyType, `%${query.propertyType}%`));
+    conditions.push(ilike(marketListings.propertyType, `%${sanitizeLike(query.propertyType)}%`));
   }
   if (query.operation) {
-    conditions.push(ilike(marketListings.operation, `%${query.operation}%`));
+    conditions.push(ilike(marketListings.operation, `%${sanitizeLike(query.operation)}%`));
   }
   if (query.neighborhood) {
-    conditions.push(ilike(marketListings.neighborhood, `%${query.neighborhood}%`));
+    conditions.push(ilike(marketListings.neighborhood, `%${sanitizeLike(query.neighborhood)}%`));
   } else if (query.city) {
-    conditions.push(ilike(marketListings.city, `%${query.city}%`));
+    conditions.push(ilike(marketListings.city, `%${sanitizeLike(query.city)}%`));
   }
   if (query.areaMin) {
     conditions.push(gte(sql`CAST(${marketListings.areaM2} AS NUMERIC)`, query.areaMin));
@@ -68,18 +71,19 @@ export async function searchMarketListings(
 
 /** Get KPIs for a search query */
 export async function getMarketKPIs(query: ParsedQuery) {
+  await requireUserId();
   const conditions = [];
 
   if (query.propertyType) {
-    conditions.push(ilike(marketListings.propertyType, `%${query.propertyType}%`));
+    conditions.push(ilike(marketListings.propertyType, `%${sanitizeLike(query.propertyType)}%`));
   }
   if (query.operation) {
-    conditions.push(ilike(marketListings.operation, `%${query.operation}%`));
+    conditions.push(ilike(marketListings.operation, `%${sanitizeLike(query.operation)}%`));
   }
   if (query.neighborhood) {
-    conditions.push(ilike(marketListings.neighborhood, `%${query.neighborhood}%`));
+    conditions.push(ilike(marketListings.neighborhood, `%${sanitizeLike(query.neighborhood)}%`));
   } else if (query.city) {
-    conditions.push(ilike(marketListings.city, `%${query.city}%`));
+    conditions.push(ilike(marketListings.city, `%${sanitizeLike(query.city)}%`));
   }
 
   const cutoff = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000);

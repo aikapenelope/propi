@@ -26,6 +26,23 @@ export default async function PublicPropertyPage(
 
   const property = await db.query.properties.findFirst({
     where: and(eq(properties.id, id), eq(properties.status, "active")),
+    columns: {
+      id: true,
+      title: true,
+      description: true,
+      type: true,
+      operation: true,
+      price: true,
+      currency: true,
+      area: true,
+      bedrooms: true,
+      bathrooms: true,
+      parkingSpaces: true,
+      address: true,
+      city: true,
+      state: true,
+      externalLinks: true,
+    },
     with: {
       images: { orderBy: [propertyImages.sortOrder] },
     },
