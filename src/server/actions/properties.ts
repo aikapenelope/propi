@@ -110,6 +110,7 @@ export async function getProperties(filters: PropertyFilters = {}) {
       },
     },
     orderBy: [desc(properties.updatedAt)],
+    limit: 200,
   });
 }
 

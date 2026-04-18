@@ -3,6 +3,8 @@ import { Plus, MapPin, Bed, Bath, Maximize } from "lucide-react";
 import { getProperties } from "@/server/actions/properties";
 import { formatCurrency } from "@/lib/utils";
 
+export const dynamic = "force-dynamic";
+
 const typeLabels: Record<string, string> = {
   apartment: "Apartamento",
   house: "Casa",

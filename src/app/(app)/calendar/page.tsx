@@ -3,6 +3,8 @@ import { Plus } from "lucide-react";
 import { getAppointments } from "@/server/actions/appointments";
 import { BigCalendarView } from "@/components/calendar/big-calendar-view";
 
+export const dynamic = "force-dynamic";
+
 export default async function CalendarPage() {
   // Fetch 6 months before and after today so the user can navigate freely
   const now = new Date();

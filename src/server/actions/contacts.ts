@@ -46,6 +46,7 @@ export async function getContacts(search?: string) {
       },
     },
     orderBy: [desc(contacts.updatedAt)],
+    limit: 200,
   });
 }
 
