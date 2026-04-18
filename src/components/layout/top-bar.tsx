@@ -29,7 +29,7 @@ export function TopBar({ sidebarCollapsed, onMenuToggle }: TopBarProps) {
   return (
     <header
       className={cn(
-        "fixed right-0 top-0 z-20 flex h-16 md:h-24 items-center gap-4 border-b border-transparent px-4 md:px-8 transition-all duration-200",
+        "fixed right-0 top-0 z-20 flex h-16 md:h-24 items-center gap-4 border-b border-border px-4 md:px-8 transition-all duration-200 bg-background/80 backdrop-blur-md",
         sidebarCollapsed ? "md:left-16" : "md:left-[260px]",
         "left-0",
       )}
