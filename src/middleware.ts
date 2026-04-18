@@ -10,6 +10,7 @@ const isPublicRoute = createRouteMatcher([
   "/sign-up(.*)",
   "/api/webhooks(.*)",
   "/api/health",
+  "/api/cron(.*)",
 ]);
 
 // Only activate Clerk middleware if the keys are configured.

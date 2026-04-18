@@ -16,6 +16,7 @@
 | 16 | UX improvements | Completado |
 | 17 | Performance optimization | Completado |
 | 18 | DB audit fixes | Completado |
+| 19 | Auditoria P0 fixes | Completado |
 
 ## Sprint 14: Production hardening
 - Migraciones versionadas con `drizzle-kit migrate` (reemplaza `push --force`)
@@ -30,7 +31,7 @@
 ## Sprint 16: UX improvements
 - Pipeline: buscador de contactos + drag & drop con `pointerWithin` + `rectIntersection`
 - Importacion de contactos: CSV, vCard, Contact Picker API (Chrome Android)
-- Calendario: `react-big-calendar` con vistas mes/semana/dia/agenda, touch fix para PWA
+- Calendario: `@fullcalendar/react` con vistas mes/semana/dia/agenda, touch fix para PWA
 - Sidebar: TikTok arriba de Email
 - Tareas: vista agrupada por fecha (Atrasadas/Hoy/Manana/Semana/Proximas/Sin fecha)
 - Tareas: notas expandibles por tarea (nueva columna `notes` en schema)
@@ -52,6 +53,49 @@
 - Redis `noeviction` para BullMQ
 - `ignoreChanges: ["sshKeys"]` en todos los servidores
 - Documentado en `docs/INFRASTRUCTURE_RISKS.md`
+
+## Sprint 19: Auditoria P0 fixes
+
+- Fix `sanitizeLike` faltante en `getWeeklyNewListings` (omitido en sprint 15)
+- Agregar `/api/cron(.*)` a `isPublicRoute` en middleware (Clerk bloqueaba crons)
+- Fix `deleteDocument` sin filtro `userId` en el DELETE SQL (defense-in-depth)
+- Calendario: `@fullcalendar/react` (corrige referencia a `react-big-calendar` en sprint 16)
+
+## Pendiente: Configurar cron jobs en Coolify
+
+El codigo tiene 3 cron endpoints listos pero **no estan activados** en Coolify.
+Se activaran cuando tengamos la API de MercadoLibre aprobada.
+Requieren la env var `CRON_SECRET` y cron jobs en Coolify.
+
+| Cron | Endpoint | Frecuencia | Que hace |
+|------|----------|------------|----------|
+| Sync MercadoLibre | `/api/cron/sync-market` | Diario (4am) | Encola jobs en BullMQ para sincronizar listings de ML |
+| Drip campaigns | `/api/cron/process-drips` | Cada hora | Envia emails automaticos de secuencias drip |
+| Cleanup mensajes | `/api/cron/cleanup-messages` | Semanal (dom 3am) | Elimina mensajes >90 dias (solo relevante si se activa Meta inbox) |
+
+### Para activar:
+
+1. Agregar env var `CRON_SECRET` a Propi en Coolify
+2. Deployar `Dockerfile.worker` como segundo servicio (para sync-market)
+3. Configurar cron jobs en Coolify:
+   ```bash
+   curl -s -H "Authorization: Bearer $CRON_SECRET" https://propi.aikalabs.cc/api/cron/sync-market
+   curl -s -H "Authorization: Bearer $CRON_SECRET" https://propi.aikalabs.cc/api/cron/process-drips
+   curl -s -H "Authorization: Bearer $CRON_SECRET" https://propi.aikalabs.cc/api/cron/cleanup-messages
+   ```
+
+## Pendiente: Mejoras post-auditoria (backlog)
+
+| Prioridad | Item | Esfuerzo |
+|-----------|------|----------|
+| P1 | Crear ESC environment `platform-infra/propi` | 30 min |
+| P1 | Agregar limite/paginacion a `getPipelineContacts` (carga todos sin limite) | 1h |
+| P1 | Mover `sendEmailCampaign` a BullMQ (evitar timeout con muchos contactos) | 2h |
+| P2 | Crear usuarios PostgreSQL por proyecto (R5 en INFRASTRUCTURE_RISKS.md) | 2h |
+| P2 | Crear service accounts MinIO por proyecto (R4 en INFRASTRUCTURE_RISKS.md) | 2h |
+| P2 | Agregar `magicSearches` a Drizzle relations | 15 min |
+| P2 | Indice compuesto en `market_listings(city, neighborhood, property_type)` | 15 min |
+| P3 | Evaluar si CSP `unsafe-eval` es removible (puede ser requerido por Clerk) | 1h |
 
 ## Capacidad actual
 

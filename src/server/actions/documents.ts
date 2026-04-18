@@ -108,6 +108,6 @@ export async function deleteDocument(id: string, key: string) {
   // Always delete from DB even if MinIO fails
   await db
     .delete(documents)
-    .where(eq(documents.id, id));
+    .where(and(eq(documents.id, id), eq(documents.userId, userId)));
   revalidatePath("/documents");
 }

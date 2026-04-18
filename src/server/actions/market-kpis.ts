@@ -162,7 +162,7 @@ export async function getWeeklyNewListings(city: string) {
     .from(marketListings)
     .where(
       and(
-        ilike(marketListings.city, `%${city}%`),
+        ilike(marketListings.city, `%${sanitizeLike(city)}%`),
         gte(marketListings.publishedAt, eightWeeksAgo),
       ),
     )
