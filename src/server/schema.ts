@@ -708,6 +708,7 @@ export const tasks = pgTable(
       onDelete: "set null",
     }),
     dueAt: timestamp("due_at", { withTimezone: true }),
+    notes: text("notes"),
     completed: boolean("completed").notNull().default(false),
     completedAt: timestamp("completed_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true })

@@ -16,14 +16,18 @@ import {
   CalendarCheck,
   CalendarDays,
   Inbox,
+  StickyNote,
+  Save,
+  Loader2,
 } from "lucide-react";
 import Link from "next/link";
-import { toggleTask, deleteTask } from "@/server/actions/tasks";
+import { toggleTask, deleteTask, updateTaskNotes } from "@/server/actions/tasks";
 
 interface Task {
   id: string;
   title: string;
   dueAt: Date | null;
+  notes: string | null;
   completed: boolean;
   completedAt: Date | null;
   createdAt: Date;
@@ -63,88 +67,37 @@ function groupTasks(tasks: Task[]): { pending: TaskGroup[]; completed: Task[] } 
       completed.push(task);
       continue;
     }
-
     if (!task.dueAt) {
       noDate.push(task);
       continue;
     }
-
     const due = new Date(task.dueAt);
-    if (due < todayStart) {
-      overdue.push(task);
-    } else if (due < tomorrowStart) {
-      today.push(task);
-    } else if (due < tomorrowEnd) {
-      tomorrow.push(task);
-    } else if (due < weekEnd) {
-      thisWeek.push(task);
-    } else {
-      later.push(task);
-    }
+    if (due < todayStart) overdue.push(task);
+    else if (due < tomorrowStart) today.push(task);
+    else if (due < tomorrowEnd) tomorrow.push(task);
+    else if (due < weekEnd) thisWeek.push(task);
+    else later.push(task);
   }
 
   const groups: TaskGroup[] = [];
-
-  if (overdue.length > 0) {
-    groups.push({
-      key: "overdue",
-      label: "Atrasadas",
-      icon: AlertTriangle,
-      color: "#ef4444",
-      tasks: overdue,
-    });
-  }
-  if (today.length > 0) {
-    groups.push({
-      key: "today",
-      label: "Hoy",
-      icon: CalendarClock,
-      color: "#00FF55",
-      tasks: today,
-    });
-  }
-  if (tomorrow.length > 0) {
-    groups.push({
-      key: "tomorrow",
-      label: "Manana",
-      icon: CalendarCheck,
-      color: "#3b82f6",
-      tasks: tomorrow,
-    });
-  }
-  if (thisWeek.length > 0) {
-    groups.push({
-      key: "week",
-      label: "Esta semana",
-      icon: CalendarDays,
-      color: "#8b5cf6",
-      tasks: thisWeek,
-    });
-  }
-  if (later.length > 0) {
-    groups.push({
-      key: "later",
-      label: "Proximas",
-      icon: CalendarDays,
-      color: "#6b7280",
-      tasks: later,
-    });
-  }
-  if (noDate.length > 0) {
-    groups.push({
-      key: "nodate",
-      label: "Sin fecha",
-      icon: Inbox,
-      color: "#6b7280",
-      tasks: noDate,
-    });
-  }
+  if (overdue.length > 0)
+    groups.push({ key: "overdue", label: "Atrasadas", icon: AlertTriangle, color: "#ef4444", tasks: overdue });
+  if (today.length > 0)
+    groups.push({ key: "today", label: "Hoy", icon: CalendarClock, color: "#00FF55", tasks: today });
+  if (tomorrow.length > 0)
+    groups.push({ key: "tomorrow", label: "Manana", icon: CalendarCheck, color: "#3b82f6", tasks: tomorrow });
+  if (thisWeek.length > 0)
+    groups.push({ key: "week", label: "Esta semana", icon: CalendarDays, color: "#8b5cf6", tasks: thisWeek });
+  if (later.length > 0)
+    groups.push({ key: "later", label: "Proximas", icon: CalendarDays, color: "#6b7280", tasks: later });
+  if (noDate.length > 0)
+    groups.push({ key: "nodate", label: "Sin fecha", icon: Inbox, color: "#6b7280", tasks: noDate });
 
   return { pending: groups, completed };
 }
 
 // ---------------------------------------------------------------------------
-// Components
+// Main component
 // ---------------------------------------------------------------------------
 
 export function TaskList({ initialTasks }: { initialTasks: Task[] }) {
@@ -157,7 +110,7 @@ export function TaskList({ initialTasks }: { initialTasks: Task[] }) {
   const totalPending = pending.reduce((sum, g) => sum + g.tasks.length, 0);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       {/* Summary bar */}
       <div className="flex items-center gap-4 text-xs text-muted-foreground">
         <span>{totalPending} pendiente{totalPending !== 1 ? "s" : ""}</span>
@@ -202,7 +155,7 @@ export function TaskList({ initialTasks }: { initialTasks: Task[] }) {
             Completadas ({completed.length})
           </button>
           {showCompleted && (
-            <div className="space-y-1.5 opacity-50">
+            <div className="space-y-2 opacity-50">
               {completed.slice(0, 20).map((task) => (
                 <TaskItem key={task.id} task={task} />
               ))}
@@ -219,18 +172,21 @@ export function TaskList({ initialTasks }: { initialTasks: Task[] }) {
   );
 }
 
+// ---------------------------------------------------------------------------
+// Group section
+// ---------------------------------------------------------------------------
+
 function TaskGroupSection({ group }: { group: TaskGroup }) {
   const Icon = group.icon;
 
   return (
     <div>
-      {/* Group header */}
-      <div className="flex items-center gap-2 mb-2">
+      <div className="flex items-center gap-2 mb-2.5">
         <div
-          className="w-5 h-5 rounded flex items-center justify-center"
+          className="w-6 h-6 rounded-lg flex items-center justify-center"
           style={{ backgroundColor: `${group.color}15`, color: group.color }}
         >
-          <Icon className="h-3 w-3" />
+          <Icon className="h-3.5 w-3.5" />
         </div>
         <span
           className="text-xs font-bold uppercase tracking-wider"
@@ -238,13 +194,12 @@ function TaskGroupSection({ group }: { group: TaskGroup }) {
         >
           {group.label}
         </span>
-        <span className="text-[10px] text-muted-foreground font-medium bg-muted rounded-full px-1.5 py-0.5">
+        <span className="text-[10px] text-muted-foreground font-medium bg-muted rounded-full px-2 py-0.5">
           {group.tasks.length}
         </span>
       </div>
 
-      {/* Tasks */}
-      <div className="space-y-1.5 ml-1 border-l-2 pl-4" style={{ borderColor: `${group.color}30` }}>
+      <div className="space-y-2 ml-1 border-l-2 pl-4" style={{ borderColor: `${group.color}30` }}>
         {group.tasks.map((task) => (
           <TaskItem key={task.id} task={task} />
         ))}
@@ -253,12 +208,22 @@ function TaskGroupSection({ group }: { group: TaskGroup }) {
   );
 }
 
+// ---------------------------------------------------------------------------
+// Task item (expandable with notes)
+// ---------------------------------------------------------------------------
+
 function TaskItem({ task }: { task: Task }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const [expanded, setExpanded] = useState(false);
+  const [notes, setNotes] = useState(task.notes || "");
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
 
   const isOverdue =
     !task.completed && task.dueAt && new Date(task.dueAt) < new Date();
+
+  const hasNotes = !!task.notes;
 
   function handleToggle() {
     startTransition(async () => {
@@ -274,83 +239,166 @@ function TaskItem({ task }: { task: Task }) {
     });
   }
 
+  async function handleSaveNotes() {
+    setSaving(true);
+    try {
+      await updateTaskNotes(task.id, notes);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+      router.refresh();
+    } finally {
+      setSaving(false);
+    }
+  }
+
   return (
     <div
-      className={`group flex items-start gap-3 rounded-xl border p-3 transition-all ${
+      className={`group rounded-xl border transition-all ${
         isOverdue
           ? "border-red-500/20 bg-red-500/5"
-          : "border-border hover:bg-muted/50"
+          : expanded
+            ? "border-border bg-muted/30"
+            : "border-border hover:bg-muted/50"
       }`}
     >
-      {/* Toggle */}
-      <button
-        onClick={handleToggle}
-        disabled={isPending}
-        className="mt-0.5 shrink-0 disabled:opacity-50"
-      >
-        {task.completed ? (
-          <Check className="h-5 w-5 text-green-500" />
-        ) : (
-          <Circle className="h-5 w-5 text-muted-foreground transition-colors hover:text-primary" />
-        )}
-      </button>
-
-      {/* Content */}
-      <div className="flex-1 min-w-0">
-        <p
-          className={`text-sm ${
-            task.completed
-              ? "line-through text-muted-foreground"
-              : "text-foreground"
-          }`}
+      {/* Main row */}
+      <div className="flex items-start gap-3 p-3">
+        {/* Toggle */}
+        <button
+          onClick={handleToggle}
+          disabled={isPending}
+          className="mt-0.5 shrink-0 disabled:opacity-50"
         >
-          {task.title}
-        </p>
+          {task.completed ? (
+            <Check className="h-5 w-5 text-green-500" />
+          ) : (
+            <Circle className="h-5 w-5 text-muted-foreground transition-colors hover:text-primary" />
+          )}
+        </button>
 
-        <div className="flex items-center gap-3 mt-1 flex-wrap">
-          {task.dueAt && (
-            <span
-              className={`flex items-center gap-1 text-[10px] ${
-                isOverdue ? "text-red-400 font-medium" : "text-muted-foreground"
-              }`}
-            >
-              {isOverdue ? (
-                <AlertTriangle className="h-2.5 w-2.5" />
-              ) : (
-                <Clock className="h-2.5 w-2.5" />
-              )}
-              {formatDue(task.dueAt)}
-            </span>
-          )}
-          {task.contact && (
-            <Link
-              href={`/contacts/${task.contact.id}`}
-              className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-primary transition-colors"
-            >
-              <User className="h-2.5 w-2.5" />
-              {task.contact.name}
-            </Link>
-          )}
-          {task.property && (
-            <Link
-              href={`/properties/${task.property.id}`}
-              className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-primary transition-colors"
-            >
-              <Building2 className="h-2.5 w-2.5" />
-              {task.property.title?.slice(0, 25)}
-            </Link>
-          )}
-        </div>
+        {/* Content — click to expand */}
+        <button
+          onClick={() => setExpanded((v) => !v)}
+          className="flex-1 min-w-0 text-left"
+        >
+          <p
+            className={`text-sm ${
+              task.completed
+                ? "line-through text-muted-foreground"
+                : "text-foreground font-medium"
+            }`}
+          >
+            {task.title}
+          </p>
+
+          <div className="flex items-center gap-3 mt-1 flex-wrap">
+            {task.dueAt && (
+              <span
+                className={`flex items-center gap-1 text-[10px] ${
+                  isOverdue ? "text-red-400 font-medium" : "text-muted-foreground"
+                }`}
+              >
+                {isOverdue ? (
+                  <AlertTriangle className="h-2.5 w-2.5" />
+                ) : (
+                  <Clock className="h-2.5 w-2.5" />
+                )}
+                {formatDue(task.dueAt)}
+              </span>
+            )}
+            {task.contact && (
+              <Link
+                href={`/contacts/${task.contact.id}`}
+                onClick={(e) => e.stopPropagation()}
+                className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-primary transition-colors"
+              >
+                <User className="h-2.5 w-2.5" />
+                {task.contact.name}
+              </Link>
+            )}
+            {task.property && (
+              <Link
+                href={`/properties/${task.property.id}`}
+                onClick={(e) => e.stopPropagation()}
+                className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-primary transition-colors"
+              >
+                <Building2 className="h-2.5 w-2.5" />
+                {task.property.title?.slice(0, 25)}
+              </Link>
+            )}
+            {hasNotes && !expanded && (
+              <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                <StickyNote className="h-2.5 w-2.5" />
+                Nota
+              </span>
+            )}
+          </div>
+        </button>
+
+        {/* Delete */}
+        <button
+          onClick={handleDelete}
+          disabled={isPending}
+          className="opacity-0 group-hover:opacity-100 p-1 rounded text-muted-foreground hover:text-red-400 transition-all shrink-0 disabled:opacity-50"
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+        </button>
       </div>
 
-      {/* Delete */}
-      <button
-        onClick={handleDelete}
-        disabled={isPending}
-        className="opacity-0 group-hover:opacity-100 p-1 rounded text-muted-foreground hover:text-red-400 transition-all shrink-0 disabled:opacity-50"
-      >
-        <Trash2 className="h-3.5 w-3.5" />
-      </button>
+      {/* Expanded: notes editor */}
+      {expanded && !task.completed && (
+        <div className="px-3 pb-3 pt-0 ml-8">
+          <div className="border-t border-border pt-3">
+            <label className="flex items-center gap-1.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">
+              <StickyNote className="h-3 w-3" />
+              Notas
+            </label>
+            <textarea
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="Agregar notas..."
+              rows={3}
+              className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary/30 resize-none"
+            />
+            <div className="flex items-center gap-2 mt-2">
+              <button
+                onClick={handleSaveNotes}
+                disabled={saving || notes === (task.notes || "")}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
+              >
+                {saving ? (
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                ) : saved ? (
+                  <Check className="h-3 w-3" />
+                ) : (
+                  <Save className="h-3 w-3" />
+                )}
+                {saved ? "Guardado" : "Guardar"}
+              </button>
+              {notes !== (task.notes || "") && (
+                <span className="text-[10px] text-muted-foreground">
+                  Sin guardar
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Expanded: show existing notes (read-only for completed) */}
+      {expanded && task.completed && task.notes && (
+        <div className="px-3 pb-3 pt-0 ml-8">
+          <div className="border-t border-border pt-3">
+            <label className="flex items-center gap-1.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">
+              <StickyNote className="h-3 w-3" />
+              Notas
+            </label>
+            <p className="text-xs text-muted-foreground whitespace-pre-wrap">
+              {task.notes}
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
