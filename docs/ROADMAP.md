@@ -17,6 +17,7 @@
 | 17 | Performance optimization | Completado |
 | 18 | DB audit fixes | Completado |
 | 19 | Auditoria P0 fixes | Completado |
+| 20 | Pipeline, email BullMQ, schema improvements | Completado |
 
 ## Sprint 14: Production hardening
 - Migraciones versionadas con `drizzle-kit migrate` (reemplaza `push --force`)
@@ -84,17 +85,38 @@ Requieren la env var `CRON_SECRET` y cron jobs en Coolify.
    curl -s -H "Authorization: Bearer $CRON_SECRET" https://propi.aikalabs.cc/api/cron/cleanup-messages
    ```
 
+## Sprint 20: Pipeline, email BullMQ, schema improvements
+
+- `getPipelineContacts`: query por status en paralelo con limite 100 por columna (max 700 vs ilimitado)
+- `sendEmailCampaign`: enqueue a BullMQ en vez de enviar inline (evita timeout con 500+ contactos)
+- Worker maneja `email-campaign` + `market-sync` en un solo proceso
+- `magicSearchesRelations` agregado a Drizzle schema
+- Indice compuesto `market_listings_kpi_idx(city, property_type, operation, neighborhood)` para KPIs
+- Migracion 0003: `CREATE INDEX market_listings_kpi_idx`
+- ESC environment `platform-infra/propi` creado con credenciales del data plane + Groq
+
+## Pendiente: Credenciales en ESC y Coolify
+
+El ESC environment `platform-infra/propi` tiene las credenciales del data plane (DB, Redis, MinIO)
+y Groq. **Faltan las siguientes credenciales por agregar:**
+
+| Variable | Donde | Descripcion |
+|----------|-------|-------------|
+| `CLERK_SECRET_KEY` | ESC + Coolify | Clerk auth backend |
+| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | ESC + Coolify | Clerk auth frontend |
+| `RESEND_API_KEY` | ESC + Coolify + Worker | Email via Resend |
+| `MAIL_FROM` | Coolify Worker | Remitente de emails (default: `Propi <noreply@propi.aikalabs.cc>`) |
+| `CRON_SECRET` | Coolify | Proteccion de cron endpoints |
+
+El worker (`Dockerfile.worker`) necesita `RESEND_API_KEY` y `MAIL_FROM` para procesar
+campanas de email. Sin ellas, los jobs se encolan pero fallan al ejecutarse.
+
 ## Pendiente: Mejoras post-auditoria (backlog)
 
 | Prioridad | Item | Esfuerzo |
 |-----------|------|----------|
-| P1 | Crear ESC environment `platform-infra/propi` | 30 min |
-| P1 | Agregar limite/paginacion a `getPipelineContacts` (carga todos sin limite) | 1h |
-| P1 | Mover `sendEmailCampaign` a BullMQ (evitar timeout con muchos contactos) | 2h |
 | P2 | Crear usuarios PostgreSQL por proyecto (R5 en INFRASTRUCTURE_RISKS.md) | 2h |
 | P2 | Crear service accounts MinIO por proyecto (R4 en INFRASTRUCTURE_RISKS.md) | 2h |
-| P2 | Agregar `magicSearches` a Drizzle relations | 15 min |
-| P2 | Indice compuesto en `market_listings(city, neighborhood, property_type)` | 15 min |
 | P3 | Evaluar si CSP `unsafe-eval` es removible (puede ser requerido por Clerk) | 1h |
 
 ## Capacidad actual
