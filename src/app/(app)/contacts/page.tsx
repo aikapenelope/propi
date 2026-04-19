@@ -3,6 +3,7 @@ import { Mail, Phone, Building } from "lucide-react";
 import { getContacts } from "@/server/actions/contacts";
 import { formatDate } from "@/lib/utils";
 import { ContactsHeader } from "@/components/contacts/contacts-header";
+import { ContactSwipeRow } from "@/components/contacts/contact-swipe-row";
 
 export const dynamic = "force-dynamic";
 
@@ -47,11 +48,16 @@ export default async function ContactsPage({
       ) : (
         <div className="space-y-2">
           {contactList.map((contact) => (
-            <Link
+            <ContactSwipeRow
               key={contact.id}
-              href={`/contacts/${contact.id}`}
-              className="flex items-center gap-4 rounded-lg border border-border p-4 transition-colors hover:bg-muted"
+              contactId={contact.id}
+              phone={contact.phone}
             >
+              <Link
+                href={`/contacts/${contact.id}`}
+                className="flex items-center gap-4 rounded-lg border border-border p-4 transition-colors hover:bg-muted"
+                style={{ viewTransitionName: `contact-${contact.id}` }}
+              >
               {/* Avatar placeholder */}
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">
                 {contact.name
@@ -109,7 +115,8 @@ export default async function ContactsPage({
               <span className="hidden text-xs text-muted-foreground md:block">
                 {formatDate(contact.updatedAt)}
               </span>
-            </Link>
+              </Link>
+            </ContactSwipeRow>
           ))}
         </div>
       )}

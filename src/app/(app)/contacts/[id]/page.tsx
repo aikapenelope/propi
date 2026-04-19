@@ -31,7 +31,7 @@ export default async function ContactDetailPage({
   const notes = await getContactNotes(id);
 
   return (
-    <div className="p-4 md:p-6">
+    <div className="p-4 md:p-6" style={{ viewTransitionName: `contact-${contact.id}` }}>
       {/* Back link */}
       <Link
         href="/contacts"
