@@ -5,6 +5,7 @@ import { Sidebar } from "./sidebar";
 import { TopBar } from "./top-bar";
 import { MobileNav } from "./mobile-nav";
 import { MobileSidebar } from "./mobile-sidebar";
+import { PullToRefresh } from "@/components/ui/pull-to-refresh";
 import { cn } from "@/lib/utils";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
@@ -42,7 +43,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <div className="absolute top-0 right-[20%] w-[600px] h-[300px] bg-primary/5 blur-[120px] rounded-full pointer-events-none z-0 hidden md:block" />
         <div className="absolute bottom-0 left-[10%] w-[400px] h-[400px] bg-purple-500/5 blur-[150px] rounded-full pointer-events-none z-0 hidden md:block" />
         <div className="relative z-10 min-w-0">
-          {children}
+          <PullToRefresh>{children}</PullToRefresh>
         </div>
       </main>
 

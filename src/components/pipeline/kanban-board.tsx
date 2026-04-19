@@ -22,6 +22,7 @@ import {
 } from "@/lib/pipeline-config";
 import type { LeadStatus } from "@/lib/pipeline-config";
 import { Search, X } from "lucide-react";
+import { hapticLight, hapticMedium } from "@/lib/haptics";
 
 interface Contact {
   id: string;
@@ -102,7 +103,10 @@ export function KanbanBoard({ initialData }: KanbanBoardProps) {
     const col = findColumn(active.id as string);
     if (col) {
       const card = columns[col].find((c) => c.id === active.id);
-      if (card) setActiveCard(card);
+      if (card) {
+        setActiveCard(card);
+        hapticLight();
+      }
     }
   }
 
@@ -134,6 +138,8 @@ export function KanbanBoard({ initialData }: KanbanBoardProps) {
 
     const newCol = findColumn(active.id as string);
     if (!newCol) return;
+
+    hapticMedium();
 
     try {
       await updateLeadStatus(active.id as string, newCol);

@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { toggleTask, deleteTask, updateTaskNotes } from "@/server/actions/tasks";
+import { hapticSuccess } from "@/lib/haptics";
 
 interface Task {
   id: string;
@@ -227,6 +228,7 @@ function TaskItem({ task }: { task: Task }) {
 
   function handleToggle() {
     startTransition(async () => {
+      hapticSuccess();
       await toggleTask(task.id);
       router.refresh();
     });

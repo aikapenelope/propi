@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Plus, MapPin, Bed, Bath, Maximize } from "lucide-react";
 import { getProperties } from "@/server/actions/properties";
 import { formatCurrency } from "@/lib/utils";
+import { PropertySwipeCard } from "@/components/properties/property-swipe-card";
 
 export const dynamic = "force-dynamic";
 
@@ -153,11 +154,16 @@ export default async function PropertiesPage({
           {propertyList.map((property) => {
             const coverImage = property.images[0];
             return (
-              <Link
+              <PropertySwipeCard
                 key={property.id}
-                href={`/properties/${property.id}`}
-                className="group overflow-hidden rounded-lg border border-border transition-shadow hover:shadow-md"
+                propertyId={property.id}
+                title={property.title}
               >
+                <Link
+                  href={`/properties/${property.id}`}
+                  className="group overflow-hidden rounded-lg border border-border transition-shadow hover:shadow-md"
+                  style={{ viewTransitionName: `property-${property.id}` }}
+                >
                 {/* Image */}
                 <div className="relative aspect-[4/3] bg-muted overflow-hidden">
                   {coverImage ? (
@@ -233,6 +239,7 @@ export default async function PropertiesPage({
                   </div>
                 </div>
               </Link>
+              </PropertySwipeCard>
             );
           })}
         </div>

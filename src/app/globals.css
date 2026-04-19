@@ -119,3 +119,42 @@ body {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* ============================================
+   View Transitions (Next.js 16 + React)
+   ============================================ */
+
+/* Default crossfade for page navigations */
+::view-transition-old(root) {
+  animation: fade-out 150ms ease-out;
+}
+::view-transition-new(root) {
+  animation: fade-in 200ms ease-in;
+}
+
+/* Shared element morph (property cards, contact cards) */
+::view-transition-group(.card-morph) {
+  animation-duration: 300ms;
+  animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Slide up for detail pages */
+::view-transition-new(.slide-up) {
+  animation: slide-up 250ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+::view-transition-old(.slide-up) {
+  animation: fade-out 150ms ease-out;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes fade-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
