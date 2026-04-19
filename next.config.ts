@@ -53,7 +53,7 @@ const nextConfig: NextConfig = {
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "font-src 'self' https://fonts.gstatic.com",
               "img-src 'self' data: blob: https: http:",
-              "connect-src 'self' https://clerk.propi.aikalabs.cc https://*.clerk.accounts.dev https://*.clerk.com https://api.groq.com",
+              "connect-src 'self' https://clerk.propi.aikalabs.cc https://*.clerk.accounts.dev https://*.clerk.com https://api.groq.com https://api.iconify.design https://api.simplesvg.com https://api.unisvg.com",
               "frame-src 'self' https://clerk.propi.aikalabs.cc https://*.clerk.accounts.dev https://*.clerk.com",
               "worker-src 'self' blob:",
             ].join("; "),
