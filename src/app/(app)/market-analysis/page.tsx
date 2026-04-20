@@ -1,6 +1,7 @@
 import { Sparkles, BarChart3 } from "lucide-react";
 import Link from "next/link";
 import { PropiMagicChat } from "@/components/market/propi-magic-chat";
+import { InfoTooltip } from "@/components/ui/info-tooltip";
 
 export const dynamic = "force-dynamic";
 
@@ -13,7 +14,10 @@ export default function PropiMagicPage() {
             <Sparkles className="h-5 w-5 text-purple-500" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-foreground">Propi Magic</h1>
+            <h1 className="text-xl font-bold text-foreground flex items-center gap-2">
+              Propi Magic
+              <InfoTooltip text="Pregunta sobre precios, tendencias, o comparables en cualquier zona de Venezuela. Los datos vienen de MercadoLibre y se actualizan diariamente." />
+            </h1>
             <p className="text-xs text-muted-foreground">
               Inteligencia de mercado con datos de MercadoLibre
             </p>

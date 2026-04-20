@@ -7,6 +7,7 @@ import { ResendConfigForm } from "@/components/marketing/resend-config-form";
 import { TokenExpiryWarning } from "@/components/marketing/token-expiry-warning";
 import { SetupGuide } from "@/components/marketing/setup-guide";
 import { ENABLE_META_INBOX } from "@/lib/feature-flags";
+import { InfoTooltip } from "@/components/ui/info-tooltip";
 
 export const dynamic = "force-dynamic";
 
@@ -91,10 +92,11 @@ export default async function MarketingSettingsPage(props: {
             </div>
             <div>
               <h2 className="font-semibold text-foreground">Wasi</h2>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-muted-foreground flex items-center gap-1">
                 {wasiAccount
                   ? `Conectado: ${wasiAccount.platformAccountId}`
                   : "No conectado"}
+                <InfoTooltip text="Conecta tu cuenta de Wasi para publicar propiedades con un click desde Propi." />
               </p>
             </div>
           </div>
