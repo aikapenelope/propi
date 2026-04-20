@@ -74,7 +74,7 @@ function NavLink({ href, label, icon: Icon, collapsed, pathname }: { href: strin
       className={cn(
         "flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all",
         isActive
-          ? "bg-primary text-primary-foreground font-bold shadow-[0_4px_20px_rgba(0,255,85,0.15)]"
+          ? "bg-primary text-primary-foreground font-bold"
           : "text-muted-foreground hover:text-foreground hover:bg-white/5",
         collapsed && "justify-center px-2",
       )}
@@ -94,7 +94,7 @@ function SmallNavLink({ href, label, icon: Icon, collapsed, pathname, badge, exa
       className={cn(
         "flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium transition-all",
         isActive
-          ? "bg-primary text-primary-foreground font-bold shadow-[0_4px_20px_rgba(0,255,85,0.15)]"
+          ? "bg-primary text-primary-foreground font-bold"
           : "text-muted-foreground hover:text-foreground hover:bg-white/5",
         collapsed && "justify-center px-2",
       )}
@@ -124,14 +124,8 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
       {/* Logo */}
       <div className="h-24 flex items-center px-8 relative z-10">
         <Link href="/dashboard" className="flex items-center gap-3">
-          {/* Soundwave icon */}
-          <div className="flex gap-[2px] items-center h-6">
-            <div className="w-[3px] h-3 bg-foreground rounded-full opacity-60" />
-            <div className="w-[3px] h-5 bg-foreground rounded-full opacity-80" />
-            <div className="w-[3px] h-6 bg-foreground rounded-full shadow-[0_0_10px_currentColor]" />
-            <div className="w-[3px] h-4 bg-foreground rounded-full opacity-80" />
-            <div className="w-[3px] h-2 bg-foreground rounded-full opacity-60" />
-          </div>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/icons/logo-sidebar.png" alt="Propi" className="h-7 w-auto" />
           {!collapsed && (
             <span className="text-xl font-bold tracking-wide text-foreground">
               Propi
