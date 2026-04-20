@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useEffect, useRef, useSyncExternalStore } from "react";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
@@ -8,6 +8,7 @@ import interactionPlugin from "@fullcalendar/interaction";
 import listPlugin from "@fullcalendar/list";
 import { useRouter } from "next/navigation";
 import type { EventClickArg, DateSelectArg } from "@fullcalendar/core";
+import { hapticLight } from "@/lib/haptics";
 
 interface CalendarEvent {
   id: string;
@@ -40,21 +41,85 @@ const statusLabels: Record<string, string> = {
   no_show: "No asistio",
 };
 
+/** Detect mobile viewport (matches Tailwind's md breakpoint). */
+function useIsMobile() {
+  return useSyncExternalStore(
+    (callback) => {
+      const mq = window.matchMedia("(max-width: 767px)");
+      mq.addEventListener("change", callback);
+      return () => mq.removeEventListener("change", callback);
+    },
+    () => window.matchMedia("(max-width: 767px)").matches,
+    () => false, // SSR fallback: assume desktop
+  );
+}
+
 export function BigCalendarView({ events }: BigCalendarViewProps) {
   const router = useRouter();
+  const isMobile = useIsMobile();
+  const calendarRef = useRef<FullCalendar>(null);
+  const touchStartX = useRef(0);
+
+  // Swipe to navigate months/weeks on mobile
+  useEffect(() => {
+    if (!isMobile) return;
+    const el = document.querySelector(".propi-calendar");
+    if (!el) return;
+
+    function handleTouchStart(e: Event) {
+      touchStartX.current = (e as TouchEvent).touches[0].clientX;
+    }
+
+    function handleTouchEnd(e: Event) {
+      const dx = (e as TouchEvent).changedTouches[0].clientX - touchStartX.current;
+      const api = calendarRef.current?.getApi();
+      if (!api) return;
+
+      // Only trigger on horizontal swipes > 80px
+      if (Math.abs(dx) < 80) return;
+
+      if (dx < 0) {
+        api.next();
+        hapticLight();
+      } else {
+        api.prev();
+        hapticLight();
+      }
+    }
+
+    el.addEventListener("touchstart", handleTouchStart, { passive: true });
+    el.addEventListener("touchend", handleTouchEnd, { passive: true });
+    return () => {
+      el.removeEventListener("touchstart", handleTouchStart);
+      el.removeEventListener("touchend", handleTouchEnd);
+    };
+  }, [isMobile]);
 
   const handleDateSelect = useCallback(
     (selectInfo: DateSelectArg) => {
       const dateStr = selectInfo.start.toISOString().slice(0, 16);
       router.push(`/calendar/new?date=${dateStr}`);
       selectInfo.view.calendar.unselect();
+      hapticLight();
     },
     [router],
+  );
+
+  // On mobile, tap on a day to create appointment (instead of drag-select)
+  const handleDateClick = useCallback(
+    (info: { date: Date }) => {
+      if (!isMobile) return;
+      const dateStr = info.date.toISOString().slice(0, 16);
+      router.push(`/calendar/new?date=${dateStr}`);
+      hapticLight();
+    },
+    [isMobile, router],
   );
 
   const handleEventClick = useCallback(
     (clickInfo: EventClickArg) => {
       router.push(`/calendar/${clickInfo.event.id}/edit`);
+      hapticLight();
     },
     [router],
   );
@@ -77,13 +142,22 @@ export function BigCalendarView({ events }: BigCalendarViewProps) {
   return (
     <div className="propi-calendar">
       <FullCalendar
+        ref={calendarRef}
         plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin]}
-        initialView="dayGridMonth"
-        headerToolbar={{
-          left: "prev,next today",
-          center: "title",
-          right: "dayGridMonth,timeGridWeek,timeGridDay,listWeek",
-        }}
+        initialView={isMobile ? "listWeek" : "dayGridMonth"}
+        headerToolbar={
+          isMobile
+            ? {
+                left: "prev,next",
+                center: "title",
+                right: "listWeek,dayGridMonth",
+              }
+            : {
+                left: "prev,next today",
+                center: "title",
+                right: "dayGridMonth,timeGridWeek,timeGridDay,listWeek",
+              }
+        }
         locale="es"
         buttonText={{
           today: "Hoy",
@@ -93,28 +167,36 @@ export function BigCalendarView({ events }: BigCalendarViewProps) {
           list: "Agenda",
         }}
         events={fcEvents}
-        selectable={true}
-        selectMirror={true}
-        dayMaxEvents={3}
-        weekends={true}
-        select={handleDateSelect}
+        /* Disable drag-select on mobile (conflicts with scroll).
+           On desktop, keep selectable for range selection. */
+        selectable={!isMobile}
+        selectMirror={!isMobile}
+        select={!isMobile ? handleDateSelect : undefined}
+        dateClick={handleDateClick}
         eventClick={handleEventClick}
+        dayMaxEvents={isMobile ? 2 : 3}
+        weekends={true}
         nowIndicator={true}
         height="auto"
         contentHeight="auto"
+        stickyHeaderDates={true}
         slotMinTime="06:00:00"
         slotMaxTime="22:00:00"
         allDaySlot={false}
         slotDuration="00:30:00"
-        longPressDelay={100}
+        /* 300ms feels natural: long enough to not trigger on scroll,
+           short enough to not feel laggy. */
+        longPressDelay={300}
+        selectLongPressDelay={400}
+        eventLongPressDelay={500}
         eventContent={(eventInfo) => (
-          <div className="overflow-hidden px-1 py-0.5">
-            <div className="truncate text-[11px] font-medium">
+          <div className="overflow-hidden px-1.5 py-1">
+            <div className="truncate text-xs font-medium leading-tight">
               {eventInfo.event.title}
             </div>
             {eventInfo.view.type !== "dayGridMonth" &&
               eventInfo.event.extendedProps.contactName && (
-                <div className="truncate text-[10px] opacity-75">
+                <div className="truncate text-[11px] opacity-75 mt-0.5">
                   {eventInfo.event.extendedProps.contactName}
                 </div>
               )}
@@ -223,7 +305,7 @@ export function BigCalendarView({ events }: BigCalendarViewProps) {
           color: var(--muted-foreground);
         }
         .propi-calendar .fc-list-event-title {
-          font-size: 0.8125rem;
+          font-size: 0.875rem;
         }
         .propi-calendar .fc-list-day-cushion {
           background: var(--muted) !important;
@@ -235,8 +317,9 @@ export function BigCalendarView({ events }: BigCalendarViewProps) {
           padding: 2rem;
           color: var(--muted-foreground);
         }
-        /* Mobile */
-        @media (max-width: 640px) {
+
+        /* Mobile optimizations */
+        @media (max-width: 767px) {
           .propi-calendar .fc-toolbar {
             gap: 0.25rem;
           }
@@ -247,19 +330,41 @@ export function BigCalendarView({ events }: BigCalendarViewProps) {
             order: -1;
           }
           .propi-calendar .fc-button {
-            padding: 0.25rem 0.5rem !important;
+            padding: 0.375rem 0.625rem !important;
             font-size: 0.75rem !important;
+            min-height: 36px;
+            min-width: 36px;
           }
           .propi-calendar .fc-daygrid-day-number {
-            font-size: 0.75rem;
-            padding: 0.125rem 0.25rem;
+            font-size: 0.8125rem;
+            padding: 0.25rem 0.375rem;
+          }
+          .propi-calendar .fc-daygrid-day-events {
+            min-height: 1.5rem;
           }
           .propi-calendar .fc-event {
-            font-size: 0.625rem;
+            font-size: 0.6875rem;
+            min-height: 22px;
           }
           .propi-calendar .fc-col-header-cell {
-            font-size: 0.625rem;
-            padding: 0.25rem;
+            font-size: 0.6875rem;
+            padding: 0.375rem;
+          }
+          /* Bigger touch targets for list view */
+          .propi-calendar .fc-list-event {
+            min-height: 44px;
+          }
+          .propi-calendar .fc-list-event-title {
+            font-size: 0.875rem;
+            padding: 0.5rem 0;
+          }
+          .propi-calendar .fc-list-event-time {
+            font-size: 0.75rem;
+            min-width: 60px;
+          }
+          .propi-calendar .fc-list-day-cushion {
+            padding: 0.5rem 0.75rem !important;
+            font-size: 0.8125rem;
           }
         }
       `}</style>
