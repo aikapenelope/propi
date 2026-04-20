@@ -26,6 +26,7 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import { UnreadBadge } from "./unread-badge";
+import { SharePortalButton } from "./share-portal-button";
 import { cn } from "@/lib/utils";
 
 const navItems = [
@@ -170,6 +171,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
 
       {/* Footer */}
       <div className="p-4 flex flex-col gap-1 border-t border-border relative z-10">
+        {!collapsed && <SharePortalButton />}
         <SmallNavLink href="/help" label="Help Center" icon={HelpCircle} collapsed={collapsed} pathname={pathname} />
         {/* Collapse toggle */}
         <button

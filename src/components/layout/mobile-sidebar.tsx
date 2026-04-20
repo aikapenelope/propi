@@ -20,6 +20,7 @@ import {
   HelpCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { SharePortalButton } from "./share-portal-button";
 
 /**
  * Mobile drawer opened by "Mas..." in bottom nav or hamburger in top bar.
@@ -171,6 +172,7 @@ export function MobileSidebar({ open, onClose }: MobileSidebarProps) {
 
         {/* Footer */}
         <div className="border-t border-border px-3 py-3 shrink-0" style={{ paddingBottom: "env(safe-area-inset-bottom, 0.75rem)" }}>
+          <SharePortalButton />
           <Link
             href="/help"
             onClick={onClose}
