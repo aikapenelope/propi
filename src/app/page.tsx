@@ -446,22 +446,24 @@ export default function LandingPage() {
             <div className="rounded-3xl p-8 text-left" style={{ background: "#121212", color: "#fff" }}>
               <div className="text-xs uppercase tracking-widest opacity-50 mb-2">Plan Unico</div>
               <div className="flex items-baseline gap-2 mb-6">
-                <span className="text-5xl font-bold" style={{ fontFamily: "'Syncopate', sans-serif" }}>$50</span>
+                <span className="text-5xl font-bold" style={{ fontFamily: "'Syncopate', sans-serif" }}>$30</span>
                 <span className="text-sm opacity-50">/mes por usuario</span>
               </div>
               <div className="h-px bg-white/10 mb-6" />
               <ul className="space-y-3 text-sm">
                 {[
                   "Contactos y leads ilimitados",
+                  "Pipeline Kanban con drag & drop",
                   "Propiedades ilimitadas (4 fotos c/u)",
-                  "Inbox unificado: WhatsApp + Instagram + Facebook",
                   "Propi Magic: inteligencia de mercado con IA",
-                  "KPIs de mercado: Caracas, Valencia, Maracaibo",
+                  "KPIs de mercado por ciudad y zona",
                   "Publicacion en Wasi con 1 click",
                   "Calendario y citas vinculadas",
+                  "Tareas y recordatorios",
                   "Documentos y contratos en la nube",
                   "Email marketing (3,000 emails/mes)",
-                  "Metricas de Instagram y Facebook",
+                  "Secuencias drip automatizadas",
+                  "Importacion de contactos (CSV, vCard)",
                   "Pagina publica para compartir propiedades",
                   "App movil PWA (funciona sin internet)",
                   "Soporte por WhatsApp",
@@ -474,7 +476,7 @@ export default function LandingPage() {
               </ul>
               <div className="h-px bg-white/10 my-6" />
               <a
-                href={`https://wa.me/?text=${encodeURIComponent("Hola, quiero contratar Propi CRM ($50/mes). Mi nombre es: ")}`}
+                href={`https://wa.me/?text=${encodeURIComponent("Hola, quiero contratar Propi CRM ($30/mes). Mi nombre es: ")}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="block w-full text-center py-4 rounded-full text-xs font-semibold uppercase tracking-widest transition-all hover:opacity-90"
