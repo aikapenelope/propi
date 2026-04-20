@@ -6,7 +6,8 @@ import { eq, and, desc } from "drizzle-orm";
 import { requireUserId } from "@/lib/auth-helper";
 import { revalidatePath } from "next/cache";
 import type { LeadStatus } from "@/lib/pipeline-config";
-import { LEAD_STATUSES } from "@/lib/pipeline-config";
+import { LEAD_STATUSES, LEAD_STATUS_CONFIG } from "@/lib/pipeline-config";
+import { logActivity } from "./activity-log";
 
 // ---------------------------------------------------------------------------
 // Get contacts grouped by lead status (for Kanban)
@@ -57,6 +58,13 @@ export async function updateLeadStatus(
     .update(contacts)
     .set({ leadStatus: newStatus })
     .where(and(eq(contacts.id, contactId), eq(contacts.userId, userId)));
+
+  await logActivity({
+    userId,
+    contactId,
+    type: "pipeline_moved",
+    title: `Movido a ${LEAD_STATUS_CONFIG[newStatus].label}`,
+  });
 
   revalidatePath("/pipeline");
 }

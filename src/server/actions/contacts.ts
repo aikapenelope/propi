@@ -6,6 +6,7 @@ import { eq, and, ilike, or, desc, sql } from "drizzle-orm";
 import { revalidatePath, revalidateTag } from "next/cache";
 import { requireUserId } from "@/lib/auth-helper";
 import { sanitizeLike } from "@/lib/sanitize";
+import { logActivity } from "./activity-log";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -109,6 +110,14 @@ export async function createContact(data: ContactFormData) {
 
   revalidatePath("/contacts");
   revalidateTag(`dashboard-${userId}`, "max");
+
+  await logActivity({
+    userId,
+    contactId: contact.id,
+    type: "contact_created",
+    title: `Contacto creado: ${contact.name}`,
+  });
+
   return contact;
 }
 

@@ -5,6 +5,7 @@ import { appointments } from "@/server/schema";
 import { eq, and, gte, lte, type SQL } from "drizzle-orm";
 import { revalidatePath, revalidateTag } from "next/cache";
 import { requireUserId } from "@/lib/auth-helper";
+import { logActivity } from "./activity-log";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -100,6 +101,16 @@ export async function createAppointment(data: AppointmentFormData) {
 
   revalidatePath("/calendar");
   revalidateTag(`dashboard-${userId}`, "max");
+
+  if (data.contactId) {
+    await logActivity({
+      userId,
+      contactId: data.contactId,
+      type: "appointment_created",
+      title: `Cita creada: ${appointment.title}`,
+    });
+  }
+
   return appointment;
 }
 
