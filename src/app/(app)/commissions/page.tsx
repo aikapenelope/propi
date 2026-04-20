@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Calculator, DollarSign, Percent, Users, Building2 } from "lucide-react";
+import { InfoTooltip } from "@/components/ui/info-tooltip";
 
 /**
  * Commission simulator for real estate agents.
@@ -53,6 +54,7 @@ export default function CommissionsPage() {
         <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
           <Calculator className="h-6 w-6" />
           Simulador de Comisiones
+          <InfoTooltip text="Calcula tu comision neta por operacion. Ajusta el porcentaje, el split con la agencia, y el IVA." />
         </h1>
         <p className="text-sm text-muted-foreground mt-1">
           Calcula tu comision por operacion inmobiliaria.
@@ -122,8 +124,9 @@ export default function CommissionsPage() {
 
         {/* Agency split */}
         <div>
-          <label className="block text-sm font-medium text-foreground mb-1">
+          <label className="flex items-center gap-1.5 text-sm font-medium text-foreground mb-1">
             Split agencia / agente
+            <InfoTooltip text="Porcentaje que se queda la agencia vs lo que recibes tu. 50/50 es el estandar en Venezuela." />
           </label>
           <div className="flex items-center gap-3">
             <div className="flex-1">
@@ -162,8 +165,9 @@ export default function CommissionsPage() {
               className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${includeIva ? "translate-x-5" : ""}`}
             />
           </button>
-          <span className="text-sm text-foreground">
+          <span className="text-sm text-foreground flex items-center gap-1.5">
             Incluir IVA (16%)
+            <InfoTooltip text="Impuesto al Valor Agregado de Venezuela. Se aplica sobre tu porcion de la comision." />
           </span>
         </div>
       </div>

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { getDripSequences } from "@/server/actions/drip-campaigns";
 import type { DripStep } from "@/server/actions/drip-campaigns";
 import { DeleteSequenceButton } from "@/components/marketing/drip/delete-sequence-button";
+import { InfoTooltip } from "@/components/ui/info-tooltip";
 
 export const dynamic = "force-dynamic";
 
@@ -15,7 +16,10 @@ export default async function DripCampaignsPage() {
         <div className="flex items-center gap-3">
           <Zap className="h-6 w-6 text-amber-500" />
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Secuencias</h1>
+            <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
+              Secuencias
+              <InfoTooltip text="Emails automaticos que se envian en orden a tus contactos. Ideal para seguimiento de leads frios." />
+            </h1>
             <p className="text-xs text-muted-foreground">
               Emails automaticos que se envian en secuencia a tus contactos
             </p>
