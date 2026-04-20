@@ -117,6 +117,8 @@ export const contacts = pgTable(
     notes: text("notes"),
     source: contactSourceEnum("source").default("other"),
     leadStatus: leadStatusEnum("lead_status").notNull().default("new"),
+    /** Birthday for reminder notifications (month + day only) */
+    birthDate: timestamp("birth_date", { withTimezone: true }),
     userId: text("user_id").notNull(),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
@@ -836,3 +838,38 @@ export const magicSearchesRelations = relations(magicSearches, () => ({
   // No FKs — userId is a Clerk ID, not a DB reference.
   // Relation block exists so Drizzle query builder recognizes the table.
 }));
+
+// ---------------------------------------------------------------------------
+// Notifications (in-app alerts for agents)
+// ---------------------------------------------------------------------------
+
+export const notificationTypeEnum = pgEnum("notification_type", [
+  "appointment_reminder",
+  "task_overdue",
+  "birthday",
+  "campaign_complete",
+  "system",
+]);
+
+export const notifications = pgTable(
+  "notifications",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: text("user_id").notNull(),
+    type: notificationTypeEnum("type").notNull(),
+    title: varchar("title", { length: 255 }).notNull(),
+    message: text("message"),
+    /** Link to navigate to when clicked (e.g. /calendar, /contacts/uuid) */
+    link: text("link"),
+    read: boolean("read").notNull().default(false),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("notifications_user_read_idx").on(table.userId, table.read),
+    index("notifications_created_idx").on(table.createdAt),
+  ],
+);
+
+export const notificationsRelations = relations(notifications, () => ({}));

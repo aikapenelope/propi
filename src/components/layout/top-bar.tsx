@@ -2,8 +2,9 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Search, Menu, Bell, Sun } from "lucide-react";
+import { Search, Menu, Sun } from "lucide-react";
 import { UserButton } from "@clerk/nextjs";
+import { NotificationBell } from "./notification-bell";
 import { cn } from "@/lib/utils";
 
 interface TopBarProps {
@@ -69,10 +70,7 @@ export function TopBar({ sidebarCollapsed, onMenuToggle }: TopBarProps) {
         </button>
 
         {/* Notifications */}
-        <button className="w-10 h-10 rounded-full border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-white/10 transition-all relative bg-background">
-          <Bell className="h-[18px] w-[18px]" />
-          <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-destructive border-2 border-background rounded-full" />
-        </button>
+        <NotificationBell />
 
         {/* User */}
         <UserButton
