@@ -9,6 +9,7 @@ import {
 import { eq, and, desc } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { requireUserId } from "@/lib/auth-helper";
+import { getUserResendKey } from "@/lib/resend-key";
 
 // ---------------------------------------------------------------------------
 // Queries
@@ -114,9 +115,11 @@ export async function sendEmailCampaign(campaignId: string) {
   // Enqueue to BullMQ — the worker handles the actual sending.
   // This returns in ~1ms instead of blocking for N * sendEmail() calls.
   const { emailCampaignQueue } = await import("@/lib/queue");
+  const userResendKey = await getUserResendKey(userId);
   await emailCampaignQueue.add("send", {
     campaignId,
     userId,
+    resendApiKey: userResendKey || undefined,
     recipients: recipientContacts.map((c) => ({
       id: c.id,
       email: c.email!,
