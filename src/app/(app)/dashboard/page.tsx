@@ -82,13 +82,18 @@ export default async function DashboardPage() {
   const maxDayCount = Math.max(...dayData.map((d) => d.count), 1);
   const todayDow = new Date().getDay();
 
+  // Time-based greeting
+  const hour = new Date().getHours();
+  const greeting =
+    hour < 12 ? "Buenos dias" : hour < 18 ? "Buenas tardes" : "Buenas noches";
+
   return (
     <div className="max-w-[1600px] mx-auto px-3 md:px-8 py-4 md:py-6">
       {/* Title */}
       <div className="flex flex-col md:flex-row md:items-end justify-between mb-6 md:mb-8 gap-4">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-1 md:mb-2 glow-text flex items-center gap-2">
-            Overview
+          <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-1 md:mb-2 flex items-center gap-2">
+            {greeting}
             <InfoTooltip text="Resumen en tiempo real de tu negocio. Los datos se actualizan cada 60 segundos." />
           </h1>
           <p className="text-muted-foreground text-xs md:text-sm">
@@ -98,7 +103,7 @@ export default async function DashboardPage() {
         <div className="flex items-center gap-3">
           <Link
             href="/properties/new"
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-bold hover:opacity-90 transition-all shadow-[0_0_20px_rgba(0,255,85,0.25)]"
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-bold hover:opacity-90 transition-all"
           >
             <Building2 className="h-4 w-4" />
             Nueva Propiedad
@@ -110,9 +115,9 @@ export default async function DashboardPage() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5 mb-6">
         {/* Card 1: Properties by type (real bar chart) */}
         <div className="bg-[var(--card-bg)] border border-border rounded-2xl p-4 md:p-5 card-shadow relative overflow-hidden group hover:border-white/[0.08] transition-all duration-300 min-w-0 min-h-[220px]">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 blur-[40px] rounded-full pointer-events-none opacity-50 group-hover:opacity-100 transition-opacity" />
+
           <div className="flex items-center gap-3 mb-4 relative z-10">
-            <div className="w-8 h-8 rounded-full border border-primary/30 flex items-center justify-center bg-primary/10 shadow-[0_0_10px_rgba(0,255,85,0.1)]">
+            <div className="w-8 h-8 rounded-full border border-primary/30 flex items-center justify-center bg-primary/10">
               <Building2 className="h-4 w-4 text-primary" />
             </div>
             <span className="text-sm font-medium text-foreground/80">
@@ -174,9 +179,9 @@ export default async function DashboardPage() {
 
         {/* Card 2: Contacts (real SVG area chart from contactsByMonth) */}
         <div className="bg-[var(--card-bg)] border border-border rounded-2xl p-4 md:p-5 card-shadow relative overflow-hidden group hover:border-white/[0.08] transition-all duration-300 min-w-0 min-h-[220px]">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 blur-[40px] rounded-full pointer-events-none opacity-50 group-hover:opacity-100 transition-opacity" />
+
           <div className="flex items-center gap-3 mb-4 relative z-10">
-            <div className="w-8 h-8 rounded-full border border-blue-500/30 flex items-center justify-center bg-blue-500/10 shadow-[0_0_10px_rgba(59,130,246,0.1)]">
+            <div className="w-8 h-8 rounded-full border border-blue-500/30 flex items-center justify-center bg-blue-500/10">
               <UserCheck className="h-4 w-4 text-blue-400" />
             </div>
             <span className="text-sm font-medium text-foreground/80">
@@ -237,9 +242,9 @@ export default async function DashboardPage() {
 
         {/* Card 3: Closed Sales */}
         <div className="bg-[var(--card-bg)] border border-border rounded-2xl p-4 md:p-5 card-shadow relative overflow-hidden group hover:border-white/[0.08] transition-all duration-300 flex flex-col min-w-0 min-h-[220px]">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/5 blur-[40px] rounded-full pointer-events-none opacity-50 group-hover:opacity-100 transition-opacity" />
+
           <div className="flex items-center gap-3 mb-6 relative z-10">
-            <div className="w-8 h-8 rounded-full border border-purple-500/30 flex items-center justify-center bg-purple-500/10 shadow-[0_0_10px_rgba(168,85,247,0.1)]">
+            <div className="w-8 h-8 rounded-full border border-purple-500/30 flex items-center justify-center bg-purple-500/10">
               <Key className="h-4 w-4 text-purple-400" />
             </div>
             <span className="text-sm font-medium text-foreground/80">
@@ -250,7 +255,7 @@ export default async function DashboardPage() {
 
           <div className="flex-1 flex gap-4 mt-2">
             <div className="flex-1 relative pl-4">
-              <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-purple-500 to-pink-500 rounded-full shadow-[0_0_12px_rgba(168,85,247,0.4)]" />
+              <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-purple-500 to-pink-500 rounded-full" />
               <p className="text-muted-foreground text-[11px] mb-1 uppercase tracking-wider font-semibold">
                 Vendidas
               </p>
@@ -272,9 +277,9 @@ export default async function DashboardPage() {
 
         {/* Card 4: Appointments by day (real column chart) */}
         <div className="bg-[var(--card-bg)] border border-border rounded-2xl p-4 md:p-5 card-shadow relative overflow-hidden group hover:border-white/[0.08] transition-all duration-300 flex flex-col min-w-0 min-h-[220px]">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/5 blur-[40px] rounded-full pointer-events-none opacity-50 group-hover:opacity-100 transition-opacity" />
+
           <div className="flex items-center gap-3 mb-6 relative z-10">
-            <div className="w-8 h-8 rounded-full border border-amber-500/30 flex items-center justify-center bg-amber-500/10 shadow-[0_0_10px_rgba(245,158,11,0.1)]">
+            <div className="w-8 h-8 rounded-full border border-amber-500/30 flex items-center justify-center bg-amber-500/10">
               <Wallet className="h-4 w-4 text-amber-400" />
             </div>
             <span className="text-sm font-medium text-foreground/80">
@@ -300,7 +305,7 @@ export default async function DashboardPage() {
                   key={i}
                   className={`w-full rounded-t-[3px] transition-colors ${
                     isToday
-                      ? "bg-gradient-to-t from-amber-600 to-amber-400 shadow-[0_0_15px_rgba(245,158,11,0.3)]"
+                      ? "bg-gradient-to-t from-amber-600 to-amber-400"
                       : d.count > 0
                         ? "bg-amber-500/30 hover:bg-amber-500/50"
                         : "bg-white/[0.04] hover:bg-white/10"

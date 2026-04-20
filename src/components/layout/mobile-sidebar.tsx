@@ -98,13 +98,8 @@ export function MobileSidebar({ open, onClose }: MobileSidebarProps) {
         {/* Header */}
         <div className="flex h-14 items-center justify-between border-b border-border px-4 shrink-0">
           <div className="flex items-center gap-2">
-            <div className="flex gap-[2px] items-center h-5">
-              <div className="w-[2px] h-2 bg-foreground rounded-full opacity-60" />
-              <div className="w-[2px] h-3.5 bg-foreground rounded-full opacity-80" />
-              <div className="w-[2px] h-5 bg-foreground rounded-full" />
-              <div className="w-[2px] h-3 bg-foreground rounded-full opacity-80" />
-              <div className="w-[2px] h-1.5 bg-foreground rounded-full opacity-60" />
-            </div>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/icons/logo-sidebar.png" alt="Propi" className="h-5 w-auto" />
             <span className="text-lg font-bold text-foreground">Propi</span>
           </div>
           <button
