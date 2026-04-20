@@ -20,6 +20,7 @@ import { PublishToggle } from "@/components/properties/publish-toggle";
 import { PublishSection } from "@/components/properties/publish-section";
 import { PropertyMatches } from "@/components/properties/property-matches";
 import { SendPropertyEmailButton } from "@/components/properties/send-property-email-button";
+import { InfoTooltip } from "@/components/ui/info-tooltip";
 import { getContacts } from "@/server/actions/contacts";
 
 const typeLabels: Record<string, string> = {
@@ -161,6 +162,10 @@ export default async function PropertyDetailPage({
 
       {/* Image gallery with upload */}
       <div className="mb-6">
+        <div className="flex items-center gap-1.5 mb-2">
+          <h2 className="text-sm font-medium text-muted-foreground">Fotos</h2>
+          <InfoTooltip text="Maximo 4 fotos por propiedad. Formatos: JPEG, PNG, WebP, HEIC. Max 10MB cada una." />
+        </div>
         <PropertyImageUpload
           propertyId={id}
           images={imagesWithUrls.map((img) => ({
@@ -273,6 +278,10 @@ export default async function PropertyDetailPage({
         )}
 
         {/* Publish to portals */}
+        <div className="flex items-center gap-1.5 mb-2">
+          <h2 className="text-sm font-medium text-muted-foreground">Publicar en portales</h2>
+          <InfoTooltip text="Publica esta propiedad en Wasi con un click. Las fotos se suben automaticamente." />
+        </div>
         <PublishSection
           propertyId={id}
           title={property.title}

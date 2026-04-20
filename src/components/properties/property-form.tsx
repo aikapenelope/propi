@@ -8,6 +8,7 @@ import {
   type PropertyFormData,
 } from "@/server/actions/properties";
 import { TagSelector } from "@/components/ui/tag-selector";
+import { InfoTooltip } from "@/components/ui/info-tooltip";
 
 const typeOptions = [
   { value: "apartment", label: "Apartamento" },
@@ -282,7 +283,10 @@ export function PropertyForm({
 
       {/* External Links */}
       <div>
-        <label className="block text-sm font-medium text-foreground mb-2">Links de publicacion (opcional)</label>
+        <label className="flex items-center gap-1.5 text-sm font-medium text-foreground mb-2">
+          Links de publicacion (opcional)
+          <InfoTooltip text="Links a portales donde esta publicada (Wasi, MercadoLibre, etc). Se muestran en la pagina publica." />
+        </label>
         <p className="text-xs text-muted-foreground mb-3">Links de tu propiedad en portales externos (Wasi, MercadoLibre, etc.)</p>
         <div className="space-y-2">
           {[1, 2, 3].map((i) => {

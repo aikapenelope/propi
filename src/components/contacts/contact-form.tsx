@@ -8,6 +8,7 @@ import {
   type ContactFormData,
 } from "@/server/actions/contacts";
 import { TagSelector } from "@/components/ui/tag-selector";
+import { InfoTooltip } from "@/components/ui/info-tooltip";
 
 const sourceOptions = [
   { value: "website", label: "Sitio Web" },
@@ -189,9 +190,10 @@ export function ContactForm({
       <div>
         <label
           htmlFor="source"
-          className="block text-sm font-medium text-foreground"
+          className="flex items-center gap-1.5 text-sm font-medium text-foreground"
         >
           Fuente
+          <InfoTooltip text="De donde llego este contacto. Te ayuda a medir que canal genera mas leads." />
         </label>
         <select
           id="source"
@@ -216,8 +218,9 @@ export function ContactForm({
 
       {/* Search Preferences (for property matching) */}
       <div>
-        <p className="text-sm font-medium text-foreground mb-3">
+        <p className="flex items-center gap-1.5 text-sm font-medium text-foreground mb-3">
           Preferencias de busqueda
+          <InfoTooltip text="Opcional. Si llenas estas preferencias, Propi puede sugerirte propiedades compatibles con este contacto." />
         </p>
         <p className="text-xs text-muted-foreground mb-3">
           Opcional. Permite encontrar propiedades compatibles con este contacto.
@@ -282,9 +285,10 @@ export function ContactForm({
           <div>
             <label
               htmlFor="prefBudgetMax"
-              className="block text-xs font-medium text-muted-foreground mb-1"
+              className="flex items-center gap-1 text-xs font-medium text-muted-foreground mb-1"
             >
               Presupuesto maximo (USD)
+              <InfoTooltip text="En dolares. Se usa para el matching automatico con propiedades." />
             </label>
             <input
               id="prefBudgetMax"
