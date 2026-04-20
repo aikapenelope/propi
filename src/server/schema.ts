@@ -330,6 +330,7 @@ export const socialPlatformEnum = pgEnum("social_platform", [
   "whatsapp",
   "mercadolibre",
   "wasi",
+  "resend",
 ]);
 
 export const socialAccounts = pgTable("social_accounts", {

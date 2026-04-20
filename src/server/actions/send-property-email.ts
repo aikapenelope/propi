@@ -5,6 +5,7 @@ import { properties, propertyImages, contacts } from "@/server/schema";
 import { eq, and } from "drizzle-orm";
 import { requireUserId } from "@/lib/auth-helper";
 import { sendEmail, getMailFrom } from "@/lib/mailer";
+import { getUserResendKey } from "@/lib/resend-key";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -112,6 +113,9 @@ export async function sendPropertyByEmail(
   const from = getMailFrom();
   const subject = `${property.title}${price ? ` — ${price}` : ""}`;
 
+  // Use per-user Resend key if configured, otherwise fall back to global
+  const userResendKey = await getUserResendKey(userId);
+
   let sent = 0;
   let failed = 0;
 
@@ -122,6 +126,7 @@ export async function sendPropertyByEmail(
         to: contact.email!,
         subject,
         html,
+        apiKey: userResendKey || undefined,
       });
       sent++;
     } catch {

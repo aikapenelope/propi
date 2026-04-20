@@ -6,7 +6,7 @@ import { eq, and } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { requireUserId } from "@/lib/auth-helper";
 
-type Platform = "instagram" | "facebook" | "whatsapp" | "mercadolibre" | "wasi";
+type Platform = "instagram" | "facebook" | "whatsapp" | "mercadolibre" | "wasi" | "resend";
 
 // ---------------------------------------------------------------------------
 // Queries

@@ -233,20 +233,21 @@ worker.on("failed", (job, err) => {
 interface EmailJobData {
   campaignId: string;
   userId: string;
+  resendApiKey?: string;
   recipients: { id: string; email: string }[];
   subject: string;
   htmlBody: string;
 }
 
 /** Minimal Resend client for the worker (no Next.js imports). */
-async function workerSendEmail(to: string, subject: string, html: string, from: string) {
-  const apiKey = process.env.RESEND_API_KEY;
-  if (!apiKey) throw new Error("RESEND_API_KEY not configured");
+async function workerSendEmail(to: string, subject: string, html: string, from: string, apiKey?: string) {
+  const key = apiKey || process.env.RESEND_API_KEY;
+  if (!key) throw new Error("No Resend API key available (user or global)");
 
   const res = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${apiKey}`,
+      Authorization: `Bearer ${key}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({ from, to: [to], subject, html }),
@@ -272,7 +273,7 @@ const emailWorker = new Worker(
 
     for (const recipient of data.recipients) {
       try {
-        await workerSendEmail(recipient.email, data.subject, data.htmlBody, from);
+        await workerSendEmail(recipient.email, data.subject, data.htmlBody, from, data.resendApiKey);
 
         await db
           .insert(schema.campaignRecipients)

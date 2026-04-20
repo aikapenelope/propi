@@ -3,6 +3,7 @@ import { getAllSocialAccounts } from "@/server/actions/social-accounts";
 import { formatDate } from "@/lib/utils";
 import { SocialAccountForm } from "@/components/marketing/social-account-form";
 import { WasiConfigForm } from "@/components/marketing/wasi-config-form";
+import { ResendConfigForm } from "@/components/marketing/resend-config-form";
 import { TokenExpiryWarning } from "@/components/marketing/token-expiry-warning";
 import { SetupGuide } from "@/components/marketing/setup-guide";
 import { ENABLE_META_INBOX } from "@/lib/feature-flags";
@@ -17,6 +18,7 @@ export default async function MarketingSettingsPage(props: {
   const fbAccount = accounts.find((a) => a.platform === "facebook");
   const waAccount = accounts.find((a) => a.platform === "whatsapp");
   const wasiAccount = accounts.find((a) => a.platform === "wasi");
+  const resendAccount = accounts.find((a) => a.platform === "resend");
 
   return (
     <div className="p-4 md:p-6">
@@ -331,7 +333,7 @@ export default async function MarketingSettingsPage(props: {
           </>
         )}
 
-        {/* Email (Resend) */}
+        {/* Email (Resend) — per-user API key */}
         <div className="rounded-lg border border-border p-4">
           <div className="mb-4 flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-500/10">
@@ -340,29 +342,17 @@ export default async function MarketingSettingsPage(props: {
             <div>
               <h2 className="font-semibold text-foreground">Email (Resend)</h2>
               <p className="text-xs text-muted-foreground">
-                {process.env.RESEND_API_KEY ? "Configurado" : "No configurado"}
+                {resendAccount ? "Conectado — tu propia API key" : "No configurado"}
               </p>
             </div>
           </div>
-          <div className="rounded-lg bg-muted p-3 text-sm text-muted-foreground">
-            <p className="mb-2">
-              Configura Resend en las variables de entorno (1 sola key):
-            </p>
-            <code className="block rounded bg-background p-2 text-xs font-mono">
-              RESEND_API_KEY=re_...
-            </code>
-            <p className="mt-2 text-xs">
-              Gratis: 3,000 emails/mes. Obten tu key en{" "}
-              <a
-                href="https://resend.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-primary hover:underline"
-              >
-                resend.com
-              </a>
-            </p>
-          </div>
+          <ResendConfigForm
+            existing={
+              resendAccount
+                ? { apiKey: resendAccount.accessToken }
+                : undefined
+            }
+          />
         </div>
       </div>
     </div>
