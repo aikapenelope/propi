@@ -119,6 +119,11 @@ export const contacts = pgTable(
     leadStatus: leadStatusEnum("lead_status").notNull().default("new"),
     /** Birthday for reminder notifications (month + day only) */
     birthDate: timestamp("birth_date", { withTimezone: true }),
+    /** Search preferences for property matching */
+    prefPropertyType: propertyTypeEnum("pref_property_type"),
+    prefCity: varchar("pref_city", { length: 255 }),
+    prefBudgetMax: numeric("pref_budget_max", { precision: 14, scale: 2 }),
+    prefOperation: operationEnum("pref_operation"),
     userId: text("user_id").notNull(),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()

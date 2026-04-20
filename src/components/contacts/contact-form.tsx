@@ -21,6 +21,24 @@ const sourceOptions = [
   { value: "other", label: "Otro" },
 ];
 
+const propertyTypeOptions = [
+  { value: "", label: "Sin preferencia" },
+  { value: "apartment", label: "Apartamento" },
+  { value: "house", label: "Casa" },
+  { value: "land", label: "Terreno" },
+  { value: "commercial", label: "Comercial" },
+  { value: "office", label: "Oficina" },
+  { value: "warehouse", label: "Bodega" },
+  { value: "other", label: "Otro" },
+];
+
+const operationOptions = [
+  { value: "", label: "Sin preferencia" },
+  { value: "sale", label: "Comprar" },
+  { value: "rent", label: "Alquilar" },
+  { value: "sale_rent", label: "Comprar o Alquilar" },
+];
+
 interface Tag {
   id: string;
   name: string;
@@ -36,6 +54,10 @@ interface ContactFormProps {
     company: string | null;
     notes: string | null;
     source: string | null;
+    prefPropertyType: string | null;
+    prefCity: string | null;
+    prefBudgetMax: string | null;
+    prefOperation: string | null;
   };
   selectedTagIds?: string[];
   availableTags: Tag[];
@@ -64,6 +86,10 @@ export function ContactForm({
       company: (formData.get("company") as string) || undefined,
       notes: (formData.get("notes") as string) || undefined,
       source: (formData.get("source") as string) || undefined,
+      prefPropertyType: (formData.get("prefPropertyType") as string) || undefined,
+      prefCity: (formData.get("prefCity") as string) || undefined,
+      prefBudgetMax: (formData.get("prefBudgetMax") as string) || undefined,
+      prefOperation: (formData.get("prefOperation") as string) || undefined,
       tagIds,
     };
 
@@ -187,6 +213,92 @@ export function ContactForm({
         selectedIds={tagIds}
         onToggle={toggleTag}
       />
+
+      {/* Search Preferences (for property matching) */}
+      <div>
+        <p className="text-sm font-medium text-foreground mb-3">
+          Preferencias de busqueda
+        </p>
+        <p className="text-xs text-muted-foreground mb-3">
+          Opcional. Permite encontrar propiedades compatibles con este contacto.
+        </p>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div>
+            <label
+              htmlFor="prefPropertyType"
+              className="block text-xs font-medium text-muted-foreground mb-1"
+            >
+              Tipo de propiedad
+            </label>
+            <select
+              id="prefPropertyType"
+              name="prefPropertyType"
+              defaultValue={contact?.prefPropertyType ?? ""}
+              className="h-10 w-full rounded-lg border border-border bg-background px-3 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+            >
+              {propertyTypeOptions.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label
+              htmlFor="prefOperation"
+              className="block text-xs font-medium text-muted-foreground mb-1"
+            >
+              Operacion
+            </label>
+            <select
+              id="prefOperation"
+              name="prefOperation"
+              defaultValue={contact?.prefOperation ?? ""}
+              className="h-10 w-full rounded-lg border border-border bg-background px-3 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+            >
+              {operationOptions.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label
+              htmlFor="prefCity"
+              className="block text-xs font-medium text-muted-foreground mb-1"
+            >
+              Ciudad preferida
+            </label>
+            <input
+              id="prefCity"
+              name="prefCity"
+              type="text"
+              defaultValue={contact?.prefCity ?? ""}
+              placeholder="Caracas, Valencia..."
+              className="h-10 w-full rounded-lg border border-border bg-background px-3 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+            />
+          </div>
+          <div>
+            <label
+              htmlFor="prefBudgetMax"
+              className="block text-xs font-medium text-muted-foreground mb-1"
+            >
+              Presupuesto maximo (USD)
+            </label>
+            <input
+              id="prefBudgetMax"
+              name="prefBudgetMax"
+              type="number"
+              min="0"
+              step="1000"
+              defaultValue={contact?.prefBudgetMax ?? ""}
+              placeholder="150000"
+              className="h-10 w-full rounded-lg border border-border bg-background px-3 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+            />
+          </div>
+        </div>
+      </div>
 
       {/* Notes */}
       <div>

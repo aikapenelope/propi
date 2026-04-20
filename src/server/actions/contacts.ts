@@ -20,6 +20,11 @@ export type ContactFormData = {
   notes?: string;
   source?: string;
   tagIds?: string[];
+  /** Search preferences for property matching */
+  prefPropertyType?: string;
+  prefCity?: string;
+  prefBudgetMax?: string;
+  prefOperation?: string;
 };
 
 // ---------------------------------------------------------------------------
@@ -94,6 +99,10 @@ export async function createContact(data: ContactFormData) {
       company: data.company || null,
       notes: data.notes || null,
       source: (data.source as typeof contacts.$inferInsert.source) || "other",
+      prefPropertyType: (data.prefPropertyType as typeof contacts.$inferInsert.prefPropertyType) || null,
+      prefCity: data.prefCity || null,
+      prefBudgetMax: data.prefBudgetMax || null,
+      prefOperation: (data.prefOperation as typeof contacts.$inferInsert.prefOperation) || null,
       userId,
     })
     .returning();
@@ -133,6 +142,10 @@ export async function updateContact(id: string, data: ContactFormData) {
       company: data.company || null,
       notes: data.notes || null,
       source: (data.source as typeof contacts.$inferInsert.source) || "other",
+      prefPropertyType: (data.prefPropertyType as typeof contacts.$inferInsert.prefPropertyType) || null,
+      prefCity: data.prefCity || null,
+      prefBudgetMax: data.prefBudgetMax || null,
+      prefOperation: (data.prefOperation as typeof contacts.$inferInsert.prefOperation) || null,
     })
     .where(and(eq(contacts.id, id), eq(contacts.userId, userId)))
     .returning();

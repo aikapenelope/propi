@@ -50,6 +50,13 @@
       "when": 1776713371786,
       "tag": "0006_mighty_nitro",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1776714354443,
+      "tag": "0007_hesitant_colleen_wing",
+      "breakpoints": true
     }
   ]
 }
