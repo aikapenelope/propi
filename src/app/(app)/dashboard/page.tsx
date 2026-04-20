@@ -15,6 +15,7 @@ import { getUpcomingAppointments } from "@/server/actions/appointments";
 import { formatDate } from "@/lib/utils";
 import { CommissionCalculator } from "@/components/dashboard/commission-calculator";
 import { TasksWidget } from "@/components/tasks/tasks-widget";
+import { InfoTooltip } from "@/components/ui/info-tooltip";
 
 export const dynamic = "force-dynamic";
 
@@ -86,8 +87,9 @@ export default async function DashboardPage() {
       {/* Title */}
       <div className="flex flex-col md:flex-row md:items-end justify-between mb-6 md:mb-8 gap-4">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-1 md:mb-2 glow-text">
+          <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-1 md:mb-2 glow-text flex items-center gap-2">
             Overview
+            <InfoTooltip text="Resumen en tiempo real de tu negocio. Los datos se actualizan cada 60 segundos." />
           </h1>
           <p className="text-muted-foreground text-xs md:text-sm">
             Resumen de tu negocio inmobiliario
@@ -116,6 +118,7 @@ export default async function DashboardPage() {
             <span className="text-sm font-medium text-foreground/80">
               Propiedades
             </span>
+            <InfoTooltip text="Total de propiedades en tu inventario. La grafica muestra la distribucion por tipo." />
           </div>
           <p className="text-muted-foreground text-xs mb-1 relative z-10">
             Portafolio activo
@@ -179,6 +182,7 @@ export default async function DashboardPage() {
             <span className="text-sm font-medium text-foreground/80">
               Contactos
             </span>
+            <InfoTooltip text="Contactos creados en los ultimos 6 meses. La grafica muestra el crecimiento mensual." />
           </div>
           <p className="text-muted-foreground text-xs mb-1 relative z-10">
             Ultimos 6 meses
@@ -241,6 +245,7 @@ export default async function DashboardPage() {
             <span className="text-sm font-medium text-foreground/80">
               Ventas Cerradas
             </span>
+            <InfoTooltip text="Propiedades con status 'Vendida' o 'Reservada'. Cambia el status desde el detalle de cada propiedad." />
           </div>
 
           <div className="flex-1 flex gap-4 mt-2">
@@ -275,6 +280,7 @@ export default async function DashboardPage() {
             <span className="text-sm font-medium text-foreground/80">
               Citas esta Semana
             </span>
+            <InfoTooltip text="Citas programadas de lunes a domingo. La grafica muestra la distribucion por dia." />
           </div>
 
           <h3 className="text-4xl font-bold text-foreground relative z-10 mb-2">
@@ -330,6 +336,7 @@ export default async function DashboardPage() {
               <h2 className="text-base font-semibold text-foreground">
                 Proximas Citas
               </h2>
+              <InfoTooltip text="Tus proximas 4 citas. Haz click en una para editarla o cancelarla." />
             </div>
             <Link
               href="/calendar"
@@ -391,6 +398,7 @@ export default async function DashboardPage() {
               <h2 className="text-base font-semibold text-foreground">
                 Actividad Reciente
               </h2>
+              <InfoTooltip text="Ultimas propiedades y contactos creados o modificados." />
             </div>
           </div>
 
@@ -469,6 +477,7 @@ export default async function DashboardPage() {
               <h2 className="text-base font-semibold text-foreground">
                 Tareas Pendientes
               </h2>
+              <InfoTooltip text="Tareas con fecha limite proxima. Marca como completada con un click." />
             </div>
             <Link
               href="/tasks"
@@ -489,6 +498,7 @@ export default async function DashboardPage() {
             <h2 className="text-base font-semibold text-foreground">
               Calculadora de Comisiones
             </h2>
+            <InfoTooltip text="Calcula tu comision rapida. Para el simulador completo ve a Comisiones en el menu." />
           </div>
           <CommissionCalculator />
         </div>
