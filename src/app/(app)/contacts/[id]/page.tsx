@@ -15,6 +15,7 @@ import { formatDate } from "@/lib/utils";
 import { DeleteContactButton } from "@/components/contacts/delete-contact-button";
 import { ContactNotes } from "@/components/contacts/contact-notes";
 import { ActivityTimeline } from "@/components/contacts/activity-timeline";
+import { InfoTooltip } from "@/components/ui/info-tooltip";
 
 interface ContactDetailPageProps {
   params: Promise<{ id: string }>;
@@ -195,8 +196,9 @@ export default async function ContactDetailPage({
 
         {/* Activity log */}
         <div>
-          <h2 className="mb-3 text-lg font-semibold text-foreground">
+          <h2 className="mb-3 text-lg font-semibold text-foreground flex items-center gap-1.5">
             Historial de Actividad
+            <InfoTooltip text="Registro automatico de acciones: citas creadas, movimientos en pipeline, notas agregadas." />
           </h2>
           <ActivityTimeline activities={activities} />
         </div>

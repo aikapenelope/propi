@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Plus, Upload } from "lucide-react";
 import { ImportContactsDialog } from "./import-contacts-dialog";
+import { InfoTooltip } from "@/components/ui/info-tooltip";
 
 export function ContactsHeader({ count }: { count: number }) {
   const [importOpen, setImportOpen] = useState(false);
@@ -24,6 +25,7 @@ export function ContactsHeader({ count }: { count: number }) {
           >
             <Upload className="h-4 w-4" />
             <span className="hidden sm:inline">Importar</span>
+            <InfoTooltip text="Importa contactos desde un archivo CSV, vCard (.vcf), o directamente desde tu telefono (Chrome Android)." />
           </button>
           <Link
             href="/contacts/new"
