@@ -18,6 +18,8 @@ import { PropertyImageUpload } from "@/components/properties/property-image-uplo
 import { SharePropertyButton } from "@/components/properties/share-property-button";
 import { PublishToggle } from "@/components/properties/publish-toggle";
 import { PublishSection } from "@/components/properties/publish-section";
+import { SendPropertyEmailButton } from "@/components/properties/send-property-email-button";
+import { getContacts } from "@/server/actions/contacts";
 
 const typeLabels: Record<string, string> = {
   apartment: "Apartamento",
@@ -67,8 +69,8 @@ export default async function PropertyDetailPage({
     notFound();
   }
 
-  // Resolve image URLs and check Wasi connection
-  const [imagesWithUrls, wasiAccount] = await Promise.all([
+  // Resolve image URLs, check Wasi connection, and get contacts for email
+  const [imagesWithUrls, wasiAccount, contactList] = await Promise.all([
     Promise.all(
       property.images.map(async (img) => {
         try {
@@ -80,6 +82,7 @@ export default async function PropertyDetailPage({
       }),
     ),
     getSocialAccount("wasi"),
+    getContacts(),
   ]);
 
   return (
@@ -135,6 +138,14 @@ export default async function PropertyDetailPage({
             currency={property.currency ?? undefined}
             city={property.city ?? undefined}
             propertyId={id}
+          />
+          <SendPropertyEmailButton
+            propertyId={id}
+            contacts={contactList.map((c) => ({
+              id: c.id,
+              name: c.name,
+              email: c.email,
+            }))}
           />
           <Link
             href={`/properties/${id}/edit`}
