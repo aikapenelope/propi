@@ -504,6 +504,7 @@ export const contactsRelations = relations(contacts, ({ many }) => ({
   campaignRecipients: many(campaignRecipients),
   conversations: many(conversations),
   notes: many(contactNotes),
+  activities: many(activityLog),
 }));
 
 export const contactTagsRelations = relations(contactTags, ({ one }) => ({
@@ -838,6 +839,52 @@ export const magicSearches = pgTable(
 export const magicSearchesRelations = relations(magicSearches, () => ({
   // No FKs — userId is a Clerk ID, not a DB reference.
   // Relation block exists so Drizzle query builder recognizes the table.
+}));
+
+// ---------------------------------------------------------------------------
+// Activity Log (automatic timeline per contact)
+// ---------------------------------------------------------------------------
+
+export const activityTypeEnum = pgEnum("activity_type", [
+  "email_sent",
+  "appointment_created",
+  "appointment_completed",
+  "pipeline_moved",
+  "property_shared",
+  "note_added",
+  "contact_created",
+  "task_created",
+  "document_uploaded",
+]);
+
+export const activityLog = pgTable(
+  "activity_log",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: text("user_id").notNull(),
+    contactId: uuid("contact_id")
+      .notNull()
+      .references(() => contacts.id, { onDelete: "cascade" }),
+    type: activityTypeEnum("type").notNull(),
+    title: varchar("title", { length: 500 }).notNull(),
+    /** Extra context (property name, pipeline stage, etc.) */
+    metadata: text("metadata"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("activity_log_contact_idx").on(table.contactId),
+    index("activity_log_user_idx").on(table.userId),
+    index("activity_log_created_idx").on(table.createdAt),
+  ],
+);
+
+export const activityLogRelations = relations(activityLog, ({ one }) => ({
+  contact: one(contacts, {
+    fields: [activityLog.contactId],
+    references: [contacts.id],
+  }),
 }));
 
 // ---------------------------------------------------------------------------

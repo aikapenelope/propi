@@ -10,9 +10,11 @@ import {
 } from "lucide-react";
 import { getContact } from "@/server/actions/contacts";
 import { getContactNotes } from "@/server/actions/contact-notes";
+import { getContactActivities } from "@/server/actions/activity-log";
 import { formatDate } from "@/lib/utils";
 import { DeleteContactButton } from "@/components/contacts/delete-contact-button";
 import { ContactNotes } from "@/components/contacts/contact-notes";
+import { ActivityTimeline } from "@/components/contacts/activity-timeline";
 
 interface ContactDetailPageProps {
   params: Promise<{ id: string }>;
@@ -28,7 +30,10 @@ export default async function ContactDetailPage({
     notFound();
   }
 
-  const notes = await getContactNotes(id);
+  const [notes, activities] = await Promise.all([
+    getContactNotes(id),
+    getContactActivities(id),
+  ]);
 
   return (
     <div className="p-4 md:p-6" style={{ viewTransitionName: `contact-${contact.id}` }}>
@@ -187,6 +192,14 @@ export default async function ContactDetailPage({
 
         {/* Notes timeline */}
         <ContactNotes contactId={id} initialNotes={notes} />
+
+        {/* Activity log */}
+        <div>
+          <h2 className="mb-3 text-lg font-semibold text-foreground">
+            Historial de Actividad
+          </h2>
+          <ActivityTimeline activities={activities} />
+        </div>
       </div>
     </div>
   );

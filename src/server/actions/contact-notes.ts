@@ -5,6 +5,7 @@ import { contactNotes, contacts } from "@/server/schema";
 import { eq, and, desc } from "drizzle-orm";
 import { requireUserId } from "@/lib/auth-helper";
 import { revalidatePath } from "next/cache";
+import { logActivity } from "./activity-log";
 
 // ---------------------------------------------------------------------------
 // Get notes for a contact
@@ -52,6 +53,15 @@ export async function addContactNote(contactId: string, content: string) {
     .returning();
 
   revalidatePath(`/contacts/${contactId}`);
+
+  await logActivity({
+    userId,
+    contactId,
+    type: "note_added",
+    title: "Nota agregada",
+    metadata: content.trim().slice(0, 100),
+  });
+
   return note;
 }
 
