@@ -2,6 +2,7 @@ import { FileText, User, Building2 } from "lucide-react";
 import { getDocuments } from "@/server/actions/documents";
 import { formatDate } from "@/lib/utils";
 import { UploadDocumentButton } from "@/components/documents/upload-document-button";
+import { InfoTooltip } from "@/components/ui/info-tooltip";
 
 export const dynamic = "force-dynamic";
 import { DocumentActions } from "@/components/documents/document-actions";
@@ -31,7 +32,10 @@ export default async function DocumentsPage() {
       {/* Header */}
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">Documentos</h1>
+          <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
+            Documentos
+            <InfoTooltip text="Sube contratos, escrituras, avaluos, planos. Formatos: PDF, Word, Excel, imagenes. Max 10MB." />
+          </h1>
           <p className="text-sm text-muted-foreground">
             {documentList.length} documento
             {documentList.length !== 1 ? "s" : ""}
