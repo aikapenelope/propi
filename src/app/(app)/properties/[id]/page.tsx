@@ -18,6 +18,7 @@ import { PropertyImageUpload } from "@/components/properties/property-image-uplo
 import { SharePropertyButton } from "@/components/properties/share-property-button";
 import { PublishToggle } from "@/components/properties/publish-toggle";
 import { PublishSection } from "@/components/properties/publish-section";
+import { PropertyMatches } from "@/components/properties/property-matches";
 import { SendPropertyEmailButton } from "@/components/properties/send-property-email-button";
 import { getContacts } from "@/server/actions/contacts";
 
@@ -291,6 +292,9 @@ export default async function PropertyDetailPage({
           hasWasiToken={!!wasiAccount}
           wasiId={(property.externalIds as Record<string, string> | null)?.wasi}
         />
+
+        {/* Property-Contact Matching */}
+        <PropertyMatches propertyId={id} />
       </div>
     </div>
   );
