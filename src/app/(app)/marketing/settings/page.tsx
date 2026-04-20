@@ -1,12 +1,10 @@
-import { Instagram, Facebook, MessageCircle, Mail, ShoppingBag, Wallet, ChevronRight, Globe } from "lucide-react";
+import { Instagram, Facebook, MessageCircle, Mail, ShoppingBag, Wallet, ChevronRight } from "lucide-react";
 import { getAllSocialAccounts } from "@/server/actions/social-accounts";
-import { getAgentProfile } from "@/server/actions/agent-profile";
 import { formatDate } from "@/lib/utils";
 import { SocialAccountForm } from "@/components/marketing/social-account-form";
 import { WasiConfigForm } from "@/components/marketing/wasi-config-form";
 import { TokenExpiryWarning } from "@/components/marketing/token-expiry-warning";
 import { SetupGuide } from "@/components/marketing/setup-guide";
-import { AgentProfileForm } from "@/components/agent/agent-profile-form";
 import { ENABLE_META_INBOX } from "@/lib/feature-flags";
 
 export const dynamic = "force-dynamic";
@@ -15,7 +13,6 @@ export default async function MarketingSettingsPage(props: {
   searchParams: Promise<{ ml_success?: string; ml_error?: string }>;
 }) {
   const accounts = await getAllSocialAccounts();
-  const agentProfile = await getAgentProfile();
   const igAccount = accounts.find((a) => a.platform === "instagram");
   const fbAccount = accounts.find((a) => a.platform === "facebook");
   const waAccount = accounts.find((a) => a.platform === "whatsapp");
@@ -83,24 +80,6 @@ export default async function MarketingSettingsPage(props: {
           </div>
           <ChevronRight className="h-4 w-4 text-muted-foreground/40" />
         </a>
-
-        {/* Agent Portal Profile */}
-        <div className="rounded-lg border border-border p-4">
-          <div className="mb-4 flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-              <Globe className="h-5 w-5 text-primary" />
-            </div>
-            <div>
-              <h2 className="font-semibold text-foreground">Mi Portal Web</h2>
-              <p className="text-xs text-muted-foreground">
-                {agentProfile?.published
-                  ? `Publicado: /agente/${agentProfile.slug}`
-                  : "Configura tu portal publico de propiedades"}
-              </p>
-            </div>
-          </div>
-          <AgentProfileForm initialData={agentProfile} />
-        </div>
 
         {/* Wasi */}
         <div className="rounded-lg border border-border p-4">
