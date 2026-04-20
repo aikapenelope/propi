@@ -11,6 +11,7 @@ import {
   Calendar,
   FileText,
   CheckSquare,
+  Calculator,
   Instagram,
   Facebook,
   MessageCircle,
@@ -36,6 +37,7 @@ const navItems = [
   { href: "/properties", label: "Propiedades", icon: Building2 },
   { href: "/calendar", label: "Calendario", icon: Calendar },
   { href: "/tasks", label: "Tareas", icon: CheckSquare },
+  { href: "/commissions", label: "Comisiones", icon: Calculator },
   { href: "/documents", label: "Documentos", icon: FileText },
 ];
 
