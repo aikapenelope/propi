@@ -18,6 +18,19 @@
 | 18 | DB audit fixes | Completado |
 | 19 | Auditoria P0 fixes | Completado |
 | 20 | Pipeline, email BullMQ, schema improvements | Completado |
+| 21 | Mini portal web del agente | Completado |
+| 22 | Notificaciones in-app | Completado |
+| 23 | Envio de ficha de propiedad por email | Completado |
+| 24 | Simulador de comisiones | Completado |
+| 25 | Calendario mobile UX | Completado |
+| 26 | Resend API key por usuario | Completado |
+| 27 | Historial de actividad automatico | Completado |
+| 28 | Matching propiedad-contacto | Completado |
+| 29 | Preferencias de busqueda en contactos | Completado |
+| 30 | Tooltips de ayuda contextual (4 sprints) | Completado |
+| 31 | PWA UX (view transitions, pull-to-refresh, haptics, swipe, skeletons) | Completado |
+| 32 | CSP fixes (Clerk CAPTCHA, Iconify) | Completado |
+| 33 | Landing actualizada ($30, features reales) | Completado |
 
 ## Sprint 14: Production hardening
 - Migraciones versionadas con `drizzle-kit migrate` (reemplaza `push --force`)
@@ -115,8 +128,14 @@ campanas de email. Sin ellas, los jobs se encolan pero fallan al ejecutarse.
 
 | Prioridad | Item | Esfuerzo |
 |-----------|------|----------|
+| P1 | Reportes PDF exportables (KPIs del mes, propiedades vendidas) | 4h |
+| P1 | Multi-moneda con tasa BCV del dia | 3h |
+| P1 | Recordatorio de seguimiento automatico (lead sin actividad X dias) | 2h |
+| P2 | Comparables para tasacion (reporte de 3-5 propiedades similares) | 3h |
 | P2 | Crear usuarios PostgreSQL por proyecto (R5 en INFRASTRUCTURE_RISKS.md) | 2h |
 | P2 | Crear service accounts MinIO por proyecto (R4 en INFRASTRUCTURE_RISKS.md) | 2h |
+| P3 | Firma electronica en documentos | 8h |
+| P3 | Multi-idioma | 6h |
 | P3 | Evaluar si CSP `unsafe-eval` es removible (puede ser requerido por Clerk) | 1h |
 
 ## Capacidad actual
