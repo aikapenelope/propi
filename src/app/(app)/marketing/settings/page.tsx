@@ -34,7 +34,7 @@ export default async function MarketingSettingsPage(props: {
       <div className="grid gap-6 max-w-2xl">
         {/* Invite a friend */}
         <a
-          href={`https://wa.me/?text=${encodeURIComponent("Prueba Propi, el CRM inmobiliario que funciona en tu telefono. Contactos, propiedades, inbox unificado de WhatsApp/Instagram/Facebook, y analisis de mercado con IA. https://propi.aikalabs.cc")}`}
+          href={`https://wa.me/?text=${encodeURIComponent("Prueba Propi, el CRM inmobiliario que funciona en tu telefono. Contactos, propiedades, pipeline, calendario, inteligencia de mercado con IA, y publicacion en portales. https://propi.aikalabs.cc")}`}
           target="_blank"
           rel="noopener noreferrer"
           className="flex items-center gap-4 rounded-2xl p-5 transition-all hover:opacity-90 active:scale-[0.98]"
