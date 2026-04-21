@@ -19,12 +19,12 @@ import {
   Video,
   Zap,
   Settings,
+  ChevronLeft,
   ChevronRight,
   Sparkles,
   BarChart3,
   History,
   HelpCircle,
-  AlertTriangle,
 } from "lucide-react";
 import { UnreadBadge } from "./unread-badge";
 import { SharePortalButton } from "./share-portal-button";
@@ -168,7 +168,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
       {/* Footer */}
       <div className="p-4 flex flex-col gap-1 border-t border-border relative z-10">
         {!collapsed && <SharePortalButton />}
-        <SmallNavLink href="/help" label="Help Center" icon={HelpCircle} collapsed={collapsed} pathname={pathname} />
+        <SmallNavLink href="/help" label="Ayuda" icon={HelpCircle} collapsed={collapsed} pathname={pathname} />
         {/* Collapse toggle */}
         <button
           onClick={onToggle}
@@ -179,8 +179,8 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
             <ChevronRight className="h-5 w-5" />
           ) : (
             <>
-              <AlertTriangle className="h-5 w-5" />
-              <span>Report</span>
+              <ChevronLeft className="h-5 w-5" />
+              <span>Colapsar</span>
             </>
           )}
         </button>
