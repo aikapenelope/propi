@@ -113,7 +113,8 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
   return (
     <aside
       className={cn(
-        "fixed left-0 top-0 z-30 hidden h-screen flex-col border-r border-border transition-all duration-200 md:flex",
+        "fixed left-0 top-0 z-30 hidden h-screen flex-col border-r border-border md:flex",
+        "transition-[width] duration-150 ease-out",
         collapsed ? "w-16" : "w-[260px]",
       )}
       style={{ background: "var(--sidebar-bg)" }}
@@ -169,11 +170,15 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
       <div className="p-4 flex flex-col gap-1 border-t border-border relative z-10">
         {!collapsed && <SharePortalButton />}
         <SmallNavLink href="/help" label="Ayuda" icon={HelpCircle} collapsed={collapsed} pathname={pathname} />
-        {/* Collapse toggle */}
+        {/* Collapse toggle — always visible, even when collapsed */}
         <button
           onClick={onToggle}
-          className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-white/5 transition-all"
+          className={cn(
+            "flex items-center gap-3 rounded-xl py-3 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-white/10 transition-colors",
+            collapsed ? "justify-center px-2" : "px-4",
+          )}
           aria-label={collapsed ? "Expandir sidebar" : "Colapsar sidebar"}
+          title={collapsed ? "Expandir" : "Colapsar"}
         >
           {collapsed ? (
             <ChevronRight className="h-5 w-5" />

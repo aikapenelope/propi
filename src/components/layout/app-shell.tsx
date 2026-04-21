@@ -35,7 +35,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       {/* Main content area - fixed structure, no layout shift */}
       <main
         className={cn(
-          "min-h-screen pt-16 md:pt-24 pb-20 md:pb-0 transition-all duration-200 relative overflow-x-hidden",
+          "min-h-screen pt-16 md:pt-24 pb-20 md:pb-0 relative overflow-x-hidden",
+          "transition-[padding-left] duration-150 ease-out",
           sidebarCollapsed ? "md:pl-16" : "md:pl-[260px]",
         )}
       >
