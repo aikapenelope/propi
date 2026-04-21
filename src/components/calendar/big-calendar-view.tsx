@@ -258,15 +258,16 @@ export function BigCalendarView({ events }: BigCalendarViewProps) {
         .propi-calendar .fc-button:focus {
           box-shadow: none !important;
         }
-        /* Prev/Next nav buttons — pill shaped, not square */
+        /* Prev/Next nav buttons — pill shaped, distinct from each other */
         .propi-calendar .fc-prev-button,
         .propi-calendar .fc-next-button {
           border-radius: 0.5rem !important;
-          padding: 0.375rem 0.5rem !important;
-          min-width: 36px;
+          padding: 0.375rem 0.625rem !important;
+          min-width: 38px;
+          min-height: 38px;
         }
         .propi-calendar .fc-prev-button {
-          margin-right: 2px !important;
+          margin-right: 4px !important;
         }
         /* View toggle button group (Mes, Agenda, etc.) */
         .propi-calendar .fc-button-group > .fc-button {
@@ -281,7 +282,7 @@ export function BigCalendarView({ events }: BigCalendarViewProps) {
         /* Override button-group stripping on prev/next (they're also in a group) */
         .propi-calendar .fc-toolbar-chunk:first-child .fc-button-group > .fc-button {
           border-radius: 0.5rem !important;
-          margin-right: 2px;
+          margin-right: 4px;
         }
         .propi-calendar .fc-scrollgrid {
           border-radius: 0.75rem;
