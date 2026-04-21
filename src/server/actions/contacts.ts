@@ -25,6 +25,7 @@ export type ContactFormData = {
   prefCity?: string;
   prefBudgetMax?: string;
   prefOperation?: string;
+  birthDate?: string;
 };
 
 // ---------------------------------------------------------------------------
@@ -103,6 +104,7 @@ export async function createContact(data: ContactFormData) {
       prefCity: data.prefCity || null,
       prefBudgetMax: data.prefBudgetMax || null,
       prefOperation: (data.prefOperation as typeof contacts.$inferInsert.prefOperation) || null,
+      birthDate: data.birthDate ? new Date(data.birthDate) : null,
       userId,
     })
     .returning();
@@ -146,6 +148,7 @@ export async function updateContact(id: string, data: ContactFormData) {
       prefCity: data.prefCity || null,
       prefBudgetMax: data.prefBudgetMax || null,
       prefOperation: (data.prefOperation as typeof contacts.$inferInsert.prefOperation) || null,
+      birthDate: data.birthDate ? new Date(data.birthDate) : null,
     })
     .where(and(eq(contacts.id, id), eq(contacts.userId, userId)))
     .returning();

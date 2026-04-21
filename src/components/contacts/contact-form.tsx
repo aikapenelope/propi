@@ -59,6 +59,7 @@ interface ContactFormProps {
     prefCity: string | null;
     prefBudgetMax: string | null;
     prefOperation: string | null;
+    birthDate: Date | null;
   };
   selectedTagIds?: string[];
   availableTags: Tag[];
@@ -91,6 +92,7 @@ export function ContactForm({
       prefCity: (formData.get("prefCity") as string) || undefined,
       prefBudgetMax: (formData.get("prefBudgetMax") as string) || undefined,
       prefOperation: (formData.get("prefOperation") as string) || undefined,
+      birthDate: (formData.get("birthDate") as string) || undefined,
       tagIds,
     };
 
@@ -207,6 +209,28 @@ export function ContactForm({
             </option>
           ))}
         </select>
+      </div>
+
+      {/* Birthday */}
+      <div>
+        <label
+          htmlFor="birthDate"
+          className="flex items-center gap-1.5 text-sm font-medium text-foreground"
+        >
+          Fecha de nacimiento
+          <InfoTooltip text="Opcional. Recibiras una notificacion el dia de su cumpleanos." />
+        </label>
+        <input
+          id="birthDate"
+          name="birthDate"
+          type="date"
+          defaultValue={
+            contact?.birthDate
+              ? new Date(contact.birthDate).toISOString().slice(0, 10)
+              : ""
+          }
+          className="mt-1 h-10 w-full max-w-xs rounded-lg border border-border bg-background px-3 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+        />
       </div>
 
       {/* Tags */}
