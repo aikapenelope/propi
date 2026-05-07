@@ -37,6 +37,7 @@ const navItems = [
   { href: "/properties", label: "Propiedades", icon: Building2 },
   { href: "/calendar", label: "Calendario", icon: Calendar },
   { href: "/tasks", label: "Tareas", icon: CheckSquare },
+  { href: "/reports", label: "Reportes", icon: BarChart3 },
   { href: "/commissions", label: "Comisiones", icon: Calculator },
   { href: "/documents", label: "Documentos", icon: FileText },
 ];
