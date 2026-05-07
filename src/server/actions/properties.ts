@@ -35,6 +35,10 @@ export type PropertyFormData = {
   longitude?: string;
   tagIds?: string[];
   externalLinks?: string[];
+  /** Closing fields for reports */
+  soldPrice?: string;
+  commissionRate?: string;
+  closedAt?: string;
 };
 
 export type PropertyFilters = {
@@ -167,6 +171,9 @@ export async function createProperty(data: PropertyFormData) {
       latitude: data.latitude || null,
       longitude: data.longitude || null,
       externalLinks: data.externalLinks?.filter(Boolean).slice(0, 3) || null,
+      soldPrice: data.soldPrice || null,
+      commissionRate: data.commissionRate || "5",
+      closedAt: data.closedAt ? new Date(data.closedAt) : null,
       userId,
     })
     .returning();
@@ -239,6 +246,9 @@ export async function updateProperty(id: string, data: PropertyFormData) {
       latitude: data.latitude || null,
       longitude: data.longitude || null,
       externalLinks: data.externalLinks?.filter(Boolean).slice(0, 3) || null,
+      soldPrice: data.soldPrice || null,
+      commissionRate: data.commissionRate || "5",
+      closedAt: data.closedAt ? new Date(data.closedAt) : null,
     })
     .where(and(eq(properties.id, id), eq(properties.userId, userId)))
     .returning();

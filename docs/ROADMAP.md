@@ -77,6 +77,107 @@ key en Configuracion > Email (Resend). La env var global sirve como fallback.
 
 ## Backlog: Features pendientes
 
+### P0 — CRM Core (diferenciadores vs competencia EEUU)
+
+Estos features son estandar en CRMs inmobiliarios de EEUU (KvCORE, Follow Up Boss, LionDesk)
+y representan la base para escalar Propi como producto competitivo.
+
+| # | Feature | Descripcion | Esfuerzo | Impacto DB |
+|---|---------|-------------|----------|------------|
+| 1 | Rol comprador/vendedor en contactos | Enum `contact_role` (buyer, seller, both, other). Distinguir tipo de relacion con el agente. El matching solo aplica a buyers. | 1-2d | 1 enum + 1 col |
+| 2 | Propietario enlazado a propiedad | Columna `ownerId` (FK contacts) en properties. Selector en form. Permite saber quien es el dueno de cada inmueble. | 2-3d | 1 col + 1 idx |
+| 3 | Reportes completos + compartir metricas | Ver seccion detallada abajo. | 5-6d | 2 tablas + 3 cols |
+| 4 | Portafolio publico con slider de imagenes | Pagina `/agente/[id]` mostrando todas las propiedades activas con cards fijas e imagenes que rotan (carousel autoplay). Embla Carousel o Swiper. | 3-4d | Ninguno |
+| 5 | Calendario: notificaciones + recurrencia | Recurrencia basica (semanal/mensual) en citas. Notificaciones push/email antes de cita (ya existe cron + tabla notifications). Tabla `recurrence_rules` o campo JSONB. | 5-7d | 2-3 cols |
+| 6 | Google Calendar sync (unidireccional) | OAuth flow por usuario, sync Propi->GCal. Tokens encriptados, refresh automatico. Soporte para calendar compartido de agencia. Basado en implementacion de Docflow. | 5-7d | 1 tabla (calendar_integrations) |
+
+**Orden recomendado:** 1 -> 2 -> 3 -> 4 -> 5 -> 6
+
+**Notas de implementacion:**
+- Features 1-2 son prerequisitos para reportes correctos (saber si una transaccion es venta o compra del cliente)
+- Feature 3 incluye reportes individuales + mecanismo de compartir metricas con broker (sin teams)
+- Feature 4 ya tiene la ruta `/agente/[id]` creada, solo falta el contenido
+- Feature 5 es incremental sobre el calendario actual (FullCalendar ya soporta recurring events con plugin)
+- Feature 6 es unidireccional (Propi->GCal). Cada agente conecta su cuenta. Soporta calendar compartido de agencia via `calendarId` configurable.
+
+---
+
+### Detalle Feature #3: Reportes Completos + Compartir Metricas
+
+**Problema:** Equipos de agentes necesitan visibilidad cruzada sin un sistema de teams/permisos complejo.
+
+**Solucion:** Reportes detallados por agente + mecanismo consent-based para compartir metricas con un broker.
+
+#### Fase A: Reportes individuales (3 dias)
+
+Pagina `/reports` con:
+
+| Seccion | Metricas |
+|---------|----------|
+| Resumen | Periodo seleccionado, propiedades activas/vendidas/alquiladas |
+| Pipeline | Leads por etapa, conversion rate, tiempo promedio por etapa |
+| Transacciones | Propiedades cerradas, precio total, comision real (con `soldPrice`) |
+| Actividad | Citas realizadas/completadas, emails enviados, contactos nuevos, notas creadas |
+| Comparativa | vs periodo anterior (%, delta absoluto) |
+
+Filtros: mensual / trimestral / anual / rango custom.
+Export: PDF (via html-to-pdf o @react-pdf/renderer) + CSV.
+
+Requiere agregar a `properties`:
+- `closedAt` (timestamp) — cuando se cerro la venta/alquiler
+- `soldPrice` (numeric) — precio real de cierre (puede diferir del precio de lista)
+- `commissionRate` (numeric, default 5) — porcentaje de comision pactado
+
+#### Fase B: Compartir metricas con broker (2-3 dias)
+
+Modelo consent-based: el agente autoriza a un broker a ver sus metricas.
+
+**Tabla `metric_shares`:**
+```
+id, agentId, brokerEmail, status (pending/active/revoked), 
+permissions (jsonb: {pipeline, transactions, activity, contacts_count}),
+createdAt, revokedAt
+```
+
+**Tabla `scheduled_reports`:**
+```
+id, userId, recipientEmail, frequency (weekly/monthly), 
+lastSentAt, nextRunAt, active
+```
+
+**Flujo del agente:**
+1. Settings > "Compartir metricas"
+2. Ingresa email del broker
+3. Selecciona que comparte: pipeline, transacciones, actividad
+4. Opcionalmente activa reporte automatico semanal/mensual
+
+**Flujo del broker (si tiene cuenta Propi):**
+- Ve pagina `/reports/team` con metricas agregadas de agentes que lo autorizaron
+- Filtro por agente, periodo
+- Ranking por ventas/actividad
+- NO ve datos de contactos individuales (solo conteos)
+
+**Flujo del broker (sin cuenta Propi):**
+- Recibe email periodico con PDF del reporte de cada agente
+- Cron job existente (`generate-notifications`) se extiende para enviar reportes
+
+**Que ve el broker en el reporte consolidado:**
+
+| Agente | Props Activas | Vendidas | Comision Total | Leads Nuevos | Conversion | Citas |
+|--------|--------------|----------|---------------|-------------|-----------|-------|
+| Juan   | 12           | 3        | $22,500       | 8           | 37%       | 15    |
+| Maria  | 8            | 5        | $41,000       | 12          | 42%       | 22    |
+| Pedro  | 15           | 2        | $18,000       | 5           | 40%       | 9     |
+| **Total** | **35**    | **10**   | **$81,500**   | **25**      | **40%**   | **46** |
+
+**Ventajas de este enfoque vs Teams:**
+- Cero cambios en queries existentes (sigue filtrando por `userId`)
+- El agente mantiene control total de sus datos
+- El broker no necesita cuenta Propi (recibe por email)
+- Si el broker tiene cuenta, ve un dashboard de lectura
+- Revocable en cualquier momento
+- No requiere Clerk Organizations ni roles complejos
+
 ### P1 — Proximo sprint
 
 | Feature | Descripcion | Esfuerzo |

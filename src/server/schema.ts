@@ -193,6 +193,12 @@ export const properties = pgTable(
     externalIds: jsonb("external_ids"),
     /** External listing links (up to 3): ["https://wasi.co/...", "https://mercadolibre.com.ve/..."] */
     externalLinks: jsonb("external_links"),
+    /** When the transaction was closed (sold/rented) */
+    closedAt: timestamp("closed_at", { withTimezone: true }),
+    /** Actual closing price (may differ from listing price) */
+    soldPrice: numeric("sold_price", { precision: 14, scale: 2 }),
+    /** Commission rate agreed for this property (percentage, e.g. 5.0) */
+    commissionRate: numeric("commission_rate", { precision: 5, scale: 2 }).default("5"),
     userId: text("user_id").notNull(),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
@@ -209,6 +215,7 @@ export const properties = pgTable(
     index("properties_city_idx").on(table.city),
     index("properties_price_idx").on(table.price),
     index("properties_user_idx").on(table.userId),
+    index("properties_closed_at_idx").on(table.closedAt),
   ],
 );
 
@@ -926,3 +933,76 @@ export const notifications = pgTable(
 );
 
 export const notificationsRelations = relations(notifications, () => ({}));
+
+// ---------------------------------------------------------------------------
+// Metric Shares (consent-based sharing of metrics with a broker)
+// ---------------------------------------------------------------------------
+
+export const shareStatusEnum = pgEnum("share_status", [
+  "pending",
+  "active",
+  "revoked",
+]);
+
+export const metricShares = pgTable(
+  "metric_shares",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    /** The agent sharing their metrics */
+    agentId: text("agent_id").notNull(),
+    /** Email of the broker receiving metrics */
+    brokerEmail: varchar("broker_email", { length: 255 }).notNull(),
+    /** Status of the share */
+    status: shareStatusEnum("status").notNull().default("active"),
+    /** What metrics are shared: { pipeline, transactions, activity, contacts_count } */
+    permissions: jsonb("permissions").notNull().default({
+      pipeline: true,
+      transactions: true,
+      activity: true,
+      contactsCount: true,
+    }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    revokedAt: timestamp("revoked_at", { withTimezone: true }),
+  },
+  (table) => [
+    index("metric_shares_agent_idx").on(table.agentId),
+    index("metric_shares_broker_email_idx").on(table.brokerEmail),
+    index("metric_shares_status_idx").on(table.status),
+  ],
+);
+
+// ---------------------------------------------------------------------------
+// Scheduled Reports (automatic email reports to broker)
+// ---------------------------------------------------------------------------
+
+export const reportFrequencyEnum = pgEnum("report_frequency", [
+  "weekly",
+  "monthly",
+]);
+
+export const scheduledReports = pgTable(
+  "scheduled_reports",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    /** The agent whose report is sent */
+    userId: text("user_id").notNull(),
+    /** Recipient email (broker or self) */
+    recipientEmail: varchar("recipient_email", { length: 255 }).notNull(),
+    /** How often to send */
+    frequency: reportFrequencyEnum("frequency").notNull().default("monthly"),
+    /** Whether this schedule is active */
+    active: boolean("active").notNull().default(true),
+    lastSentAt: timestamp("last_sent_at", { withTimezone: true }),
+    nextRunAt: timestamp("next_run_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("scheduled_reports_user_idx").on(table.userId),
+    index("scheduled_reports_next_run_idx").on(table.nextRunAt),
+    index("scheduled_reports_active_idx").on(table.active),
+  ],
+);
