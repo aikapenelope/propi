@@ -63,6 +63,10 @@ interface PropertyFormProps {
     latitude: string | null;
     longitude: string | null;
     externalLinks?: unknown;
+    /** Date from DB (Date object) or ISO string */
+    closedAt?: Date | string | null;
+    soldPrice?: string | null;
+    commissionRate?: string | null;
   };
   selectedTagIds?: string[];
   availableTags: Tag[];
@@ -106,6 +110,9 @@ export function PropertyForm({
         (fd.get("externalLink2") as string) || "",
         (fd.get("externalLink3") as string) || "",
       ].filter(Boolean),
+      closedAt: (fd.get("closedAt") as string) || undefined,
+      soldPrice: (fd.get("soldPrice") as string) || undefined,
+      commissionRate: (fd.get("commissionRate") as string) || undefined,
       tagIds,
     };
 
@@ -280,6 +287,66 @@ export function PropertyForm({
         selectedIds={tagIds}
         onToggle={toggleTag}
       />
+
+      {/* Closing Info */}
+      <div className="rounded-xl border border-border p-4 space-y-3">
+        <label className="flex items-center gap-1.5 text-sm font-medium text-foreground">
+          Datos de cierre
+          <InfoTooltip text="Registra el precio real de cierre y la comision pactada cuando se venda o alquile. Se usa para reportes." />
+        </label>
+        <p className="text-xs text-muted-foreground">
+          Completa cuando la propiedad se venda o alquile.
+        </p>
+        <div className="grid gap-4 sm:grid-cols-3">
+          <div>
+            <label htmlFor="soldPrice" className="block text-xs font-medium text-muted-foreground">
+              Precio de cierre (USD)
+            </label>
+            <input
+              id="soldPrice"
+              name="soldPrice"
+              type="number"
+              step="0.01"
+              min="0"
+              placeholder="Precio real"
+              defaultValue={property?.soldPrice ?? ""}
+              className={inputClass}
+            />
+          </div>
+          <div>
+            <label htmlFor="commissionRate" className="block text-xs font-medium text-muted-foreground">
+              Comision (%)
+            </label>
+            <input
+              id="commissionRate"
+              name="commissionRate"
+              type="number"
+              step="0.5"
+              min="0"
+              max="100"
+              placeholder="5"
+              defaultValue={property?.commissionRate ?? ""}
+              className={inputClass}
+            />
+          </div>
+          <div>
+            <label htmlFor="closedAt" className="block text-xs font-medium text-muted-foreground">
+              Fecha de cierre
+            </label>
+            <input
+              id="closedAt"
+              name="closedAt"
+              type="date"
+              defaultValue={
+                property?.closedAt instanceof Date
+                  ? property.closedAt.toISOString().slice(0, 10)
+                  : (property?.closedAt ?? "")
+              }
+              className={inputClass}
+            />
+          </div>
+        </div>
+      </div>
 
       {/* External Links */}
       <div>
