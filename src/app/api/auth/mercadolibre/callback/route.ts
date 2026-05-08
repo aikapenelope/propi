@@ -10,11 +10,16 @@ export const dynamic = "force-dynamic";
 /**
  * OAuth2 callback for MercadoLibre.
  * Receives ?code=XXX, exchanges for tokens, saves in:
- * 1. social_accounts (per-user, backward compat)
- * 2. service_credentials (platform-level, used by sync worker)
+ * 1. service_credentials (platform-level, used by sync worker) — ALWAYS
+ * 2. social_accounts (per-user, backward compat) — only if logged in
  *
  * The service_credentials entry is what powers the global market sync.
  * Only one ML service credential exists — last authorization wins.
+ *
+ * This callback does NOT require the user to be logged in to Propi.
+ * The platform token is saved regardless of Clerk session state.
+ * This ensures the admin can authorize ML without needing to be
+ * authenticated in Propi first.
  */
 export async function GET(request: Request) {
   const url = new URL(request.url);
@@ -28,28 +33,10 @@ export async function GET(request: Request) {
   }
 
   try {
-    const { userId } = await auth();
-    if (!userId) {
-      return NextResponse.redirect(
-        new URL("/marketing/settings?ml_error=not_authenticated", request.url),
-      );
-    }
-
     const tokens = await exchangeMeliCode(code);
 
-    // 1. Save per-user (backward compat for user-facing features)
-    await upsertSocialAccount({
-      platform: "mercadolibre",
-      accessToken: tokens.accessToken,
-      refreshToken: tokens.refreshToken,
-      platformAccountId: String(tokens.userId),
-      accountName: `MeLi User ${tokens.userId}`,
-      tokenExpiresAt: tokens.expiresAt.toISOString(),
-      metadata: { userId: tokens.userId },
-      userId,
-    });
-
-    // 2. Save as platform service credential (used by sync worker)
+    // 1. ALWAYS save as platform service credential (used by sync worker)
+    // This is the critical path — the worker depends on this token.
     await db
       .insert(serviceCredentials)
       .values({
@@ -57,7 +44,7 @@ export async function GET(request: Request) {
         accessToken: tokens.accessToken,
         refreshToken: tokens.refreshToken,
         tokenExpiresAt: tokens.expiresAt,
-        metadata: { userId: tokens.userId },
+        metadata: { meliUserId: tokens.userId },
       })
       .onConflictDoUpdate({
         target: serviceCredentials.service,
@@ -65,9 +52,25 @@ export async function GET(request: Request) {
           accessToken: tokens.accessToken,
           refreshToken: tokens.refreshToken,
           tokenExpiresAt: tokens.expiresAt,
-          metadata: { userId: tokens.userId },
+          metadata: { meliUserId: tokens.userId },
         },
       });
+
+    // 2. Optionally save per-user (backward compat for user-facing features)
+    // Only if the user is logged in to Propi via Clerk.
+    const { userId } = await auth();
+    if (userId) {
+      await upsertSocialAccount({
+        platform: "mercadolibre",
+        accessToken: tokens.accessToken,
+        refreshToken: tokens.refreshToken,
+        platformAccountId: String(tokens.userId),
+        accountName: `MeLi User ${tokens.userId}`,
+        tokenExpiresAt: tokens.expiresAt.toISOString(),
+        metadata: { userId: tokens.userId },
+        userId,
+      });
+    }
 
     return NextResponse.redirect(
       new URL("/marketing/settings?ml_success=true", request.url),
