@@ -15,7 +15,7 @@ import { Worker } from "bullmq";
 import IORedis from "ioredis";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
-import { eq, and } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import * as schema from "../server/schema";
 
 // ---------------------------------------------------------------------------
@@ -165,6 +165,33 @@ async function syncCategory(
 
 const REDIS_URL = process.env.REDIS_URL || "redis://:password@10.0.1.20:6379/3";
 
+/** Refresh ML service token using client credentials */
+async function refreshServiceToken(refreshToken: string) {
+  const res = await fetch(`${MELI_API}/oauth/token`, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({
+      grant_type: "refresh_token",
+      client_id: process.env.ML_APP_ID || "",
+      client_secret: process.env.ML_SECRET_KEY || "",
+      refresh_token: refreshToken,
+    }),
+  });
+
+  if (!res.ok) {
+    const err = await res.text().catch(() => "");
+    throw new Error(`ML token refresh failed: ${res.status} ${err}`);
+  }
+
+  const data = await res.json();
+  return {
+    accessToken: data.access_token as string,
+    refreshToken: data.refresh_token as string,
+    expiresAt: new Date(Date.now() + data.expires_in * 1000),
+    userId: data.user_id as number,
+  };
+}
+
 const connection = new IORedis(REDIS_URL, {
   maxRetriesPerRequest: null,
   enableReadyCheck: false,
@@ -173,18 +200,43 @@ const connection = new IORedis(REDIS_URL, {
 const worker = new Worker(
   "market-sync",
   async (job) => {
-    const { userId } = job.data as { userId: string };
-    console.log(`[market-sync] Processing job ${job.id} for user ${userId}`);
+    console.log(`[market-sync] Processing job ${job.id}`);
 
-    // Fetch token at processing time (not stored in Redis)
-    const account = await db.query.socialAccounts.findFirst({
-      where: and(
-        eq(schema.socialAccounts.platform, "mercadolibre"),
-        eq(schema.socialAccounts.userId, userId),
-      ),
+    // Use platform-level service token (not tied to any user)
+    const credential = await db.query.serviceCredentials.findFirst({
+      where: eq(schema.serviceCredentials.service, "mercadolibre"),
     });
-    if (!account) throw new Error(`No ML account for user ${userId}`);
-    const token = account.accessToken;
+
+    if (!credential) {
+      throw new Error(
+        "No MercadoLibre service credential configured. Run the OAuth flow and seed service_credentials.",
+      );
+    }
+
+    // Refresh token if expired
+    let token = credential.accessToken;
+    const expiresAt = credential.tokenExpiresAt ?? new Date(0);
+
+    if (expiresAt < new Date()) {
+      if (!credential.refreshToken) {
+        throw new Error("ML service token expired and no refresh token available. Re-authorize.");
+      }
+
+      console.log("[market-sync] Token expired, refreshing...");
+      const refreshed = await refreshServiceToken(credential.refreshToken);
+      token = refreshed.accessToken;
+
+      // Update stored credentials
+      await db
+        .update(schema.serviceCredentials)
+        .set({
+          accessToken: refreshed.accessToken,
+          refreshToken: refreshed.refreshToken,
+          tokenExpiresAt: refreshed.expiresAt,
+          metadata: { userId: refreshed.userId },
+        })
+        .where(eq(schema.serviceCredentials.service, "mercadolibre"));
+    }
 
     const cutoff = new Date(Date.now() - TWELVE_MONTHS_MS);
     let totalInserted = 0;
@@ -203,17 +255,17 @@ const worker = new Worker(
     }
 
     console.log(
-      `[market-sync] Done for ${userId}: +${totalInserted} ~${totalUpdated} -${totalSkipped}`,
+      `[market-sync] Done: +${totalInserted} ~${totalUpdated} -${totalSkipped}`,
     );
 
     return { inserted: totalInserted, updated: totalUpdated, skipped: totalSkipped };
   },
   {
     connection,
-    concurrency: 2, // Process 2 users in parallel max
+    concurrency: 1, // Single sync at a time (one service token)
     limiter: {
       max: 10,
-      duration: 60_000, // Max 10 jobs per minute (rate limit protection)
+      duration: 60_000,
     },
   },
 );
