@@ -84,16 +84,27 @@ async function syncCategory(
 
       if (res.status === 429) {
         const retryAfter = parseInt(res.headers.get("retry-after") || "5", 10);
+        console.log(`[market-sync] Rate limited, waiting ${retryAfter}s...`);
         await new Promise((r) => setTimeout(r, retryAfter * 1000));
         page--;
         continue;
       }
 
-      if (!res.ok) break;
+      if (!res.ok) {
+        const errBody = await res.text().catch(() => "");
+        console.error(`[market-sync] API error ${res.status} for ${category.id} page ${page}: ${errBody}`);
+        break;
+      }
       const data = await res.json();
       results = data.results || [];
       if (results.length === 0) break;
-    } catch {
+
+      // Log progress on first page of each category
+      if (page === 0) {
+        console.log(`[market-sync] ${category.id} (${category.type}/${category.operation}): ${data.paging?.total ?? "?"} total listings`);
+      }
+    } catch (err) {
+      console.error(`[market-sync] Fetch error for ${category.id} page ${page}:`, err instanceof Error ? err.message : err);
       break;
     }
 
@@ -213,30 +224,54 @@ const worker = new Worker(
       );
     }
 
-    // Refresh token if expired
+    // Check token expiry and refresh if needed
     let token = credential.accessToken;
     const expiresAt = credential.tokenExpiresAt ?? new Date(0);
+    const now = new Date();
 
-    if (expiresAt < new Date()) {
+    console.log(`[market-sync] Token expires: ${expiresAt.toISOString()}, now: ${now.toISOString()}, expired: ${expiresAt < now}`);
+    console.log(`[market-sync] Has refresh token: ${!!credential.refreshToken}`);
+
+    if (expiresAt < now) {
       if (!credential.refreshToken) {
-        throw new Error("ML service token expired and no refresh token available. Re-authorize.");
+        // No refresh token — try using the token anyway (ML sometimes accepts slightly expired tokens)
+        console.warn("[market-sync] WARNING: Token appears expired and no refresh token available. Attempting anyway...");
+      } else {
+        console.log("[market-sync] Token expired, refreshing...");
+        try {
+          const refreshed = await refreshServiceToken(credential.refreshToken);
+          token = refreshed.accessToken;
+
+          // Update stored credentials
+          await db
+            .update(schema.serviceCredentials)
+            .set({
+              accessToken: refreshed.accessToken,
+              refreshToken: refreshed.refreshToken,
+              tokenExpiresAt: refreshed.expiresAt,
+              metadata: { userId: refreshed.userId },
+            })
+            .where(eq(schema.serviceCredentials.service, "mercadolibre"));
+
+          console.log(`[market-sync] Token refreshed, new expiry: ${refreshed.expiresAt.toISOString()}`);
+        } catch (err) {
+          console.error("[market-sync] Token refresh FAILED:", err instanceof Error ? err.message : err);
+          throw new Error(`Token refresh failed: ${err instanceof Error ? err.message : "unknown"}`);
+        }
       }
-
-      console.log("[market-sync] Token expired, refreshing...");
-      const refreshed = await refreshServiceToken(credential.refreshToken);
-      token = refreshed.accessToken;
-
-      // Update stored credentials
-      await db
-        .update(schema.serviceCredentials)
-        .set({
-          accessToken: refreshed.accessToken,
-          refreshToken: refreshed.refreshToken,
-          tokenExpiresAt: refreshed.expiresAt,
-          metadata: { userId: refreshed.userId },
-        })
-        .where(eq(schema.serviceCredentials.service, "mercadolibre"));
     }
+
+    // Test token with a single request before full sync
+    console.log(`[market-sync] Testing token (first 25 chars): ${token.substring(0, 25)}...`);
+    const testRes = await fetch(`${MELI_API}/sites/MLV/search?category=MLV1472&limit=1`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!testRes.ok) {
+      const errBody = await testRes.text().catch(() => "");
+      throw new Error(`Token validation failed: ${testRes.status} ${errBody}`);
+    }
+    const testData = await testRes.json();
+    console.log(`[market-sync] Token valid. MLV1472 has ${testData.paging?.total ?? 0} listings.`);
 
     const cutoff = new Date(Date.now() - TWELVE_MONTHS_MS);
     let totalInserted = 0;
