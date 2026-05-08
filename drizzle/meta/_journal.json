@@ -64,6 +64,13 @@
       "when": 1778114179637,
       "tag": "0008_worthless_reavers",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1778198326346,
+      "tag": "0009_brief_gladiator",
+      "breakpoints": true
     }
   ]
 }

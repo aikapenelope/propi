@@ -935,6 +935,34 @@ export const notifications = pgTable(
 export const notificationsRelations = relations(notifications, () => ({}));
 
 // ---------------------------------------------------------------------------
+// Service Credentials (platform-level tokens not tied to any user)
+// ---------------------------------------------------------------------------
+
+export const serviceCredentials = pgTable(
+  "service_credentials",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    /** Service identifier (e.g. "mercadolibre") */
+    service: varchar("service", { length: 50 }).notNull().unique(),
+    /** Current access token */
+    accessToken: text("access_token").notNull(),
+    /** Refresh token for automatic renewal */
+    refreshToken: text("refresh_token"),
+    /** When the access token expires */
+    tokenExpiresAt: timestamp("token_expires_at", { withTimezone: true }),
+    /** Extra metadata (e.g. ML user ID) */
+    metadata: jsonb("metadata"),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  },
+  (table) => [
+    index("service_credentials_service_idx").on(table.service),
+  ],
+);
+
+// ---------------------------------------------------------------------------
 // Metric Shares (consent-based sharing of agent metrics with a broker)
 // ---------------------------------------------------------------------------
 
