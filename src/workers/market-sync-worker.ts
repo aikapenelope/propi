@@ -203,6 +203,38 @@ async function refreshServiceToken(refreshToken: string) {
   };
 }
 
+/** Send email alert when ML token dies. Uses Resend if configured. */
+async function sendTokenDeathAlert(errorMessage: string) {
+  const apiKey = process.env.RESEND_API_KEY;
+  const alertEmail = process.env.ALERT_EMAIL || process.env.MAIL_FROM;
+  if (!apiKey || !alertEmail) return;
+
+  const from = process.env.MAIL_FROM || "Propi <noreply@propi.aikalabs.cc>";
+  const reauthorizeUrl =
+    "https://auth.mercadolibre.cl/authorization?" +
+    `response_type=code&client_id=${process.env.ML_APP_ID}` +
+    "&redirect_uri=https://propi.aikalabs.cc/api/auth/mercadolibre/callback";
+
+  await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      from,
+      to: [alertEmail.replace(/.*<(.+)>/, "$1")],
+      subject: "[Propi] MercadoLibre token muerto — re-autorizar",
+      html:
+        `<h2>El token de MercadoLibre expiro o fue revocado</h2>` +
+        `<p><strong>Error:</strong> ${errorMessage}</p>` +
+        `<p>El sync de propiedades esta detenido hasta que re-autorices.</p>` +
+        `<p><a href="${reauthorizeUrl}">Click aqui para re-autorizar</a></p>` +
+        `<p>Despues de autorizar, el proximo cron sincronizara automaticamente.</p>`,
+    }),
+  });
+}
+
 const connection = new IORedis(REDIS_URL, {
   maxRetriesPerRequest: null,
   enableReadyCheck: false,
@@ -311,6 +343,24 @@ worker.on("completed", (job) => {
 
 worker.on("failed", (job, err) => {
   console.error(`[market-sync] Job ${job?.id} failed:`, err.message);
+
+  // Alert admin if token is dead (403/401 or refresh failure)
+  const isTokenDead =
+    err.message.includes("403") ||
+    err.message.includes("401") ||
+    err.message.includes("Token refresh failed") ||
+    err.message.includes("Token validation failed") ||
+    err.message.includes("No MercadoLibre service credential");
+
+  if (isTokenDead) {
+    console.error(
+      "[market-sync] TOKEN DEAD — MercadoLibre token is invalid. " +
+      "Re-authorize at: https://auth.mercadolibre.cl/authorization?" +
+      `response_type=code&client_id=${process.env.ML_APP_ID}` +
+      "&redirect_uri=https://propi.aikalabs.cc/api/auth/mercadolibre/callback",
+    );
+    sendTokenDeathAlert(err.message).catch(() => {});
+  }
 });
 
 // ---------------------------------------------------------------------------

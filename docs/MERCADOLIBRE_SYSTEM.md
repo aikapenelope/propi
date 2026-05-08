@@ -282,6 +282,42 @@ cd /app && npx drizzle-kit migrate
 | `DATABASE_URL` | Worker | Conexion a PostgreSQL |
 | `REDIS_URL` | App + Worker | Cola BullMQ (Redis DB 3) |
 
+## Alertas de Token Muerto
+
+Si el token de ML muere (403, 401, refresh falla), el worker:
+1. Loguea `[market-sync] TOKEN DEAD` con la URL de re-autorizacion
+2. Envia un email a `ALERT_EMAIL` (o `MAIL_FROM` como fallback) con:
+   - El error exacto
+   - Un link directo para re-autorizar
+
+Para que funcione, configura `ALERT_EMAIL` en el worker (o usa `MAIL_FROM` que ya tienes).
+
+## Limpieza: Empezar desde cero
+
+Si el token actual esta corrupto (como el 403 que tuvimos), limpia antes de re-autorizar:
+
+```sql
+-- Eliminar el token muerto de service_credentials
+DELETE FROM service_credentials WHERE service = 'mercadolibre';
+
+-- Opcional: eliminar el token per-user viejo tambien
+DELETE FROM social_accounts WHERE platform = 'mercadolibre';
+```
+
+Despues de limpiar, haz el OAuth de nuevo (ver "Paso a Paso" arriba).
+
+## URL de Autorizacion
+
+Reemplaza `$APP_ID` con tu ML_APP_ID:
+
+```
+https://auth.mercadolibre.cl/authorization?response_type=code&client_id=$APP_ID&redirect_uri=https://propi.aikalabs.cc/api/auth/mercadolibre/callback
+```
+
+**No necesitas estar logueado en Propi.** Solo necesitas estar logueado en MercadoLibre Chile.
+
+Despues de autorizar, ML te redirige al callback de Propi que guarda el token automaticamente.
+
 ## Resumen: Que debe estar corriendo
 
 | Servicio | Donde | Que hace |
