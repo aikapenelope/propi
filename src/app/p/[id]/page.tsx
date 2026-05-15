@@ -97,9 +97,9 @@ export default async function PublicPropertyPage(
         </span>
       </header>
 
-      {/* Image gallery — horizontal snap-scroll carousel */}
+      {/* Image carousel — max 4 images, swipe on mobile, arrows on desktop */}
       <div className="w-full max-w-5xl mx-auto px-4 mb-8">
-        <ImageCarousel images={imagesWithUrls} alt={property.title} />
+        <ImageCarousel images={imagesWithUrls.slice(0, 4)} alt={property.title} />
       </div>
 
       {/* Content */}
