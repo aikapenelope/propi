@@ -92,11 +92,30 @@ export default function LandingPage() {
   const [loaderDone, setLoaderDone] = useState(false);
   const heroRef = useRef<HTMLDivElement>(null);
 
+  // PWA install prompt
+  const deferredPrompt = useRef<Event | null>(null);
+  const [isIOS, setIsIOS] = useState(false);
+  const [showIOSGuide, setShowIOSGuide] = useState(false);
+
   useEffect(() => {
     // Load Iconify
     const script = document.createElement("script");
     script.src = "https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js";
     document.head.appendChild(script);
+
+    // Detect iOS for PWA install guide
+    const ua = navigator.userAgent;
+    setIsIOS(
+      /iPad|iPhone|iPod/.test(ua) ||
+        (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1),
+    );
+
+    // Capture Android/Chrome install prompt
+    const handlePrompt = (e: Event) => {
+      e.preventDefault();
+      deferredPrompt.current = e;
+    };
+    window.addEventListener("beforeinstallprompt", handlePrompt);
 
     // Simulate loader
     const timer = setTimeout(() => {
@@ -104,7 +123,10 @@ export default function LandingPage() {
       setTimeout(() => setLoaderDone(true), 800);
     }, 1200);
 
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener("beforeinstallprompt", handlePrompt);
+    };
   }, []);
 
   useEffect(() => {
@@ -155,6 +177,18 @@ export default function LandingPage() {
       });
     });
   }, [loaderDone]);
+
+  function installApp() {
+    if (deferredPrompt.current) {
+      const prompt = deferredPrompt.current as unknown as { prompt: () => void };
+      prompt.prompt();
+      deferredPrompt.current = null;
+    } else if (isIOS) {
+      setShowIOSGuide(true);
+    } else {
+      window.location.href = "/sign-up";
+    }
+  }
 
   return (
     <div className="min-h-screen relative overflow-x-hidden" style={{ background: "#E3E1DC", color: "#121212", fontFamily: "'Manrope', sans-serif" }}>
@@ -494,6 +528,80 @@ export default function LandingPage() {
             Crear Cuenta Gratis
           </Link>
           <p className="text-xs text-gray-400 mt-4">Prueba gratis. Sin tarjeta de credito.</p>
+        </section>
+
+        {/* Install PWA Section */}
+        <section className="py-24 px-6 md:px-20 border-t border-black/5" style={{ background: "#E3E1DC" }}>
+          <div className="max-w-[1000px] mx-auto">
+            <div className="rounded-3xl p-8 md:p-12 relative overflow-hidden" style={{ background: "#121212", color: "#E3E1DC" }}>
+              <div className="absolute top-0 right-0 w-[300px] h-[300px] rounded-full opacity-10 blur-[80px] pointer-events-none" style={{ background: "#374336" }} />
+              <div className="relative z-10 grid md:grid-cols-2 gap-10 items-center">
+                <div>
+                  <div className="text-xs uppercase tracking-widest opacity-50 mb-4">App Movil</div>
+                  <h2 className="text-3xl md:text-4xl tracking-tight leading-tight mb-6" style={{ fontFamily: "'Syncopate', sans-serif" }}>
+                    Instala Propi<br /><span style={{ color: "#6b8f71" }}>en tu telefono</span>
+                  </h2>
+                  <p className="text-sm text-gray-400 font-normal leading-relaxed mb-8">
+                    Propi es una aplicacion web progresiva. No necesitas App Store ni Play Store. Un tap y esta en tu pantalla de inicio.
+                  </p>
+                  <div className="space-y-5">
+                    <div>
+                      <h4 className="flex items-center gap-2 text-sm font-medium mb-1">
+                        <Icon icon="uiw:android" className="text-lg" /> Android
+                      </h4>
+                      <p className="text-xs text-gray-500">Usa Chrome y acepta el prompt de &quot;Instalar aplicacion&quot; o toca el boton de abajo.</p>
+                    </div>
+                    <div>
+                      <h4 className="flex items-center gap-2 text-sm font-medium mb-1">
+                        <Icon icon="uiw:apple" className="text-lg" /> iOS (iPhone)
+                      </h4>
+                      <p className="text-xs text-gray-500">En Safari, toca Compartir y luego &quot;Agregar a pantalla de inicio&quot;.</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex justify-center">
+                  <button
+                    onClick={installApp}
+                    className="px-8 py-4 rounded-full text-xs font-semibold uppercase tracking-widest transition-all hover:opacity-90 hover:-translate-y-1 duration-300 shadow-lg"
+                    style={{ background: "#E3E1DC", color: "#121212" }}
+                  >
+                    Instalar Propi
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* iOS guide modal */}
+          {showIOSGuide && (
+            <div className="fixed inset-0 z-[10001] flex items-end justify-center bg-black/60 backdrop-blur-sm" onClick={() => setShowIOSGuide(false)}>
+              <div className="w-full max-w-lg rounded-t-3xl p-8" style={{ background: "#E3E1DC", color: "#121212" }} onClick={(e) => e.stopPropagation()}>
+                <div className="mb-1 flex justify-center"><div className="h-1 w-10 rounded-full bg-black/20" /></div>
+                <h3 className="mb-6 text-center text-lg font-semibold" style={{ fontFamily: "'Syncopate', sans-serif" }}>Instalar en iPhone</h3>
+                <div className="space-y-5">
+                  <div className="flex items-start gap-4">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white" style={{ background: "#374336" }}>1</div>
+                    <p className="text-sm text-gray-600">Abre <span className="font-semibold text-black">propi.aikalabs.cc</span> en Safari</p>
+                  </div>
+                  <div className="flex items-start gap-4">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white" style={{ background: "#374336" }}>2</div>
+                    <p className="text-sm text-gray-600">Toca el boton de <span className="font-semibold text-black">Compartir</span> (el cuadrado con flecha hacia arriba)</p>
+                  </div>
+                  <div className="flex items-start gap-4">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold text-black" style={{ background: "#374336" }}>3</div>
+                    <p className="text-sm text-gray-600">Desplaza hacia abajo y toca <span className="font-semibold text-black">&quot;Agregar a pantalla de inicio&quot;</span></p>
+                  </div>
+                </div>
+                <button
+                  className="mt-8 w-full rounded-full py-3.5 text-xs font-semibold uppercase tracking-widest text-white transition-colors hover:opacity-90"
+                  style={{ background: "#121212" }}
+                  onClick={() => setShowIOSGuide(false)}
+                >
+                  Entendido
+                </button>
+              </div>
+            </div>
+          )}
         </section>
       </div>
 
