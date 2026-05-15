@@ -11,6 +11,7 @@ import {
   Ruler,
   DollarSign,
 } from "lucide-react";
+import { ImageCarousel } from "@/components/properties/image-carousel";
 
 export const dynamic = "force-dynamic";
 
@@ -96,35 +97,9 @@ export default async function PublicPropertyPage(
         </span>
       </header>
 
-      {/* Image gallery */}
+      {/* Image carousel — max 4 images, swipe on mobile, arrows on desktop */}
       <div className="w-full max-w-5xl mx-auto px-4 mb-8">
-        {imagesWithUrls.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 rounded-2xl overflow-hidden">
-            {imagesWithUrls.slice(0, 4).map((img, i) => (
-              <div
-                key={img.id}
-                className={`relative overflow-hidden ${i === 0 ? "md:col-span-2 aspect-[16/9]" : "aspect-[4/3]"}`}
-              >
-                {img.url ? (
-                  /* eslint-disable-next-line @next/next/no-img-element */
-                  <img
-                    src={img.url}
-                    alt={property.title}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-400">
-                    <Building2 className="h-12 w-12" />
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="aspect-[16/7] rounded-2xl bg-gray-200 flex items-center justify-center">
-            <Building2 className="h-16 w-16 text-gray-400" />
-          </div>
-        )}
+        <ImageCarousel images={imagesWithUrls.slice(0, 4)} alt={property.title} />
       </div>
 
       {/* Content */}
