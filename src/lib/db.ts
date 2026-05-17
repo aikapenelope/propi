@@ -6,13 +6,25 @@ import * as schema from "@/server/schema";
 /**
  * Database connection for Propi.
  *
- * Returns a real Drizzle client if DATABASE_URL is set,
- * or a no-op proxy if not (build time on Vercel).
- * The proxy throws only if you actually try to query,
- * which never happens during static generation.
+ * - Runtime: DATABASE_URL is required. Fails fast at startup if missing.
+ * - Build time: Returns a no-op proxy (DATABASE_URL is intentionally absent
+ *   during `next build`). The proxy throws only if you actually try to query,
+ *   which never happens during static generation.
+ *
+ * Note: NODE_ENV=production is set during Docker builds, so we can't use it
+ * alone to detect runtime. We check NEXT_PHASE to distinguish build from run.
  */
 
 const connectionString = process.env.DATABASE_URL;
+const isBuilding = process.env.NEXT_PHASE === "phase-production-build";
+
+// Fail fast at runtime if DATABASE_URL is missing.
+// Skip during `next build` where DATABASE_URL is intentionally absent.
+if (!connectionString && !isBuilding) {
+  console.error(
+    "WARNING: DATABASE_URL is not set. Database queries will fail.",
+  );
+}
 
 export const db: ReturnType<typeof drizzle<typeof schema>> = connectionString
   ? drizzle(
