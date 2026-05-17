@@ -113,7 +113,7 @@ type StoreInbound = (
   conversationId: string,
   body: string,
   externalId?: string,
-  metadata?: string,
+  metadata?: Record<string, unknown> | string,
 ) => Promise<unknown>;
 
 // ---------------------------------------------------------------------------
@@ -190,7 +190,7 @@ async function handleWhatsAppWebhook(
           convo.id,
           textBody,
           msg.id,
-          JSON.stringify({ type: msg.type, timestamp: msg.timestamp }),
+          { type: msg.type, timestamp: msg.timestamp },
         );
       }
     }
