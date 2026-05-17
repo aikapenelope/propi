@@ -64,15 +64,19 @@ export function UploadDocumentButton() {
         body: formData,
       });
 
+      const resBody = await res.json();
+
       if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || "Upload failed");
+        throw new Error(resBody.error || "Upload failed");
       }
+
+      // Use the key returned by the API (may differ from original if processed)
+      const finalKey = (resBody.key as string) || key;
 
       await createDocument({
         name: file.name,
         type: docType,
-        key,
+        key: finalKey,
         filename: file.name,
         sizeBytes: file.size,
         mimeType: file.type,

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { PutObjectCommand } from "@aws-sdk/client-s3";
+import sharp from "sharp";
 import { s3, MEDIA_BUCKET, DOCS_BUCKET } from "@/lib/s3";
 import { auth } from "@clerk/nextjs/server";
 
@@ -29,14 +30,20 @@ function checkUploadRateLimit(userId: string): boolean {
 // Allowed MIME types
 // ---------------------------------------------------------------------------
 
-/** Allowed MIME types for media bucket (property photos/videos) */
-const ALLOWED_MEDIA_TYPES = new Set([
+/** Image MIME types that sharp can process and convert to WebP. */
+const PROCESSABLE_IMAGE_TYPES = new Set([
   "image/jpeg",
   "image/png",
   "image/webp",
   "image/heic",
   "image/heif",
   "image/avif",
+  "image/tiff",
+]);
+
+/** Allowed MIME types for media bucket (property photos/videos) */
+const ALLOWED_MEDIA_TYPES = new Set([
+  ...PROCESSABLE_IMAGE_TYPES,
   "video/mp4",
   "video/quicktime",
 ]);
@@ -53,11 +60,88 @@ const ALLOWED_DOC_TYPES = new Set([
   "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
 ]);
 
+// ---------------------------------------------------------------------------
+// Image processing
+// ---------------------------------------------------------------------------
+
+/** Max dimension for property images (width or height). */
+const MAX_IMAGE_DIMENSION = 1920;
+
+/** WebP quality (0-100). 80 is a good balance of quality and file size. */
+const WEBP_QUALITY = 80;
+
+/**
+ * Process an image: resize to max dimension and convert to WebP.
+ * Returns the processed buffer and the new content type.
+ *
+ * - HEIC/HEIF from iPhones -> converted to WebP (browsers can't render HEIC)
+ * - Large images -> resized to max 1920px on the longest side
+ * - Already-small WebP/JPEG -> passed through with minimal re-encoding
+ */
+async function processImage(
+  buffer: Buffer,
+  mimeType: string,
+): Promise<{ data: Buffer; contentType: string; key: string }> {
+  const image = sharp(buffer);
+  const metadata = await image.metadata();
+
+  const width = metadata.width ?? 0;
+  const height = metadata.height ?? 0;
+  const needsResize =
+    width > MAX_IMAGE_DIMENSION || height > MAX_IMAGE_DIMENSION;
+  const needsConversion =
+    mimeType === "image/heic" ||
+    mimeType === "image/heif" ||
+    mimeType === "image/tiff" ||
+    mimeType === "image/avif";
+
+  // If already WebP and small enough, pass through
+  if (mimeType === "image/webp" && !needsResize) {
+    return { data: buffer, contentType: "image/webp", key: ".webp" };
+  }
+
+  // If JPEG/PNG and small enough, keep original format
+  if (
+    !needsConversion &&
+    !needsResize &&
+    (mimeType === "image/jpeg" || mimeType === "image/png")
+  ) {
+    return {
+      data: buffer,
+      contentType: mimeType,
+      key: mimeType === "image/jpeg" ? ".jpg" : ".png",
+    };
+  }
+
+  // Process: resize if needed + convert to WebP
+  let pipeline = image;
+  if (needsResize) {
+    pipeline = pipeline.resize(MAX_IMAGE_DIMENSION, MAX_IMAGE_DIMENSION, {
+      fit: "inside",
+      withoutEnlargement: true,
+    });
+  }
+
+  // Auto-rotate based on EXIF orientation (common with phone photos)
+  pipeline = pipeline.rotate();
+
+  const processed = await pipeline.webp({ quality: WEBP_QUALITY }).toBuffer();
+
+  return { data: processed, contentType: "image/webp", key: ".webp" };
+}
+
+// ---------------------------------------------------------------------------
+// Upload handler
+// ---------------------------------------------------------------------------
+
 /**
  * Server-side file upload to MinIO.
  * The browser sends the file here, and this route uploads it to MinIO.
  * This is necessary because MinIO is on a private network (10.0.1.20:9000)
  * that the browser cannot reach directly.
+ *
+ * For images: automatically converts HEIC/HEIF to WebP, resizes large
+ * images to max 1920px, and auto-rotates based on EXIF orientation.
  *
  * Used by: property image upload, document upload.
  *
@@ -81,7 +165,7 @@ export async function POST(request: Request) {
   try {
     const formData = await request.formData();
     const file = formData.get("file") as File | null;
-    const key = formData.get("key") as string | null;
+    let key = formData.get("key") as string | null;
     const bucketType = (formData.get("bucket") as string) || "media";
 
     if (!file || !key) {
@@ -130,14 +214,35 @@ export async function POST(request: Request) {
     }
 
     const bucket = isDocsBucket ? DOCS_BUCKET : MEDIA_BUCKET;
-    const buffer = Buffer.from(await file.arrayBuffer());
+    let buffer: Buffer = Buffer.from(await file.arrayBuffer());
+    let contentType = file.type;
+
+    // Process images: convert HEIC->WebP, resize large images, auto-rotate
+    if (!isDocsBucket && PROCESSABLE_IMAGE_TYPES.has(file.type)) {
+      try {
+        const result = await processImage(buffer, file.type);
+        buffer = result.data;
+        contentType = result.contentType;
+
+        // Update the key extension if the format changed
+        if (result.key !== getExtension(key)) {
+          key = key.replace(/\.[^.]+$/u, result.key);
+        }
+      } catch (imgErr) {
+        console.error("Image processing error:", imgErr);
+        return NextResponse.json(
+          { error: "No se pudo procesar la imagen. Intenta con otro formato (JPEG, PNG, WebP)." },
+          { status: 422 },
+        );
+      }
+    }
 
     await s3.send(
       new PutObjectCommand({
         Bucket: bucket,
         Key: key,
         Body: buffer,
-        ContentType: file.type,
+        ContentType: contentType,
       }),
     );
 
@@ -149,4 +254,10 @@ export async function POST(request: Request) {
       { status: 500 },
     );
   }
+}
+
+/** Extract file extension including the dot. */
+function getExtension(filename: string): string {
+  const match = filename.match(/\.[^.]+$/u);
+  return match ? match[0] : "";
 }

@@ -6,6 +6,9 @@ import "./src/lib/env";
 
 const nextConfig: NextConfig = {
   output: "standalone",
+  // Ensure sharp native binaries are included in the standalone output.
+  // Required because the upload API route uses sharp for image processing.
+  serverExternalPackages: ["sharp"],
   experimental: {
     viewTransition: true,
   },
