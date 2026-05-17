@@ -6,20 +6,17 @@ import * as schema from "@/server/schema";
 /**
  * Database connection for Propi.
  *
- * - Production: DATABASE_URL is required. Fails fast at startup if missing.
- * - Build time: Returns a no-op proxy (DATABASE_URL is intentionally absent
- *   during `next build`). The proxy throws only if you actually try to query,
- *   which never happens during static generation.
+ * Returns a real Drizzle client if DATABASE_URL is set,
+ * or a no-op proxy if not (build time in Docker).
+ * The proxy throws only if you actually try to query,
+ * which never happens during static generation.
+ *
+ * Note: NODE_ENV=production is set during Docker builds,
+ * so we cannot use it to distinguish build from runtime.
+ * The proxy pattern handles both cases correctly.
  */
 
 const connectionString = process.env.DATABASE_URL;
-
-// Fail fast in production if DATABASE_URL is missing.
-if (!connectionString && process.env.NODE_ENV === "production") {
-  throw new Error(
-    "DATABASE_URL is not set. The application cannot start without a database connection.",
-  );
-}
 
 export const db: ReturnType<typeof drizzle<typeof schema>> = connectionString
   ? drizzle(
