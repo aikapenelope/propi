@@ -209,42 +209,45 @@ async function refreshServiceToken(refreshToken: string) {
   };
 }
 
-/** Send email alert when ML token dies. Uses Resend if configured. */
+/** Send email alert when ML token dies. Uses workerSendEmail for rate limiting. */
 async function sendTokenDeathAlert(errorMessage: string) {
-  const apiKey = process.env.RESEND_API_KEY;
   const alertEmail = process.env.ALERT_EMAIL || process.env.MAIL_FROM;
-  if (!apiKey || !alertEmail) return;
+  if (!alertEmail) return;
 
   const from = process.env.MAIL_FROM || "Propi <noreply@propi.aikalabs.cc>";
+  const to = alertEmail.replace(/.*<(.+)>/, "$1");
   const reauthorizeUrl =
     "https://auth.mercadolibre.cl/authorization?" +
     `response_type=code&client_id=${process.env.ML_APP_ID}` +
     "&redirect_uri=https://propi.aikalabs.cc/api/auth/mercadolibre/callback";
 
-  await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      from,
-      to: [alertEmail.replace(/.*<(.+)>/, "$1")],
-      subject: "[Propi] MercadoLibre token muerto — re-autorizar",
-      html:
-        `<h2>El token de MercadoLibre expiro o fue revocado</h2>` +
-        `<p><strong>Error:</strong> ${errorMessage}</p>` +
-        `<p>El sync de propiedades esta detenido hasta que re-autorices.</p>` +
-        `<p><a href="${reauthorizeUrl}">Click aqui para re-autorizar</a></p>` +
-        `<p>Despues de autorizar, el proximo cron sincronizara automaticamente.</p>`,
-    }),
-  });
+  const html =
+    `<h2>El token de MercadoLibre expiro o fue revocado</h2>` +
+    `<p><strong>Error:</strong> ${errorMessage}</p>` +
+    `<p>El sync de propiedades esta detenido hasta que re-autorices.</p>` +
+    `<p><a href="${reauthorizeUrl}">Click aqui para re-autorizar</a></p>` +
+    `<p>Despues de autorizar, el proximo cron sincronizara automaticamente.</p>`;
+
+  await workerSendEmail(to, "[Propi] MercadoLibre token muerto — re-autorizar", html, from);
 }
 
 const connection = new IORedis(REDIS_URL, {
   maxRetriesPerRequest: null,
   enableReadyCheck: false,
 });
+
+// Separate Redis connection for rate limiting with short timeout.
+// The BullMQ connection above uses maxRetriesPerRequest: null (required by
+// BullMQ) which hangs forever if Redis is down. Rate limit checks must
+// fail fast so email sends aren't blocked.
+const rateLimitConnection = new IORedis(REDIS_URL, {
+  maxRetriesPerRequest: 1,
+  enableReadyCheck: false,
+  lazyConnect: true,
+  connectTimeout: 2_000,
+  commandTimeout: 2_000,
+});
+rateLimitConnection.on("error", () => {});
 
 const worker = new Worker(
   "market-sync",
@@ -380,10 +383,44 @@ interface EmailJobData {
   htmlBody: string;
 }
 
+const MONTHLY_EMAIL_LIMIT = 3_000;
+
+/** Check monthly email limit in Redis. Returns true if under limit. */
+async function checkWorkerEmailLimit(apiKey?: string): Promise<boolean> {
+  try {
+    const key = apiKey || process.env.RESEND_API_KEY || "global";
+    const prefix = key.slice(0, 16);
+    const month = new Date().toISOString().slice(0, 7);
+    const redisKey = `email:month:${month}:${prefix}`;
+    const val = await rateLimitConnection.get(redisKey);
+    return !val || parseInt(val, 10) < MONTHLY_EMAIL_LIMIT;
+  } catch {
+    return true; // Fail open
+  }
+}
+
+/** Increment monthly email counter after successful send. */
+async function incrementWorkerEmailCount(apiKey?: string): Promise<void> {
+  try {
+    const key = apiKey || process.env.RESEND_API_KEY || "global";
+    const prefix = key.slice(0, 16);
+    const month = new Date().toISOString().slice(0, 7);
+    const redisKey = `email:month:${month}:${prefix}`;
+    const count = await rateLimitConnection.incr(redisKey);
+    if (count === 1) await rateLimitConnection.expire(redisKey, 45 * 24 * 60 * 60);
+  } catch {
+    // Fail open
+  }
+}
+
 /** Minimal Resend client for the worker (no Next.js imports). */
 async function workerSendEmail(to: string, subject: string, html: string, from: string, apiKey?: string) {
   const key = apiKey || process.env.RESEND_API_KEY;
   if (!key) throw new Error("No Resend API key available (user or global)");
+
+  if (!(await checkWorkerEmailLimit(apiKey))) {
+    throw new Error(`Monthly email limit reached (${MONTHLY_EMAIL_LIMIT}/month)`);
+  }
 
   const res = await fetch("https://api.resend.com/emails", {
     method: "POST",
@@ -398,6 +435,8 @@ async function workerSendEmail(to: string, subject: string, html: string, from: 
     const err = await res.text().catch(() => "");
     throw new Error(`Resend error ${res.status}: ${err}`);
   }
+
+  await incrementWorkerEmailCount(apiKey);
 }
 
 const emailWorker = new Worker(
@@ -484,6 +523,7 @@ async function shutdown() {
   console.log("[workers] Shutting down...");
   await Promise.all([worker.close(), emailWorker.close()]);
   await connection.quit();
+  await rateLimitConnection.quit();
   process.exit(0);
 }
 

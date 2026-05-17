@@ -4,6 +4,10 @@ set -e
 # ---------------------------------------------------------------------------
 # Migration repair for 0010_db-integrity-constraints
 #
+# TODO: Remove this block once migration 0010 is confirmed applied in
+# production (check: SELECT * FROM drizzle.__drizzle_migrations WHERE
+# created_at = 1778979770005). After that, this is a no-op on every deploy.
+#
 # Context: Migration 0010 originally had a text->jsonb ALTER without a USING
 # clause, which caused it to hang. Drizzle runs migrations in a transaction,
 # so the hang meant the INSERT into __drizzle_migrations was rolled back.

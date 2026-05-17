@@ -8,6 +8,7 @@ import { DeleteObjectCommand } from "@aws-sdk/client-s3";
 import { sanitizeLike } from "@/lib/sanitize";
 import { s3, MEDIA_BUCKET } from "@/lib/s3";
 import { requireUserId } from "@/lib/auth-helper";
+import { propertySchema } from "@/lib/validators";
 import { checkStorageQuota } from "@/lib/storage-quota";
 
 // ---------------------------------------------------------------------------
@@ -145,42 +146,40 @@ export async function getProperty(id: string) {
 
 export async function createProperty(data: PropertyFormData) {
   const userId = await requireUserId();
+  const validated = propertySchema.parse(data);
 
   const [property] = await db
     .insert(properties)
     .values({
-      title: data.title,
-      description: data.description || null,
-      type:
-        (data.type as typeof properties.$inferInsert.type) || "apartment",
-      operation:
-        (data.operation as typeof properties.$inferInsert.operation) || "sale",
-      status:
-        (data.status as typeof properties.$inferInsert.status) || "draft",
-      price: data.price || null,
-      currency: data.currency || "USD",
-      area: data.area || null,
-      bedrooms: data.bedrooms ? parseInt(data.bedrooms) : null,
-      bathrooms: data.bathrooms ? parseInt(data.bathrooms) : null,
-      parkingSpaces: data.parkingSpaces ? parseInt(data.parkingSpaces) : null,
-      address: data.address || null,
-      city: data.city || null,
-      state: data.state || null,
-      zipCode: data.zipCode || null,
-      country: data.country || "VE",
-      latitude: data.latitude || null,
-      longitude: data.longitude || null,
-      externalLinks: data.externalLinks?.filter(Boolean).slice(0, 3) || null,
-      closedAt: data.closedAt ? new Date(data.closedAt) : null,
-      soldPrice: data.soldPrice || null,
-      commissionRate: data.commissionRate || null,
+      title: validated.title,
+      description: validated.description || null,
+      type: validated.type || "apartment",
+      operation: validated.operation || "sale",
+      status: validated.status || "draft",
+      price: validated.price || null,
+      currency: validated.currency || "USD",
+      area: validated.area || null,
+      bedrooms: validated.bedrooms ? parseInt(validated.bedrooms) : null,
+      bathrooms: validated.bathrooms ? parseInt(validated.bathrooms) : null,
+      parkingSpaces: validated.parkingSpaces ? parseInt(validated.parkingSpaces) : null,
+      address: validated.address || null,
+      city: validated.city || null,
+      state: validated.state || null,
+      zipCode: validated.zipCode || null,
+      country: validated.country || "VE",
+      latitude: validated.latitude || null,
+      longitude: validated.longitude || null,
+      externalLinks: validated.externalLinks ?? null,
+      closedAt: validated.closedAt ? new Date(validated.closedAt) : null,
+      soldPrice: validated.soldPrice || null,
+      commissionRate: validated.commissionRate || null,
       userId,
     })
     .returning();
 
-  if (data.tagIds && data.tagIds.length > 0) {
+  if (validated.tagIds && validated.tagIds.length > 0) {
     await db.insert(propertyTags).values(
-      data.tagIds.map((tagId) => ({
+      validated.tagIds.map((tagId) => ({
         propertyId: property.id,
         tagId,
       })),
@@ -220,45 +219,43 @@ export async function updatePropertyStatus(
 
 export async function updateProperty(id: string, data: PropertyFormData) {
   const userId = await requireUserId();
+  const validated = propertySchema.parse(data);
 
   const property = await db.transaction(async (tx) => {
     const [updated] = await tx
       .update(properties)
       .set({
-        title: data.title,
-        description: data.description || null,
-        type:
-          (data.type as typeof properties.$inferInsert.type) || "apartment",
-        operation:
-          (data.operation as typeof properties.$inferInsert.operation) || "sale",
-        status:
-          (data.status as typeof properties.$inferInsert.status) || "draft",
-        price: data.price || null,
-        currency: data.currency || "USD",
-        area: data.area || null,
-        bedrooms: data.bedrooms ? parseInt(data.bedrooms) : null,
-        bathrooms: data.bathrooms ? parseInt(data.bathrooms) : null,
-        parkingSpaces: data.parkingSpaces ? parseInt(data.parkingSpaces) : null,
-        address: data.address || null,
-        city: data.city || null,
-        state: data.state || null,
-        zipCode: data.zipCode || null,
-        country: data.country || "VE",
-        latitude: data.latitude || null,
-        longitude: data.longitude || null,
-        externalLinks: data.externalLinks?.filter(Boolean).slice(0, 3) || null,
-        closedAt: data.closedAt ? new Date(data.closedAt) : null,
-        soldPrice: data.soldPrice || null,
-        commissionRate: data.commissionRate || null,
+        title: validated.title,
+        description: validated.description || null,
+        type: validated.type || "apartment",
+        operation: validated.operation || "sale",
+        status: validated.status || "draft",
+        price: validated.price || null,
+        currency: validated.currency || "USD",
+        area: validated.area || null,
+        bedrooms: validated.bedrooms ? parseInt(validated.bedrooms) : null,
+        bathrooms: validated.bathrooms ? parseInt(validated.bathrooms) : null,
+        parkingSpaces: validated.parkingSpaces ? parseInt(validated.parkingSpaces) : null,
+        address: validated.address || null,
+        city: validated.city || null,
+        state: validated.state || null,
+        zipCode: validated.zipCode || null,
+        country: validated.country || "VE",
+        latitude: validated.latitude || null,
+        longitude: validated.longitude || null,
+        externalLinks: validated.externalLinks ?? null,
+        closedAt: validated.closedAt ? new Date(validated.closedAt) : null,
+        soldPrice: validated.soldPrice || null,
+        commissionRate: validated.commissionRate || null,
       })
       .where(and(eq(properties.id, id), eq(properties.userId, userId)))
       .returning();
 
     // Replace tags atomically: delete existing, insert new
     await tx.delete(propertyTags).where(eq(propertyTags.propertyId, id));
-    if (data.tagIds && data.tagIds.length > 0) {
+    if (validated.tagIds && validated.tagIds.length > 0) {
       await tx.insert(propertyTags).values(
-        data.tagIds.map((tagId) => ({
+        validated.tagIds.map((tagId) => ({
           propertyId: id,
           tagId,
         })),
