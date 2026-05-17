@@ -47,7 +47,8 @@
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "resend": "^6.10.0",
-    "tinyglobby": "^0.2.15"
+    "tinyglobby": "^0.2.15",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
