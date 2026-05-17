@@ -125,6 +125,8 @@ export const contacts = pgTable(
     prefBudgetMax: numeric("pref_budget_max", { precision: 14, scale: 2 }),
     prefOperation: operationEnum("pref_operation"),
     userId: text("user_id").notNull(),
+    /** When the contact opted out of marketing emails. Null = subscribed. */
+    unsubscribedAt: timestamp("unsubscribed_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),

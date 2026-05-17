@@ -85,7 +85,12 @@ export async function sendEmailCampaign(campaignId: string) {
   }
 
   // Resolve recipients now so we can validate before enqueuing
-  let recipientContacts: { id: string; email: string | null; name: string }[];
+  let recipientContacts: {
+    id: string;
+    email: string | null;
+    name: string;
+    unsubscribedAt: Date | null;
+  }[];
 
   if (campaign.tagId) {
     const tagged = await db.query.contactTags.findMany({
@@ -94,12 +99,14 @@ export async function sendEmailCampaign(campaignId: string) {
     });
     recipientContacts = tagged
       .map((ct) => ct.contact)
-      .filter((c) => c.email && c.userId === userId);
+      .filter((c) => c.email && c.userId === userId && !c.unsubscribedAt);
   } else {
     recipientContacts = await db.query.contacts.findMany({
       where: eq(contacts.userId, userId),
     });
-    recipientContacts = recipientContacts.filter((c) => c.email);
+    recipientContacts = recipientContacts.filter(
+      (c) => c.email && !c.unsubscribedAt,
+    );
   }
 
   if (recipientContacts.length === 0) {

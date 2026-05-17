@@ -165,17 +165,22 @@ export async function unenrollContact(enrollmentId: string) {
 export async function getPendingDripEmails() {
   const now = new Date();
 
-  return db.query.dripEnrollments.findMany({
+  const enrollments = await db.query.dripEnrollments.findMany({
     where: and(
       eq(dripEnrollments.status, "active"),
       lte(dripEnrollments.nextRunAt, now),
     ),
     with: {
       sequence: true,
-      contact: { columns: { id: true, name: true, email: true } },
+      contact: {
+        columns: { id: true, name: true, email: true, unsubscribedAt: true },
+      },
     },
     limit: 50,
   });
+
+  // Skip contacts who have unsubscribed from marketing emails
+  return enrollments.filter((e) => !e.contact.unsubscribedAt);
 }
 
 // ---------------------------------------------------------------------------
