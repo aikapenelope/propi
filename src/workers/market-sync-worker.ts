@@ -22,8 +22,15 @@ import * as schema from "../server/schema";
 // Direct DB connection (not through Next.js, this is a standalone process)
 // ---------------------------------------------------------------------------
 
+const DATABASE_URL = process.env.DATABASE_URL;
+if (!DATABASE_URL) {
+  throw new Error(
+    "DATABASE_URL is not set. The worker cannot start without a database connection.",
+  );
+}
+
 const db = drizzle(
-  postgres(process.env.DATABASE_URL!, {
+  postgres(DATABASE_URL, {
     max: 5,
     idle_timeout: 20,
   }),
