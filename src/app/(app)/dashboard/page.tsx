@@ -145,7 +145,7 @@ export default async function DashboardPage() {
                 ))
               : Array.from({ length: 7 }).map((_, i) => (
                   <div
-                    key={i}
+                    key={`skeleton-${i}`}
                     className="w-full bg-primary/10 rounded-[2px]"
                     style={{ height: "5%" }}
                   />

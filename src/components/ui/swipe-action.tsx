@@ -135,9 +135,9 @@ export function SwipeAction({ children, actions, className }: SwipeActionProps) 
         className="absolute right-0 top-0 bottom-0 flex items-stretch"
         style={{ width: clampedWidth }}
       >
-        {actions.map((action, i) => (
+        {actions.map((action) => (
           <button
-            key={i}
+            key={action.label}
             onClick={() => handleActionClick(action)}
             className="flex flex-1 flex-col items-center justify-center gap-1 text-white text-xs font-medium transition-opacity"
             style={{

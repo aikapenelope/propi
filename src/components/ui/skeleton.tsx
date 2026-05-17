@@ -90,7 +90,7 @@ export function SkeletonPage({
       )}
       <div className="space-y-2">
         {Array.from({ length: rows }).map((_, i) => (
-          <SkeletonRow key={i} />
+          <SkeletonRow key={`skeleton-row-${i}`} />
         ))}
       </div>
     </div>

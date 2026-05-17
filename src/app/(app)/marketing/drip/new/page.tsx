@@ -68,7 +68,6 @@ export default function NewSequencePage() {
           </p>
         </div>
       </div>
-
       {error && (
         <div className="rounded-lg border border-red-500/20 bg-red-500/5 p-3 mb-4 text-sm text-red-400">
           {error}
@@ -93,7 +92,7 @@ export default function NewSequencePage() {
       <div className="space-y-4 mb-6">
         {steps.map((step, i) => (
           <div
-            key={i}
+            key={step.id}
             className="rounded-xl border border-border p-4 relative"
           >
             <div className="flex items-center gap-2 mb-3">
