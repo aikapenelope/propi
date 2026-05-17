@@ -15,7 +15,7 @@ import { Worker } from "bullmq";
 import IORedis from "ioredis";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import * as schema from "../server/schema";
 
 // ---------------------------------------------------------------------------
@@ -108,6 +108,8 @@ async function syncCategory(
       break;
     }
 
+    // Transform results into listing rows, skipping old ones
+    const batch: (typeof schema.marketListings.$inferInsert)[] = [];
     for (const item of results) {
       const attrs: Record<string, string> = {};
       for (const a of item.attributes || []) {
@@ -120,9 +122,9 @@ async function syncCategory(
         continue;
       }
 
-      const listingData = {
+      batch.push({
         externalId: item.id,
-        source: "mercadolibre" as const,
+        source: "mercadolibre",
         siteId: "MLV",
         title: item.title,
         price: item.price ? String(item.price) : null,
@@ -147,23 +149,27 @@ async function syncCategory(
         publishedAt,
         lastSeenAt: new Date(),
         attributes: attrs as Record<string, unknown>,
-      };
-
-      const existing = await db.query.marketListings.findFirst({
-        where: eq(schema.marketListings.externalId, item.id),
-        columns: { id: true },
       });
+    }
 
-      if (existing) {
-        await db
-          .update(schema.marketListings)
-          .set({ lastSeenAt: new Date(), price: listingData.price, thumbnail: listingData.thumbnail })
-          .where(eq(schema.marketListings.externalId, item.id));
-        updated++;
-      } else {
-        await db.insert(schema.marketListings).values(listingData);
-        inserted++;
-      }
+    // Batch upsert: INSERT ... ON CONFLICT (external_id) DO UPDATE
+    // Replaces the N+1 pattern (findFirst + update/insert per row)
+    // with a single query per page of 50 results.
+    if (batch.length > 0) {
+      const result = await db
+        .insert(schema.marketListings)
+        .values(batch)
+        .onConflictDoUpdate({
+          target: schema.marketListings.externalId,
+          set: {
+            lastSeenAt: new Date(),
+            price: sql`excluded.price`,
+            thumbnail: sql`excluded.thumbnail`,
+          },
+        })
+        .returning({ id: schema.marketListings.id });
+
+      inserted += result.length;
     }
   }
 
@@ -294,7 +300,7 @@ const worker = new Worker(
     }
 
     // Test token with a single request before full sync
-    console.log(`[market-sync] Testing token (first 25 chars): ${token.substring(0, 25)}...`);
+    console.log("[market-sync] Testing token validity...");
     const testRes = await fetch(`${MELI_API}/sites/MLV/search?category=MLV1472&limit=1`, {
       headers: { Authorization: `Bearer ${token}` },
     });
