@@ -198,7 +198,7 @@ export async function storeInboundMessage(
   conversationId: string,
   body: string,
   externalId?: string,
-  metadata?: string,
+  metadata?: Record<string, unknown> | string,
 ) {
   // Deduplication: skip if we already processed this message
   if (externalId) {
