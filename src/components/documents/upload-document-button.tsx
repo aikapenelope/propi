@@ -8,8 +8,8 @@ import {
 } from "@/server/actions/documents";
 import { getContacts } from "@/server/actions/contacts";
 import { getProperties } from "@/server/actions/properties";
+import { ContactPicker, type ContactPickerItem } from "@/components/ui/contact-picker";
 
-type Contact = { id: string; name: string };
 type Property = { id: string; title: string };
 
 const typeOptions = [
@@ -29,13 +29,13 @@ export function UploadDocumentButton() {
   const [docType, setDocType] = useState("other");
   const [contactId, setContactId] = useState("");
   const [propertyId, setPropertyId] = useState("");
-  const [contacts, setContacts] = useState<Contact[]>([]);
+  const [contacts, setContacts] = useState<ContactPickerItem[]>([]);
   const [properties, setProperties] = useState<Property[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (showForm) {
-      getContacts().then((c) => setContacts(c.map((x) => ({ id: x.id, name: x.name }))));
+      getContacts().then((c) => setContacts(c.map((x) => ({ id: x.id, name: x.name, email: x.email, phone: x.phone }))));
       getProperties().then((p) => setProperties(p.map((x) => ({ id: x.id, title: x.title }))));
     }
   }, [showForm]);
@@ -151,18 +151,13 @@ export function UploadDocumentButton() {
               <label className="block text-xs font-medium text-foreground">
                 Vincular a contacto (opcional)
               </label>
-              <select
+              <ContactPicker
+                contacts={contacts}
                 value={contactId}
-                onChange={(e) => setContactId(e.target.value)}
+                onChange={setContactId}
+                placeholder="Buscar contacto..."
                 className={selectClass}
-              >
-                <option value="">Ninguno</option>
-                {contacts.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
+              />
             </div>
 
             <div>
