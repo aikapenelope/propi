@@ -58,13 +58,18 @@ export function PropertyImageUpload({
         body: formData,
       });
 
+      const resBody = await res.json();
+
       if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || "Upload failed");
+        throw new Error(resBody.error || "Upload failed");
       }
 
-      // 3. Save image record in DB
-      await addPropertyImage(propertyId, key, file.name, images.length === 0);
+      // The upload route may change the key extension (e.g. .heic -> .webp)
+      // so we use the key returned by the API, not the original.
+      const finalKey = resBody.key as string;
+
+      // 3. Save image record in DB with the actual MinIO key
+      await addPropertyImage(propertyId, finalKey, file.name, images.length === 0);
       router.refresh();
     } catch (err) {
       console.error("Upload error:", err);
