@@ -67,7 +67,7 @@ export const contactSchema = z.object({
     .optional(),
   prefCity: optionalString,
   prefBudgetMax: optionalString,
-  prefOperation: z.enum(["sale", "rent", "sale_rent"]).optional(),
+  prefOperation: z.enum(["sale", "rent", "sale_rent", "sell", "lease"]).optional(),
   birthDate: optionalString,
 });
 
@@ -92,7 +92,7 @@ export const propertySchema = z.object({
     ])
     .optional()
     .default("apartment"),
-  operation: z.enum(["sale", "rent", "sale_rent"]).optional().default("sale"),
+  operation: z.enum(["sale", "rent", "sale_rent", "sell", "lease"]).optional().default("sale"),
   status: z
     .enum(["draft", "active", "reserved", "sold", "rented", "inactive"])
     .optional()
