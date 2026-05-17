@@ -1,5 +1,9 @@
 import type { NextConfig } from "next";
 
+// Validate environment variables at startup (see src/lib/env.ts).
+// This import triggers the Zod validation when Next.js loads the config.
+import "./src/lib/env";
+
 const nextConfig: NextConfig = {
   output: "standalone",
   experimental: {

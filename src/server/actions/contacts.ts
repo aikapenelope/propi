@@ -6,6 +6,7 @@ import { eq, and, ilike, or, desc, sql } from "drizzle-orm";
 import { revalidatePath, revalidateTag } from "next/cache";
 import { requireUserId } from "@/lib/auth-helper";
 import { sanitizeLike } from "@/lib/sanitize";
+import { contactSchema } from "@/lib/validators";
 import { logActivity } from "./activity-log";
 
 // ---------------------------------------------------------------------------
@@ -90,29 +91,30 @@ export async function getTags() {
 
 export async function createContact(data: ContactFormData) {
   const userId = await requireUserId();
+  const validated = contactSchema.parse(data);
 
   const [contact] = await db
     .insert(contacts)
     .values({
-      name: data.name,
-      email: data.email || null,
-      phone: data.phone || null,
-      company: data.company || null,
-      notes: data.notes || null,
-      source: (data.source as typeof contacts.$inferInsert.source) || "other",
-      prefPropertyType: (data.prefPropertyType as typeof contacts.$inferInsert.prefPropertyType) || null,
-      prefCity: data.prefCity || null,
-      prefBudgetMax: data.prefBudgetMax || null,
-      prefOperation: (data.prefOperation as typeof contacts.$inferInsert.prefOperation) || null,
-      birthDate: data.birthDate ? new Date(data.birthDate) : null,
+      name: validated.name,
+      email: validated.email || null,
+      phone: validated.phone || null,
+      company: validated.company || null,
+      notes: validated.notes || null,
+      source: validated.source || "other",
+      prefPropertyType: validated.prefPropertyType || null,
+      prefCity: validated.prefCity || null,
+      prefBudgetMax: validated.prefBudgetMax || null,
+      prefOperation: validated.prefOperation || null,
+      birthDate: validated.birthDate ? new Date(validated.birthDate) : null,
       userId,
     })
     .returning();
 
   // Link tags
-  if (data.tagIds && data.tagIds.length > 0) {
+  if (validated.tagIds && validated.tagIds.length > 0) {
     await db.insert(contactTags).values(
-      data.tagIds.map((tagId) => ({
+      validated.tagIds.map((tagId) => ({
         contactId: contact.id,
         tagId,
       })),
@@ -134,31 +136,32 @@ export async function createContact(data: ContactFormData) {
 
 export async function updateContact(id: string, data: ContactFormData) {
   const userId = await requireUserId();
+  const validated = contactSchema.parse(data);
 
   const contact = await db.transaction(async (tx) => {
     const [updated] = await tx
       .update(contacts)
       .set({
-        name: data.name,
-        email: data.email || null,
-        phone: data.phone || null,
-        company: data.company || null,
-        notes: data.notes || null,
-        source: (data.source as typeof contacts.$inferInsert.source) || "other",
-        prefPropertyType: (data.prefPropertyType as typeof contacts.$inferInsert.prefPropertyType) || null,
-        prefCity: data.prefCity || null,
-        prefBudgetMax: data.prefBudgetMax || null,
-        prefOperation: (data.prefOperation as typeof contacts.$inferInsert.prefOperation) || null,
-        birthDate: data.birthDate ? new Date(data.birthDate) : null,
+        name: validated.name,
+        email: validated.email || null,
+        phone: validated.phone || null,
+        company: validated.company || null,
+        notes: validated.notes || null,
+        source: validated.source || "other",
+        prefPropertyType: validated.prefPropertyType || null,
+        prefCity: validated.prefCity || null,
+        prefBudgetMax: validated.prefBudgetMax || null,
+        prefOperation: validated.prefOperation || null,
+        birthDate: validated.birthDate ? new Date(validated.birthDate) : null,
       })
       .where(and(eq(contacts.id, id), eq(contacts.userId, userId)))
       .returning();
 
     // Replace tags atomically: delete existing, insert new
     await tx.delete(contactTags).where(eq(contactTags.contactId, id));
-    if (data.tagIds && data.tagIds.length > 0) {
+    if (validated.tagIds && validated.tagIds.length > 0) {
       await tx.insert(contactTags).values(
-        data.tagIds.map((tagId) => ({
+        validated.tagIds.map((tagId) => ({
           contactId: id,
           tagId,
         })),

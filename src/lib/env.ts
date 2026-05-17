@@ -52,9 +52,6 @@ const serverSchema = z.object({
   /** Redis (BullMQ). Optional — job queues won't work without it. */
   REDIS_URL: z.string().optional(),
 
-  /** Token encryption key (32 bytes as hex or base64). Optional in dev. */
-  TOKEN_ENCRYPTION_KEY: z.string().optional(),
-
   /** Node environment. */
   NODE_ENV: z
     .enum(["development", "production", "test"])
