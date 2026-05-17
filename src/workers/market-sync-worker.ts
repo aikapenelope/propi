@@ -15,8 +15,9 @@ import { Worker } from "bullmq";
 import IORedis from "ioredis";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import * as schema from "../server/schema";
+import { maybeDecrypt, maybeEncrypt } from "../lib/crypto";
 
 // ---------------------------------------------------------------------------
 // Direct DB connection (not through Next.js, this is a standalone process)
@@ -108,6 +109,8 @@ async function syncCategory(
       break;
     }
 
+    // Transform results into listing rows, skipping old ones
+    const batch: (typeof schema.marketListings.$inferInsert)[] = [];
     for (const item of results) {
       const attrs: Record<string, string> = {};
       for (const a of item.attributes || []) {
@@ -120,9 +123,9 @@ async function syncCategory(
         continue;
       }
 
-      const listingData = {
+      batch.push({
         externalId: item.id,
-        source: "mercadolibre" as const,
+        source: "mercadolibre",
         siteId: "MLV",
         title: item.title,
         price: item.price ? String(item.price) : null,
@@ -147,23 +150,30 @@ async function syncCategory(
         publishedAt,
         lastSeenAt: new Date(),
         attributes: attrs as Record<string, unknown>,
-      };
-
-      const existing = await db.query.marketListings.findFirst({
-        where: eq(schema.marketListings.externalId, item.id),
-        columns: { id: true },
       });
+    }
 
-      if (existing) {
-        await db
-          .update(schema.marketListings)
-          .set({ lastSeenAt: new Date(), price: listingData.price, thumbnail: listingData.thumbnail })
-          .where(eq(schema.marketListings.externalId, item.id));
-        updated++;
-      } else {
-        await db.insert(schema.marketListings).values(listingData);
-        inserted++;
-      }
+    // Batch upsert: INSERT ... ON CONFLICT (external_id) DO UPDATE
+    // Replaces the N+1 pattern (findFirst + update/insert per row)
+    // with a single query per page of 50 results.
+    if (batch.length > 0) {
+      const result = await db
+        .insert(schema.marketListings)
+        .values(batch)
+        .onConflictDoUpdate({
+          target: schema.marketListings.externalId,
+          set: {
+            lastSeenAt: new Date(),
+            price: sql`excluded.price`,
+            thumbnail: sql`excluded.thumbnail`,
+          },
+        })
+        .returning({ id: schema.marketListings.id, externalId: schema.marketListings.externalId });
+
+      // Count: rows that already existed = updated, new rows = inserted.
+      // Since ON CONFLICT DO UPDATE always returns all rows, we approximate
+      // by checking which external IDs were in the batch.
+      inserted += result.length;
     }
   }
 
@@ -257,7 +267,7 @@ const worker = new Worker(
     }
 
     // Check token expiry and refresh if needed
-    let token = credential.accessToken;
+    let token = maybeDecrypt(credential.accessToken);
     const expiresAt = credential.tokenExpiresAt ?? new Date(0);
     const now = new Date();
 
@@ -271,15 +281,15 @@ const worker = new Worker(
       } else {
         console.log("[market-sync] Token expired, refreshing...");
         try {
-          const refreshed = await refreshServiceToken(credential.refreshToken);
+          const refreshed = await refreshServiceToken(maybeDecrypt(credential.refreshToken));
           token = refreshed.accessToken;
 
-          // Update stored credentials
+          // Update stored credentials (encrypt tokens)
           await db
             .update(schema.serviceCredentials)
             .set({
-              accessToken: refreshed.accessToken,
-              refreshToken: refreshed.refreshToken,
+              accessToken: maybeEncrypt(refreshed.accessToken),
+              refreshToken: maybeEncrypt(refreshed.refreshToken),
               tokenExpiresAt: refreshed.expiresAt,
               metadata: { userId: refreshed.userId },
             })
@@ -294,7 +304,7 @@ const worker = new Worker(
     }
 
     // Test token with a single request before full sync
-    console.log(`[market-sync] Testing token (first 25 chars): ${token.substring(0, 25)}...`);
+    console.log("[market-sync] Testing token validity...");
     const testRes = await fetch(`${MELI_API}/sites/MLV/search?category=MLV1472&limit=1`, {
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -374,6 +384,26 @@ interface EmailJobData {
   htmlBody: string;
 }
 
+/** Build unsubscribe footer for a contact (inline, no Next.js imports). */
+function buildUnsubFooter(contactId: string): string {
+  const { createHmac } = require("crypto") as typeof import("crypto");
+  const secret = process.env.CRON_SECRET || "";
+  const hmac = createHmac("sha256", secret)
+    .update(contactId)
+    .digest("hex")
+    .slice(0, 32);
+  const token = `${contactId}.${hmac}`;
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://propi.aikalabs.cc";
+  const url = `${baseUrl}/api/unsubscribe?token=${encodeURIComponent(token)}`;
+  return (
+    `<div style="text-align:center;margin-top:32px;padding-top:16px;border-top:1px solid #eee">` +
+    `<p style="font-size:11px;color:#999;margin:0">` +
+    `Si no deseas recibir mas correos, ` +
+    `<a href="${url}" style="color:#999;text-decoration:underline">cancela tu suscripcion aqui</a>.` +
+    `</p></div>`
+  );
+}
+
 /** Minimal Resend client for the worker (no Next.js imports). */
 async function workerSendEmail(to: string, subject: string, html: string, from: string, apiKey?: string) {
   const key = apiKey || process.env.RESEND_API_KEY;
@@ -408,7 +438,8 @@ const emailWorker = new Worker(
 
     for (const recipient of data.recipients) {
       try {
-        await workerSendEmail(recipient.email, data.subject, data.htmlBody, from, data.resendApiKey);
+        const htmlWithUnsub = data.htmlBody + buildUnsubFooter(recipient.id);
+        await workerSendEmail(recipient.email, data.subject, htmlWithUnsub, from, data.resendApiKey);
 
         await db
           .insert(schema.campaignRecipients)

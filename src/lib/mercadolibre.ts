@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
 import { socialAccounts } from "@/server/schema";
 import { eq, and } from "drizzle-orm";
+import { maybeDecrypt, maybeEncrypt } from "@/lib/crypto";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -173,7 +174,9 @@ export async function getMeliToken(userIdOverride?: string): Promise<string> {
 
   // Refresh 5 minutes before expiry
   if (expiresAt.getTime() - Date.now() < 5 * 60 * 1000) {
-    const refreshTokenValue = account.refreshToken;
+    const refreshTokenValue = account.refreshToken
+      ? maybeDecrypt(account.refreshToken)
+      : null;
     if (!refreshTokenValue) {
       throw new Error("MercadoLibre refresh token no disponible. Reconecta tu cuenta.");
     }
@@ -183,8 +186,8 @@ export async function getMeliToken(userIdOverride?: string): Promise<string> {
     await db
       .update(socialAccounts)
       .set({
-        accessToken: tokens.accessToken,
-        refreshToken: tokens.refreshToken,
+        accessToken: maybeEncrypt(tokens.accessToken),
+        refreshToken: maybeEncrypt(tokens.refreshToken),
         tokenExpiresAt: tokens.expiresAt,
         metadata: { userId: tokens.userId },
       })
@@ -198,7 +201,7 @@ export async function getMeliToken(userIdOverride?: string): Promise<string> {
     return tokens.accessToken;
   }
 
-  return account.accessToken;
+  return maybeDecrypt(account.accessToken);
 }
 
 // ---------------------------------------------------------------------------
