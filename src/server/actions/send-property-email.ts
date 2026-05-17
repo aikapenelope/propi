@@ -6,6 +6,7 @@ import { eq, and } from "drizzle-orm";
 import { requireUserId } from "@/lib/auth-helper";
 import { sendEmail, getMailFrom } from "@/lib/mailer";
 import { getUserResendKey } from "@/lib/resend-key";
+import { getUnsubscribeFooter } from "@/lib/unsubscribe";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -121,11 +122,12 @@ export async function sendPropertyByEmail(
 
   for (const contact of recipients) {
     try {
+      const htmlWithUnsub = html + getUnsubscribeFooter(contact.id);
       await sendEmail({
         from,
         to: contact.email!,
         subject,
-        html,
+        html: htmlWithUnsub,
         apiKey: userResendKey || undefined,
       });
       sent++;

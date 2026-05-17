@@ -6,6 +6,7 @@ import {
 import type { DripStep } from "@/server/actions/drip-campaigns";
 import { sendEmail } from "@/lib/mailer";
 import { getUserResendKey } from "@/lib/resend-key";
+import { getUnsubscribeFooter } from "@/lib/unsubscribe";
 
 export const dynamic = "force-dynamic";
 
@@ -43,10 +44,11 @@ export async function GET(request: Request) {
 
       try {
         const userKey = await getUserResendKey(enrollment.userId);
+        const unsubFooter = getUnsubscribeFooter(enrollment.contactId);
         await sendEmail({
           to: enrollment.contact.email,
           subject: step.subject,
-          html: step.body.replace(/\n/g, "<br>"),
+          html: step.body.replace(/\n/g, "<br>") + unsubFooter,
           apiKey: userKey || undefined,
         });
         sent++;

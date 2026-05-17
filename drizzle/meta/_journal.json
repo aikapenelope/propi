@@ -78,6 +78,13 @@
       "when": 1778979770005,
       "tag": "0010_db-integrity-constraints",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1778989206137,
+      "tag": "0011_add-unsubscribed-at",
+      "breakpoints": true
     }
   ]
 }
