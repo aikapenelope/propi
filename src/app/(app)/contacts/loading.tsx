@@ -18,7 +18,7 @@ export default function ContactsLoading() {
       </div>
       <div className="space-y-2">
         {Array.from({ length: 8 }).map((_, i) => (
-          <SkeletonContactRow key={i} />
+          <SkeletonContactRow key={`skeleton-contact-row-${i}`} />
         ))}
       </div>
     </div>

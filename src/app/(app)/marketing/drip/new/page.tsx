@@ -93,7 +93,7 @@ export default function NewSequencePage() {
       <div className="space-y-4 mb-6">
         {steps.map((step, i) => (
           <div
-            key={i}
+            key={step.id}
             className="rounded-xl border border-border p-4 relative"
           >
             <div className="flex items-center gap-2 mb-3">

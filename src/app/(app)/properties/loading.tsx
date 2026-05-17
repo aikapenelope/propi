@@ -17,8 +17,8 @@ export default function PropertiesLoading() {
         <div className="h-9 w-24 rounded-lg bg-muted" />
       </div>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {Array.from({ length: 6 }).map((_, i) => (
-          <SkeletonPropertyCard key={i} />
+        {Array.from({ length: 6 }, (_, i) => i + 1).map((id) => (
+          <SkeletonPropertyCard key={id} />
         ))}
       </div>
     </div>

@@ -137,7 +137,7 @@ export function SwipeAction({ children, actions, className }: SwipeActionProps) 
       >
         {actions.map((action, i) => (
           <button
-            key={i}
+            key={action.id}
             onClick={() => handleActionClick(action)}
             className="flex flex-1 flex-col items-center justify-center gap-1 text-white text-xs font-medium transition-opacity"
             style={{

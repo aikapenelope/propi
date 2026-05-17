@@ -179,8 +179,8 @@ export function PropiMagicChat() {
           </div>
         )}
 
-        {messages.map((msg, i) => (
-          <div key={i}>
+        {messages.map((msg) => (
+          <div key={msg.id}>
             {/* User message */}
             {msg.role === "user" && (
               <div className="flex justify-end">

@@ -27,7 +27,7 @@ export function SetupGuide({ title, steps }: { title: string; steps: Step[] }) {
       {open && (
         <ol className="px-3 pb-3 space-y-2">
           {steps.map((step, i) => (
-            <li key={i} className="flex gap-2 text-xs text-muted-foreground">
+            <li key={step.id} className="flex gap-2 text-xs text-muted-foreground">
               <span className="flex-shrink-0 w-5 h-5 rounded-full bg-muted flex items-center justify-center text-[10px] font-bold text-foreground">
                 {i + 1}
               </span>

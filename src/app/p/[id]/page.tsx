@@ -193,9 +193,9 @@ export default async function PublicPropertyPage(
                 return links.length > 0 ? (
                   <div className="mt-4 pt-4 border-t border-white/10 space-y-2">
                     <div className="text-xs uppercase tracking-widest opacity-60 mb-2">Ver en</div>
-                    {links.map((link, i) => (
+                    {links.map((link) => (
                       <a
-                        key={i}
+                        key={link}
                         href={link}
                         target="_blank"
                         rel="noopener noreferrer"

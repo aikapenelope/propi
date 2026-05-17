@@ -89,9 +89,10 @@ export function SkeletonPage({
         </div>
       )}
       <div className="space-y-2">
-        {Array.from({ length: rows }).map((_, i) => (
-          <SkeletonRow key={i} />
-        ))}
+        {Array.from({ length: rows }).map((_, i) => {
+          const rowId = `skeleton-row-${i}`;
+          return <SkeletonRow key={rowId} />;
+        })}
       </div>
     </div>
   );

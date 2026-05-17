@@ -239,8 +239,8 @@ export function ImportContactsDialog({
                     </tr>
                   </thead>
                   <tbody>
-                    {parsed.slice(0, 50).map((c, i) => (
-                      <tr key={i} className="border-t border-border">
+                    {parsed.slice(0, 50).map((c) => (
+                      <tr key={c.id} className="border-t border-border">
                         <td className="px-3 py-1.5 text-foreground">{c.name}</td>
                         <td className="px-3 py-1.5 text-muted-foreground">{c.email || "—"}</td>
                         <td className="px-3 py-1.5 text-muted-foreground">{c.phone || "—"}</td>
@@ -307,8 +307,8 @@ export function ImportContactsDialog({
 
               {result.errors.length > 0 && (
                 <div className="mb-4 max-h-32 overflow-y-auto rounded-lg bg-red-500/10 p-3 text-xs text-red-400">
-                  {result.errors.map((e, i) => (
-                    <p key={i}>{e}</p>
+                  {result.errors.map((e) => (
+                    <p key={e}>{e}</p>
                   ))}
                 </div>
               )}

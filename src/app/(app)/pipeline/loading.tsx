@@ -28,7 +28,7 @@ export default function PipelineLoading() {
             <div className="space-y-2">
               {Array.from({ length: Math.max(1, 3 - i) }).map((_, j) => (
                 <div
-                  key={j}
+                  key={`${i}-${j}`}
                   className="rounded-xl border border-border bg-background p-3 animate-pulse"
                 >
                   <div className="h-4 w-3/4 rounded bg-muted mb-2" />

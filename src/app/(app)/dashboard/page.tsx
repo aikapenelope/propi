@@ -135,9 +135,9 @@ export default async function DashboardPage() {
           {/* Real bar chart from propertiesByType */}
           <div className="flex items-end justify-between h-8 gap-1.5 mb-2 relative z-10">
             {typeBarData.length > 0
-              ? typeBarData.map((bar, i) => (
+              ? typeBarData.map((bar) => (
                   <div
-                    key={i}
+                    key={bar.label}
                     className="w-full bg-primary/40 rounded-[2px] hover:bg-primary transition-colors"
                     style={{ height: `${Math.max(bar.height, 5)}%` }}
                     title={`${bar.label}: ${bar.count}`}
@@ -145,15 +145,15 @@ export default async function DashboardPage() {
                 ))
               : Array.from({ length: 7 }).map((_, i) => (
                   <div
-                    key={i}
+                    key={`placeholder-${i}`}
                     className="w-full bg-primary/10 rounded-[2px]"
                     style={{ height: "5%" }}
                   />
                 ))}
           </div>
           <div className="flex justify-between text-[9px] text-muted-foreground relative z-10 mb-3">
-            {typeBarData.map((bar, i) => (
-              <span key={i}>{bar.label}</span>
+            {typeBarData.map((bar) => (
+              <span key={bar.id}>{bar.label}</span>
             ))}
           </div>
 
@@ -302,7 +302,7 @@ export default async function DashboardPage() {
                   : 5;
               return (
                 <div
-                  key={i}
+                  key={d.label}
                   className={`w-full rounded-t-[3px] transition-colors ${
                     isToday
                       ? "bg-gradient-to-t from-amber-600 to-amber-400"
@@ -317,10 +317,10 @@ export default async function DashboardPage() {
             })}
           </div>
           <div className="flex justify-between mt-1 px-1 text-[10px] text-muted-foreground font-medium border-t border-border pt-2">
-            {dayData.map((d, i) => (
+            {dayData.map((d) => (
               <span
-                key={i}
-                className={i === todayDow ? "text-amber-400 font-bold" : ""}
+                key={d.value}
+                className={d.value === todayDow ? "text-amber-400 font-bold" : ""}
               >
                 {d.label}
               </span>
