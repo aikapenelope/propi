@@ -1,5 +1,5 @@
 import { getTasks } from "@/server/actions/tasks";
-import { Check, Circle, Clock, AlertTriangle } from "lucide-react";
+import { Circle, Clock, AlertTriangle } from "lucide-react";
 import Link from "next/link";
 
 export async function TasksWidget() {

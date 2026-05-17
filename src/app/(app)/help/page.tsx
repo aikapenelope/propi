@@ -11,7 +11,6 @@ import {
   Calendar,
   FileText,
   MessageCircle,
-  Instagram,
   Facebook,
   Mail,
   Sparkles,
