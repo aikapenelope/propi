@@ -53,6 +53,9 @@ ENV NODE_ENV=production
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 ENV NEXT_TELEMETRY_DISABLED=1
+# Cap V8 heap to 1.5GB to prevent OOM on cx23 (4GB RAM).
+# Leaves room for OS, PgBouncer, Redis, and the worker container.
+ENV NODE_OPTIONS="--max-old-space-size=1536"
 
 # Next.js standalone output
 COPY --from=builder --chown=node:node /app/public ./public
