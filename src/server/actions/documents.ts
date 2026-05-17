@@ -9,6 +9,7 @@ import {
 } from "@aws-sdk/client-s3";
 import { s3, DOCS_BUCKET } from "@/lib/s3";
 import { requireUserId } from "@/lib/auth-helper";
+import { documentSchema } from "@/lib/validators";
 import { checkStorageQuota } from "@/lib/storage-quota";
 
 // ---------------------------------------------------------------------------
@@ -64,18 +65,19 @@ export async function createDocument(data: {
   propertyId?: string;
 }) {
   const userId = await requireUserId();
+  const validated = documentSchema.parse(data);
 
   const [doc] = await db
     .insert(documents)
     .values({
-      name: data.name,
-      type: (data.type as typeof documents.$inferInsert.type) || "other",
-      key: data.key,
-      filename: data.filename,
-      sizeBytes: data.sizeBytes ?? null,
-      mimeType: data.mimeType ?? null,
-      contactId: data.contactId || null,
-      propertyId: data.propertyId || null,
+      name: validated.name,
+      type: validated.type || "other",
+      key: validated.key,
+      filename: validated.filename,
+      sizeBytes: validated.sizeBytes ?? null,
+      mimeType: validated.mimeType ?? null,
+      contactId: validated.contactId || null,
+      propertyId: validated.propertyId || null,
       userId,
     })
     .returning();
