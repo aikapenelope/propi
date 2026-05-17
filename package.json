@@ -8,6 +8,8 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
@@ -40,10 +42,12 @@
     "ioredis": "^5.10.1",
     "lucide-react": "^0.577.0",
     "next": "16.1.6",
+    "postcss": "^8.5.8",
     "postgres": "^3.4.8",
     "react": "19.2.3",
     "react-dom": "19.2.3",
-    "resend": "^6.10.0"
+    "resend": "^6.10.0",
+    "tinyglobby": "^0.2.15"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
@@ -54,6 +58,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.1.6"
   }
 }
