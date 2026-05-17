@@ -140,9 +140,9 @@ export function ImageCarousel({ images, alt }: ImageCarouselProps) {
       {/* Dot indicators */}
       {count > 1 && (
         <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
-          {images.map((_, i) => (
+          {images.map((img, i) => (
             <button
-              key={i}
+              key={img.id}
               type="button"
               aria-label={`Ir a imagen ${i + 1}`}
               onClick={() => scrollTo(i)}

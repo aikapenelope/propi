@@ -78,7 +78,7 @@ export default async function DripCampaignsPage() {
                     <div className="flex gap-1 mt-2">
                       {steps.slice(0, 5).map((step, i) => (
                         <div
-                          key={i}
+                          key={`step-${i}-${step.delayDays}`}
                           className="text-[9px] px-2 py-0.5 rounded-full bg-muted text-muted-foreground"
                         >
                           Dia {step.delayDays}: {step.subject.slice(0, 20)}

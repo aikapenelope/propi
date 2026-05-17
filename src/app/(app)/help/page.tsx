@@ -358,8 +358,8 @@ export default function HelpCenterPage() {
                 </div>
 
                 <div className="bg-[var(--card-bg)] border border-border rounded-2xl card-shadow px-5">
-                  {section.items.map((item, i) => (
-                    <AccordionItem key={i} q={item.q} a={item.a} />
+                  {section.items.map((item) => (
+                    <AccordionItem key={item.q} q={item.q} a={item.a} />
                   ))}
                 </div>
               </div>
