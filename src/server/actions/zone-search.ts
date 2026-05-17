@@ -73,27 +73,7 @@ export async function getZoneListings(query: ZoneQuery) {
 
   // Use a subquery with ROW_NUMBER to deduplicate
   // Properties with same price + same area + similar title (first 40 chars) = duplicate
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const results: any = await db.execute(sql`
-    SELECT DISTINCT ON (
-      COALESCE(CAST(price AS NUMERIC), 0),
-      COALESCE(CAST(area_m2 AS NUMERIC), 0),
-      LEFT(LOWER(COALESCE(title, '')), 40)
-    )
-    id, external_id, title, price, currency, area_m2,
-    bedrooms, bathrooms, parking, property_type, operation,
-    city, state, neighborhood, permalink, thumbnail,
-    seller_nickname, published_at, condition
-    FROM market_listings
-    ${where ? sql`WHERE ${where}` : sql``}
-    ORDER BY
-      COALESCE(CAST(price AS NUMERIC), 0),
-      COALESCE(CAST(area_m2 AS NUMERIC), 0),
-      LEFT(LOWER(COALESCE(title, '')), 40),
-      published_at DESC NULLS LAST
-  `);
-
-  return results.rows as Array<{
+  const results = await db.execute<{
     id: string;
     external_id: string;
     title: string | null;
@@ -113,7 +93,26 @@ export async function getZoneListings(query: ZoneQuery) {
     seller_nickname: string | null;
     published_at: string | null;
     condition: string | null;
-  }>;
+  }>(sql`
+    SELECT DISTINCT ON (
+      COALESCE(CAST(price AS NUMERIC), 0),
+      COALESCE(CAST(area_m2 AS NUMERIC), 0),
+      LEFT(LOWER(COALESCE(title, '')), 40)
+    )
+    id, external_id, title, price, currency, area_m2,
+    bedrooms, bathrooms, parking, property_type, operation,
+    city, state, neighborhood, permalink, thumbnail,
+    seller_nickname, published_at, condition
+    FROM market_listings
+    ${where ? sql`WHERE ${where}` : sql``}
+    ORDER BY
+      COALESCE(CAST(price AS NUMERIC), 0),
+      COALESCE(CAST(area_m2 AS NUMERIC), 0),
+      LEFT(LOWER(COALESCE(title, '')), 40),
+      published_at DESC NULLS LAST
+  `);
+
+  return Array.from(results);
 }
 
 /**

@@ -151,7 +151,6 @@ export async function importContacts(
   const userId = await requireUserId();
   let imported = 0;
   let skipped = 0;
-  const duplicates = 0;
   const errors: string[] = [];
 
   // Load existing contacts for duplicate detection (by email or phone)
@@ -212,7 +211,7 @@ export async function importContacts(
   revalidatePath("/contacts");
   revalidatePath("/pipeline");
 
-  return { imported, skipped: skipped + duplicates, errors };
+  return { imported, skipped, errors };
 }
 
 // ---------------------------------------------------------------------------

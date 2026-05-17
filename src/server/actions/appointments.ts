@@ -5,6 +5,7 @@ import { appointments } from "@/server/schema";
 import { eq, and, gte, lte, type SQL } from "drizzle-orm";
 import { revalidatePath, revalidateTag } from "next/cache";
 import { requireUserId } from "@/lib/auth-helper";
+import { appointmentSchema } from "@/lib/validators";
 import { logActivity } from "./activity-log";
 
 // ---------------------------------------------------------------------------
@@ -82,19 +83,19 @@ export async function getAppointment(id: string) {
 
 export async function createAppointment(data: AppointmentFormData) {
   const userId = await requireUserId();
+  const validated = appointmentSchema.parse(data);
 
   const [appointment] = await db
     .insert(appointments)
     .values({
-      title: data.title,
-      description: data.description || null,
-      startsAt: new Date(data.startsAt),
-      endsAt: new Date(data.endsAt),
-      status:
-        (data.status as typeof appointments.$inferInsert.status) || "scheduled",
-      location: data.location || null,
-      contactId: data.contactId || null,
-      propertyId: data.propertyId || null,
+      title: validated.title,
+      description: validated.description || null,
+      startsAt: new Date(validated.startsAt),
+      endsAt: new Date(validated.endsAt),
+      status: validated.status || "scheduled",
+      location: validated.location || null,
+      contactId: validated.contactId || null,
+      propertyId: validated.propertyId || null,
       userId,
     })
     .returning();
@@ -102,10 +103,10 @@ export async function createAppointment(data: AppointmentFormData) {
   revalidatePath("/calendar");
   revalidateTag(`dashboard-${userId}`, "max");
 
-  if (data.contactId) {
+  if (validated.contactId) {
     await logActivity({
       userId,
-      contactId: data.contactId,
+      contactId: validated.contactId,
       type: "appointment_created",
       title: `Cita creada: ${appointment.title}`,
     });
@@ -119,19 +120,19 @@ export async function updateAppointment(
   data: AppointmentFormData,
 ) {
   const userId = await requireUserId();
+  const validated = appointmentSchema.parse(data);
 
   const [appointment] = await db
     .update(appointments)
     .set({
-      title: data.title,
-      description: data.description || null,
-      startsAt: new Date(data.startsAt),
-      endsAt: new Date(data.endsAt),
-      status:
-        (data.status as typeof appointments.$inferInsert.status) || "scheduled",
-      location: data.location || null,
-      contactId: data.contactId || null,
-      propertyId: data.propertyId || null,
+      title: validated.title,
+      description: validated.description || null,
+      startsAt: new Date(validated.startsAt),
+      endsAt: new Date(validated.endsAt),
+      status: validated.status || "scheduled",
+      location: validated.location || null,
+      contactId: validated.contactId || null,
+      propertyId: validated.propertyId || null,
     })
     .where(and(eq(appointments.id, id), eq(appointments.userId, userId)))
     .returning();
