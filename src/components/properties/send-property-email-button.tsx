@@ -24,8 +24,26 @@ export function SendPropertyEmailButton({
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [isPending, startTransition] = useTransition();
   const [result, setResult] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
 
   const withEmail = contacts.filter((c) => c.email);
+
+  // Filter by search query (accent-normalized)
+  const needle = search
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/gu, "")
+    .toLowerCase();
+  const filtered = needle
+    ? withEmail.filter((c) => {
+        const haystack = [c.name, c.email]
+          .filter(Boolean)
+          .join(" ")
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/gu, "")
+          .toLowerCase();
+        return haystack.includes(needle);
+      })
+    : withEmail;
 
   function toggleContact(id: string) {
     setSelected((prev) => {
@@ -88,8 +106,15 @@ export function SendPropertyEmailButton({
         </p>
       ) : (
         <>
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Buscar contacto..."
+            className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary mb-2"
+          />
           <div className="max-h-48 overflow-y-auto space-y-1 mb-3">
-            {withEmail.map((c) => (
+            {filtered.map((c) => (
               <label
                 key={c.id}
                 className="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-muted cursor-pointer transition-colors"

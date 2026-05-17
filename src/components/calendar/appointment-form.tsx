@@ -7,6 +7,7 @@ import {
   updateAppointment,
   type AppointmentFormData,
 } from "@/server/actions/appointments";
+import { ContactPicker } from "@/components/ui/contact-picker";
 
 const statusOptions = [
   { value: "scheduled", label: "Programada" },
@@ -186,22 +187,18 @@ export function AppointmentForm({
 
       {/* Contact */}
       <div>
-        <label htmlFor="contactId" className="block text-sm font-medium text-foreground">
+        <label className="block text-sm font-medium text-foreground">
           Contacto
         </label>
-        <select
-          id="contactId"
-          name="contactId"
-          defaultValue={appointment?.contactId ?? ""}
-          className={inputClass}
-        >
-          <option value="">Sin contacto</option>
-          {contacts.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.name}
-            </option>
-          ))}
-        </select>
+        <div className="mt-1">
+          <ContactPicker
+            name="contactId"
+            contacts={contacts}
+            defaultValue={appointment?.contactId}
+            placeholder="Buscar contacto..."
+            className={inputClass}
+          />
+        </div>
       </div>
 
       {/* Property */}
