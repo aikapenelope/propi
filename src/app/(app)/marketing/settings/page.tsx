@@ -11,9 +11,7 @@ import { InfoTooltip } from "@/components/ui/info-tooltip";
 
 export const dynamic = "force-dynamic";
 
-export default async function MarketingSettingsPage(props: {
-  searchParams: Promise<{ ml_success?: string; ml_error?: string }>;
-}) {
+export default async function MarketingSettingsPage() {
   const accounts = await getAllSocialAccounts();
   const igAccount = accounts.find((a) => a.platform === "instagram");
   const fbAccount = accounts.find((a) => a.platform === "facebook");

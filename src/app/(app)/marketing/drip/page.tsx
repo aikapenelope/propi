@@ -1,4 +1,4 @@
-import { Zap, Plus, ToggleLeft, ToggleRight, Users, Trash2 } from "lucide-react";
+import { Zap, Plus, ToggleLeft, ToggleRight, Users } from "lucide-react";
 import Link from "next/link";
 import { getDripSequences } from "@/server/actions/drip-campaigns";
 import type { DripStep } from "@/server/actions/drip-campaigns";
