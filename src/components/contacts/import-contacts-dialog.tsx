@@ -114,7 +114,7 @@ export function ImportContactsDialog({
       const contacts: ImportedContact[] = picked
         .filter((c) => c.name?.[0])
         .map((c) => ({
-          name: c.name![0],
+          name: c.name?.[0] || undefined,
           phone: c.tel?.[0] || undefined,
           email: c.email?.[0] || undefined,
         }));

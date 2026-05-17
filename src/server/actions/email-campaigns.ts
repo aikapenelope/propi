@@ -122,7 +122,7 @@ export async function sendEmailCampaign(campaignId: string) {
     resendApiKey: userResendKey || undefined,
     recipients: recipientContacts.map((c) => ({
       id: c.id,
-      email: c.email!,
+      email: c.email ? c.email : '',
     })),
     subject: campaign.subject,
     htmlBody: campaign.htmlBody,

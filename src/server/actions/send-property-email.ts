@@ -120,10 +120,14 @@ export async function sendPropertyByEmail(
   let failed = 0;
 
   for (const contact of recipients) {
+    if (!contact.email) {
+      failed++;
+      continue;
+    }
     try {
       await sendEmail({
         from,
-        to: contact.email!,
+        to: contact.email,
         subject,
         html,
         apiKey: userResendKey || undefined,
