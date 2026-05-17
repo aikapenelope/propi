@@ -80,10 +80,11 @@ export function AppointmentForm({
     try {
       if (isEditing) {
         await updateAppointment(appointment.id, data);
+        router.push("/calendar");
       } else {
         await createAppointment(data);
+        router.push("/calendar?view=agenda");
       }
-      router.push("/calendar");
     } finally {
       setLoading(false);
     }

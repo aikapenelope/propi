@@ -6,6 +6,7 @@ import { WasiConfigForm } from "@/components/marketing/wasi-config-form";
 import { ResendConfigForm } from "@/components/marketing/resend-config-form";
 import { TokenExpiryWarning } from "@/components/marketing/token-expiry-warning";
 import { SetupGuide } from "@/components/marketing/setup-guide";
+import { WhatsAppTemplateConfig } from "@/components/marketing/whatsapp-template-config";
 import { ENABLE_META_INBOX } from "@/lib/feature-flags";
 import { InfoTooltip } from "@/components/ui/info-tooltip";
 
@@ -353,6 +354,27 @@ export default async function MarketingSettingsPage() {
                 : undefined
             }
           />
+        </div>
+
+        {/* WhatsApp Appointment Template */}
+        <div className="rounded-2xl border border-border p-5">
+          <div className="mb-4 flex items-center gap-3">
+            <div
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full"
+              style={{ background: "rgba(37, 211, 102, 0.15)" }}
+            >
+              <MessageCircle className="h-5 w-5 text-[#25D366]" />
+            </div>
+            <div>
+              <h2 className="font-semibold text-foreground">
+                Plantilla WhatsApp Citas
+              </h2>
+              <p className="text-xs text-muted-foreground">
+                Mensaje predeterminado para recordatorios de citas
+              </p>
+            </div>
+          </div>
+          <WhatsAppTemplateConfig />
         </div>
       </div>
     </div>
