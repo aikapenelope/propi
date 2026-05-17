@@ -198,7 +198,7 @@ export async function storeInboundMessage(
   conversationId: string,
   body: string,
   externalId?: string,
-  metadata?: string,
+  metadata?: Record<string, unknown> | string,
 ) {
   // Deduplication: skip if we already processed this message
   if (externalId) {
@@ -282,17 +282,17 @@ export async function cleanupOldMessages() {
     .where(lt(messages.createdAt, cutoff))
     .returning({ id: messages.id });
 
-  // Delete conversations that have no messages left (LEFT JOIN is faster than NOT IN)
-  const emptyConvos = await db.execute(sql`
-    DELETE FROM conversations c
-    WHERE NOT EXISTS (
-      SELECT 1 FROM messages m WHERE m.conversation_id = c.id
+  // Delete conversations that have no messages left
+  const emptyConvos = await db
+    .delete(conversations)
+    .where(
+      sql`NOT EXISTS (SELECT 1 FROM messages m WHERE m.conversation_id = ${conversations.id})`,
     )
-  `);
+    .returning({ id: conversations.id });
 
   return {
     messagesDeleted: deleted.length,
-    conversationsDeleted: emptyConvos,
+    conversationsDeleted: emptyConvos.length,
   };
 }
 

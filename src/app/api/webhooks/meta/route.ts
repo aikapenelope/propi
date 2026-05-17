@@ -47,20 +47,27 @@ export async function POST(request: NextRequest) {
 
   const rawBody = await request.text();
 
-  if (appSecret && signature) {
-    const expectedSig =
-      "sha256=" +
-      crypto.createHmac("sha256", appSecret).update(rawBody).digest("hex");
-    const sigBuf = Buffer.from(signature, "utf8");
-    const expectedBuf = Buffer.from(expectedSig, "utf8");
-    if (sigBuf.length !== expectedBuf.length || !crypto.timingSafeEqual(sigBuf, expectedBuf)) {
-      console.error("Webhook signature mismatch");
-      return NextResponse.json({ error: "Invalid signature" }, { status: 403 });
-    }
-  } else if (appSecret) {
-    // META_APP_SECRET configured but no signature header = reject
+  if (!appSecret) {
+    // Reject all webhooks when META_APP_SECRET is not configured.
+    // This prevents a misconfigured deployment from silently accepting
+    // unsigned payloads that could inject fake messages.
+    console.error("Webhook rejected: META_APP_SECRET is not configured");
+    return NextResponse.json({ error: "Webhook not configured" }, { status: 500 });
+  }
+
+  if (!signature) {
     console.error("Webhook missing X-Hub-Signature-256 header");
     return NextResponse.json({ error: "Missing signature" }, { status: 403 });
+  }
+
+  const expectedSig =
+    "sha256=" +
+    crypto.createHmac("sha256", appSecret).update(rawBody).digest("hex");
+  const sigBuf = Buffer.from(signature, "utf8");
+  const expectedBuf = Buffer.from(expectedSig, "utf8");
+  if (sigBuf.length !== expectedBuf.length || !crypto.timingSafeEqual(sigBuf, expectedBuf)) {
+    console.error("Webhook signature mismatch");
+    return NextResponse.json({ error: "Invalid signature" }, { status: 403 });
   }
 
   // Dynamic imports to avoid DB initialization at build time
@@ -113,7 +120,7 @@ type StoreInbound = (
   conversationId: string,
   body: string,
   externalId?: string,
-  metadata?: string,
+  metadata?: Record<string, unknown> | string,
 ) => Promise<unknown>;
 
 // ---------------------------------------------------------------------------
@@ -190,7 +197,7 @@ async function handleWhatsAppWebhook(
           convo.id,
           textBody,
           msg.id,
-          JSON.stringify({ type: msg.type, timestamp: msg.timestamp }),
+          { type: msg.type, timestamp: msg.timestamp },
         );
       }
     }

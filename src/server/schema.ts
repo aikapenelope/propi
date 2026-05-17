@@ -11,6 +11,7 @@ import {
   index,
   primaryKey,
   jsonb,
+  unique,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 
@@ -125,6 +126,8 @@ export const contacts = pgTable(
     prefBudgetMax: numeric("pref_budget_max", { precision: 14, scale: 2 }),
     prefOperation: operationEnum("pref_operation"),
     userId: text("user_id").notNull(),
+    /** When the contact opted out of marketing emails. Null = subscribed. */
+    unsubscribedAt: timestamp("unsubscribed_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -372,6 +375,8 @@ export const socialAccounts = pgTable("social_accounts", {
   index("social_accounts_user_idx").on(table.userId),
   index("social_accounts_platform_user_idx").on(table.platform, table.userId),
   index("social_accounts_platform_account_idx").on(table.platform, table.platformAccountId),
+  /** One account per platform per user. Enables ON CONFLICT upsert. */
+  unique("social_accounts_platform_user_uniq").on(table.platform, table.userId),
 ]);
 
 // ---------------------------------------------------------------------------
@@ -492,8 +497,8 @@ export const messages = pgTable(
     /** Platform-specific message ID */
     externalId: varchar("external_id", { length: 500 }),
     status: messageStatusEnum("status").notNull().default("pending"),
-    /** Extra data (media URLs, template info, etc.) stored as JSON string */
-    metadata: text("metadata"),
+    /** Extra data (media URLs, template info, etc.) */
+    metadata: jsonb("metadata"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),

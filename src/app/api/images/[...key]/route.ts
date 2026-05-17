@@ -50,6 +50,11 @@ export async function GET(
   // Rejoin segments into the full MinIO key
   const key = keySegments.map(decodeURIComponent).join("/");
 
+  // Reject path traversal attempts
+  if (key.includes("..") || key.includes("\0")) {
+    return NextResponse.json({ error: "Invalid key" }, { status: 400 });
+  }
+
   try {
     const command = new GetObjectCommand({
       Bucket: MEDIA_BUCKET,

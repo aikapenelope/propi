@@ -24,6 +24,11 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Key required" }, { status: 400 });
   }
 
+  // Reject path traversal attempts
+  if (key.includes("..") || key.includes("\0")) {
+    return NextResponse.json({ error: "Invalid key" }, { status: 400 });
+  }
+
   // Verify the key belongs to this user
   if (!key.startsWith(`${userId}/`)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -42,7 +47,11 @@ export async function GET(request: Request) {
     }
 
     const stream = response.Body.transformToWebStream();
-    const filename = key.split("/").pop() || "document";
+    const rawFilename = key.split("/").pop() || "document";
+    // Sanitize filename: remove control chars, quotes, and backslashes
+    // to prevent header injection. Use RFC 5987 encoding for safety.
+    const safeFilename = rawFilename.replace(/["\\\x00-\x1f\x7f]/g, "_");
+    const encodedFilename = encodeURIComponent(safeFilename);
 
     return new Response(stream, {
       status: 200,
@@ -51,7 +60,7 @@ export async function GET(request: Request) {
         "Content-Length": response.ContentLength
           ? String(response.ContentLength)
           : "",
-        "Content-Disposition": `inline; filename="${filename}"`,
+        "Content-Disposition": `inline; filename="${safeFilename}"; filename*=UTF-8''${encodedFilename}`,
         "Cache-Control": "private, max-age=3600",
       },
     });

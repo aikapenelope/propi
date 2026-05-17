@@ -135,34 +135,38 @@ export async function createContact(data: ContactFormData) {
 export async function updateContact(id: string, data: ContactFormData) {
   const userId = await requireUserId();
 
-  const [contact] = await db
-    .update(contacts)
-    .set({
-      name: data.name,
-      email: data.email || null,
-      phone: data.phone || null,
-      company: data.company || null,
-      notes: data.notes || null,
-      source: (data.source as typeof contacts.$inferInsert.source) || "other",
-      prefPropertyType: (data.prefPropertyType as typeof contacts.$inferInsert.prefPropertyType) || null,
-      prefCity: data.prefCity || null,
-      prefBudgetMax: data.prefBudgetMax || null,
-      prefOperation: (data.prefOperation as typeof contacts.$inferInsert.prefOperation) || null,
-      birthDate: data.birthDate ? new Date(data.birthDate) : null,
-    })
-    .where(and(eq(contacts.id, id), eq(contacts.userId, userId)))
-    .returning();
+  const contact = await db.transaction(async (tx) => {
+    const [updated] = await tx
+      .update(contacts)
+      .set({
+        name: data.name,
+        email: data.email || null,
+        phone: data.phone || null,
+        company: data.company || null,
+        notes: data.notes || null,
+        source: (data.source as typeof contacts.$inferInsert.source) || "other",
+        prefPropertyType: (data.prefPropertyType as typeof contacts.$inferInsert.prefPropertyType) || null,
+        prefCity: data.prefCity || null,
+        prefBudgetMax: data.prefBudgetMax || null,
+        prefOperation: (data.prefOperation as typeof contacts.$inferInsert.prefOperation) || null,
+        birthDate: data.birthDate ? new Date(data.birthDate) : null,
+      })
+      .where(and(eq(contacts.id, id), eq(contacts.userId, userId)))
+      .returning();
 
-  // Replace tags: delete existing, insert new
-  await db.delete(contactTags).where(eq(contactTags.contactId, id));
-  if (data.tagIds && data.tagIds.length > 0) {
-    await db.insert(contactTags).values(
-      data.tagIds.map((tagId) => ({
-        contactId: id,
-        tagId,
-      })),
-    );
-  }
+    // Replace tags atomically: delete existing, insert new
+    await tx.delete(contactTags).where(eq(contactTags.contactId, id));
+    if (data.tagIds && data.tagIds.length > 0) {
+      await tx.insert(contactTags).values(
+        data.tagIds.map((tagId) => ({
+          contactId: id,
+          tagId,
+        })),
+      );
+    }
+
+    return updated;
+  });
 
   revalidatePath("/contacts");
   revalidatePath(`/contacts/${id}`);

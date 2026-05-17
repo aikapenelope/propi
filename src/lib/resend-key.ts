@@ -3,6 +3,7 @@
 import { db } from "@/lib/db";
 import { socialAccounts } from "@/server/schema";
 import { eq, and } from "drizzle-orm";
+import { maybeDecrypt } from "@/lib/crypto";
 
 /**
  * Get the Resend API key for a user.
@@ -17,5 +18,5 @@ export async function getUserResendKey(userId: string): Promise<string | null> {
     columns: { accessToken: true },
   });
 
-  return account?.accessToken || null;
+  return account?.accessToken ? maybeDecrypt(account.accessToken) : null;
 }

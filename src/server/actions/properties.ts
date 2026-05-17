@@ -221,48 +221,52 @@ export async function updatePropertyStatus(
 export async function updateProperty(id: string, data: PropertyFormData) {
   const userId = await requireUserId();
 
-  const [property] = await db
-    .update(properties)
-    .set({
-      title: data.title,
-      description: data.description || null,
-      type:
-        (data.type as typeof properties.$inferInsert.type) || "apartment",
-      operation:
-        (data.operation as typeof properties.$inferInsert.operation) || "sale",
-      status:
-        (data.status as typeof properties.$inferInsert.status) || "draft",
-      price: data.price || null,
-      currency: data.currency || "USD",
-      area: data.area || null,
-      bedrooms: data.bedrooms ? parseInt(data.bedrooms) : null,
-      bathrooms: data.bathrooms ? parseInt(data.bathrooms) : null,
-      parkingSpaces: data.parkingSpaces ? parseInt(data.parkingSpaces) : null,
-      address: data.address || null,
-      city: data.city || null,
-      state: data.state || null,
-      zipCode: data.zipCode || null,
-      country: data.country || "VE",
-      latitude: data.latitude || null,
-      longitude: data.longitude || null,
-      externalLinks: data.externalLinks?.filter(Boolean).slice(0, 3) || null,
-      closedAt: data.closedAt ? new Date(data.closedAt) : null,
-      soldPrice: data.soldPrice || null,
-      commissionRate: data.commissionRate || null,
-    })
-    .where(and(eq(properties.id, id), eq(properties.userId, userId)))
-    .returning();
+  const property = await db.transaction(async (tx) => {
+    const [updated] = await tx
+      .update(properties)
+      .set({
+        title: data.title,
+        description: data.description || null,
+        type:
+          (data.type as typeof properties.$inferInsert.type) || "apartment",
+        operation:
+          (data.operation as typeof properties.$inferInsert.operation) || "sale",
+        status:
+          (data.status as typeof properties.$inferInsert.status) || "draft",
+        price: data.price || null,
+        currency: data.currency || "USD",
+        area: data.area || null,
+        bedrooms: data.bedrooms ? parseInt(data.bedrooms) : null,
+        bathrooms: data.bathrooms ? parseInt(data.bathrooms) : null,
+        parkingSpaces: data.parkingSpaces ? parseInt(data.parkingSpaces) : null,
+        address: data.address || null,
+        city: data.city || null,
+        state: data.state || null,
+        zipCode: data.zipCode || null,
+        country: data.country || "VE",
+        latitude: data.latitude || null,
+        longitude: data.longitude || null,
+        externalLinks: data.externalLinks?.filter(Boolean).slice(0, 3) || null,
+        closedAt: data.closedAt ? new Date(data.closedAt) : null,
+        soldPrice: data.soldPrice || null,
+        commissionRate: data.commissionRate || null,
+      })
+      .where(and(eq(properties.id, id), eq(properties.userId, userId)))
+      .returning();
 
-  // Replace tags
-  await db.delete(propertyTags).where(eq(propertyTags.propertyId, id));
-  if (data.tagIds && data.tagIds.length > 0) {
-    await db.insert(propertyTags).values(
-      data.tagIds.map((tagId) => ({
-        propertyId: id,
-        tagId,
-      })),
-    );
-  }
+    // Replace tags atomically: delete existing, insert new
+    await tx.delete(propertyTags).where(eq(propertyTags.propertyId, id));
+    if (data.tagIds && data.tagIds.length > 0) {
+      await tx.insert(propertyTags).values(
+        data.tagIds.map((tagId) => ({
+          propertyId: id,
+          tagId,
+        })),
+      );
+    }
+
+    return updated;
+  });
 
   revalidatePath("/properties");
   revalidateTag(`dashboard-${userId}`, "max");

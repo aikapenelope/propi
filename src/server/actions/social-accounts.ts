@@ -5,8 +5,26 @@ import { socialAccounts } from "@/server/schema";
 import { eq, and } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { requireUserId } from "@/lib/auth-helper";
+import { maybeDecrypt, maybeEncrypt } from "@/lib/crypto";
 
 type Platform = "instagram" | "facebook" | "whatsapp" | "mercadolibre" | "wasi" | "resend";
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+/** Decrypt token fields on a social account row. */
+function decryptAccount<
+  T extends { accessToken: string; refreshToken: string | null },
+>(account: T): T {
+  return {
+    ...account,
+    accessToken: maybeDecrypt(account.accessToken),
+    refreshToken: account.refreshToken
+      ? maybeDecrypt(account.refreshToken)
+      : null,
+  };
+}
 
 // ---------------------------------------------------------------------------
 // Queries
@@ -15,20 +33,22 @@ type Platform = "instagram" | "facebook" | "whatsapp" | "mercadolibre" | "wasi" 
 /** Get a social account for the current user by platform. */
 export async function getSocialAccount(platform: Platform) {
   const userId = await requireUserId();
-  return db.query.socialAccounts.findFirst({
+  const account = await db.query.socialAccounts.findFirst({
     where: and(
       eq(socialAccounts.platform, platform),
       eq(socialAccounts.userId, userId),
     ),
   });
+  return account ? decryptAccount(account) : account;
 }
 
 /** Get all social accounts for the current user. */
 export async function getAllSocialAccounts() {
   const userId = await requireUserId();
-  return db.query.socialAccounts.findMany({
+  const accounts = await db.query.socialAccounts.findMany({
     where: eq(socialAccounts.userId, userId),
   });
+  return accounts.map(decryptAccount);
 }
 
 /**
@@ -73,12 +93,17 @@ export async function upsertSocialAccount(data: {
     ),
   });
 
+  const encryptedAccessToken = maybeEncrypt(data.accessToken);
+  const encryptedRefreshToken = data.refreshToken
+    ? maybeEncrypt(data.refreshToken)
+    : null;
+
   if (existing) {
     await db
       .update(socialAccounts)
       .set({
-        accessToken: data.accessToken,
-        refreshToken: data.refreshToken || null,
+        accessToken: encryptedAccessToken,
+        refreshToken: encryptedRefreshToken,
         platformAccountId: data.platformAccountId,
         accountName: data.accountName || null,
         tokenExpiresAt: data.tokenExpiresAt
@@ -90,8 +115,8 @@ export async function upsertSocialAccount(data: {
   } else {
     await db.insert(socialAccounts).values({
       platform: data.platform,
-      accessToken: data.accessToken,
-      refreshToken: data.refreshToken || null,
+      accessToken: encryptedAccessToken,
+      refreshToken: encryptedRefreshToken,
       platformAccountId: data.platformAccountId,
       accountName: data.accountName || null,
       tokenExpiresAt: data.tokenExpiresAt
