@@ -9,7 +9,12 @@ import IORedis from "ioredis";
  * Redis is configured with --maxmemory 1gb --maxmemory-policy noeviction.
  */
 
-const REDIS_URL = process.env.REDIS_URL || "redis://:password@10.0.1.20:6379/3";
+const REDIS_URL = process.env.REDIS_URL;
+if (!REDIS_URL) {
+  throw new Error(
+    "REDIS_URL is not set. BullMQ queues require a Redis connection.",
+  );
+}
 
 /** Shared Redis connection for queue producers (adding jobs from Next.js) */
 export const redisConnection = new IORedis(REDIS_URL, {

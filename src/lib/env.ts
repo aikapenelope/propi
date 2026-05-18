@@ -46,8 +46,12 @@ const serverSchema = z.object({
   ML_APP_ID: z.string().optional(),
   ML_SECRET_KEY: z.string().optional(),
 
-  /** Cron job protection. */
-  CRON_SECRET: z.string().optional(),
+  /** Cron job protection. Required in production to prevent unauthenticated
+   *  access to /api/cron/* endpoints (which are public routes). */
+  CRON_SECRET:
+    process.env.NODE_ENV === "production"
+      ? z.string().min(1, "CRON_SECRET is required in production")
+      : z.string().optional(),
 
   /** Redis (BullMQ). Optional — job queues won't work without it. */
   REDIS_URL: z.string().optional(),
