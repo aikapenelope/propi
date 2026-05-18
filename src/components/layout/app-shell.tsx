@@ -45,9 +45,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <div className="absolute top-0 right-[20%] w-[600px] h-[300px] bg-primary/5 blur-[120px] rounded-full pointer-events-none z-0 hidden md:block ambient-dark" />
         <div className="absolute bottom-0 left-[10%] w-[400px] h-[400px] bg-purple-500/5 blur-[150px] rounded-full pointer-events-none z-0 hidden md:block ambient-dark" />
         {/* Light mode: warm orange/amber glows covering more area */}
-        <div className="absolute top-[-5%] right-[5%] w-[800px] h-[500px] rounded-full pointer-events-none z-0 hidden md:block ambient-light" style={{ background: "radial-gradient(ellipse, rgba(251, 146, 60, 0.08) 0%, transparent 70%)" }} />
-        <div className="absolute bottom-[10%] left-[-5%] w-[700px] h-[600px] rounded-full pointer-events-none z-0 hidden md:block ambient-light" style={{ background: "radial-gradient(ellipse, rgba(245, 158, 11, 0.06) 0%, transparent 70%)" }} />
-        <div className="absolute top-[40%] right-[30%] w-[500px] h-[500px] rounded-full pointer-events-none z-0 hidden md:block ambient-light" style={{ background: "radial-gradient(ellipse, rgba(234, 88, 12, 0.04) 0%, transparent 70%)" }} />
+        <div className="absolute top-[-10%] right-[-5%] w-[900px] h-[600px] rounded-full pointer-events-none z-0 hidden md:block ambient-light" style={{ background: "radial-gradient(ellipse, rgba(251, 146, 60, 0.18) 0%, rgba(251, 146, 60, 0.06) 50%, transparent 75%)" }} />
+        <div className="absolute bottom-[-5%] left-[-10%] w-[800px] h-[700px] rounded-full pointer-events-none z-0 hidden md:block ambient-light" style={{ background: "radial-gradient(ellipse, rgba(245, 158, 11, 0.15) 0%, rgba(245, 158, 11, 0.04) 50%, transparent 75%)" }} />
+        <div className="absolute top-[30%] left-[40%] w-[600px] h-[600px] rounded-full pointer-events-none z-0 hidden md:block ambient-light" style={{ background: "radial-gradient(ellipse, rgba(234, 88, 12, 0.10) 0%, transparent 65%)" }} />
         <div className="relative z-10 min-w-0">
           <PullToRefresh>{children}</PullToRefresh>
         </div>
