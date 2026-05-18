@@ -24,10 +24,10 @@
    ============================================ */
 .light {
   --background: #F5F5F0;
-  --foreground: #111827;
-  --muted: #EEEEE9;
-  --muted-foreground: #6B7280;
-  --border: #E0E0DB;
+  --foreground: #1a1a1a;
+  --muted: #EAEAE5;
+  --muted-foreground: #4B5563;
+  --border: #D1D1CC;
   --primary: #0A2B1D;
   --primary-foreground: #ffffff;
   --accent: #f0f9ff;
