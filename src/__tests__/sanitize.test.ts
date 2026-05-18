@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { sanitizeLike } from "@/lib/sanitize";
+import { sanitizeLike, escapeHtml } from "@/lib/sanitize";
 
 describe("sanitizeLike", () => {
   it("escapes percent signs", () => {
@@ -24,5 +24,49 @@ describe("sanitizeLike", () => {
 
   it("handles empty string", () => {
     expect(sanitizeLike("")).toBe("");
+  });
+});
+
+describe("escapeHtml", () => {
+  it("escapes ampersands", () => {
+    expect(escapeHtml("Tom & Jerry")).toBe("Tom &amp; Jerry");
+  });
+
+  it("escapes less-than signs", () => {
+    expect(escapeHtml("<script>alert('xss')</script>")).toBe(
+      "&lt;script&gt;alert(&#39;xss&#39;)&lt;/script&gt;",
+    );
+  });
+
+  it("escapes greater-than signs", () => {
+    expect(escapeHtml("a > b")).toBe("a &gt; b");
+  });
+
+  it("escapes double quotes", () => {
+    expect(escapeHtml('class="evil"')).toBe("class=&quot;evil&quot;");
+  });
+
+  it("escapes single quotes", () => {
+    expect(escapeHtml("it's")).toBe("it&#39;s");
+  });
+
+  it("escapes all special characters together", () => {
+    expect(escapeHtml(`<img src="x" onerror='alert(1)'>& done`)).toBe(
+      "&lt;img src=&quot;x&quot; onerror=&#39;alert(1)&#39;&gt;&amp; done",
+    );
+  });
+
+  it("returns plain strings unchanged", () => {
+    expect(escapeHtml("Apartamento en Caracas, 120m2")).toBe(
+      "Apartamento en Caracas, 120m2",
+    );
+  });
+
+  it("handles empty string", () => {
+    expect(escapeHtml("")).toBe("");
+  });
+
+  it("preserves newlines and whitespace", () => {
+    expect(escapeHtml("line1\nline2\ttab")).toBe("line1\nline2\ttab");
   });
 });

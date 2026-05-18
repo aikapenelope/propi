@@ -19,7 +19,7 @@ export function DocumentActions({ id, docKey }: { id: string; docKey: string }) 
   async function handleDelete() {
     setDeleting(true);
     try {
-      await deleteDocument(id, docKey);
+      await deleteDocument(id);
     } finally {
       setDeleting(false);
       setConfirming(false);

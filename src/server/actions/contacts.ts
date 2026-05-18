@@ -157,6 +157,10 @@ export async function updateContact(id: string, data: ContactFormData) {
       .where(and(eq(contacts.id, id), eq(contacts.userId, userId)))
       .returning();
 
+    if (!updated) {
+      throw new Error("Contacto no encontrado.");
+    }
+
     // Replace tags atomically: delete existing, insert new
     await tx.delete(contactTags).where(eq(contactTags.contactId, id));
     if (validated.tagIds && validated.tagIds.length > 0) {

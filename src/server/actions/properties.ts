@@ -160,9 +160,9 @@ export async function createProperty(data: PropertyFormData) {
         price: validated.price || null,
         currency: validated.currency || "USD",
         area: validated.area || null,
-        bedrooms: validated.bedrooms ? parseInt(validated.bedrooms) : null,
-        bathrooms: validated.bathrooms ? parseInt(validated.bathrooms) : null,
-        parkingSpaces: validated.parkingSpaces ? parseInt(validated.parkingSpaces) : null,
+        bedrooms: validated.bedrooms ? parseInt(validated.bedrooms, 10) : null,
+        bathrooms: validated.bathrooms ? parseInt(validated.bathrooms, 10) : null,
+        parkingSpaces: validated.parkingSpaces ? parseInt(validated.parkingSpaces, 10) : null,
         address: validated.address || null,
         city: validated.city || null,
         state: validated.state || null,
@@ -237,9 +237,9 @@ export async function updateProperty(id: string, data: PropertyFormData) {
         price: validated.price || null,
         currency: validated.currency || "USD",
         area: validated.area || null,
-        bedrooms: validated.bedrooms ? parseInt(validated.bedrooms) : null,
-        bathrooms: validated.bathrooms ? parseInt(validated.bathrooms) : null,
-        parkingSpaces: validated.parkingSpaces ? parseInt(validated.parkingSpaces) : null,
+        bedrooms: validated.bedrooms ? parseInt(validated.bedrooms, 10) : null,
+        bathrooms: validated.bathrooms ? parseInt(validated.bathrooms, 10) : null,
+        parkingSpaces: validated.parkingSpaces ? parseInt(validated.parkingSpaces, 10) : null,
         address: validated.address || null,
         city: validated.city || null,
         state: validated.state || null,
@@ -254,6 +254,10 @@ export async function updateProperty(id: string, data: PropertyFormData) {
       })
       .where(and(eq(properties.id, id), eq(properties.userId, userId)))
       .returning();
+
+    if (!updated) {
+      throw new Error("Propiedad no encontrada.");
+    }
 
     // Replace tags atomically: delete existing, insert new
     await tx.delete(propertyTags).where(eq(propertyTags.propertyId, id));
@@ -314,6 +318,15 @@ export async function getUploadKey(
   filename: string,
 ) {
   const userId = await requireUserId();
+
+  // Verify the property belongs to this user before generating a key.
+  // Prevents generating upload paths for properties owned by others.
+  const property = await db.query.properties.findFirst({
+    where: and(eq(properties.id, propertyId), eq(properties.userId, userId)),
+    columns: { id: true },
+  });
+  if (!property) throw new Error("Propiedad no encontrada.");
+
   await checkStorageQuota(userId);
   const key = `${userId}/properties/${propertyId}/${Date.now()}-${filename}`;
   return { key };
