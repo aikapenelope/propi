@@ -1,33 +1,16 @@
 import { NextResponse } from "next/server";
 import { GetObjectCommand } from "@aws-sdk/client-s3";
 import { s3, MEDIA_BUCKET } from "@/lib/s3";
+import { createRateLimiter } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 
-// Simple in-memory rate limit: max 100 requests per IP per minute
-const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
-const RATE_LIMIT = 100;
-const WINDOW_MS = 60_000;
-
-// Purge expired entries every 5 minutes to prevent unbounded Map growth.
-setInterval(() => {
-  const now = Date.now();
-  for (const [key, entry] of rateLimitMap) {
-    if (now > entry.resetAt) rateLimitMap.delete(key);
-  }
-}, 5 * 60_000).unref();
-
-function checkRateLimit(ip: string): boolean {
-  const now = Date.now();
-  const entry = rateLimitMap.get(ip);
-  if (!entry || now > entry.resetAt) {
-    rateLimitMap.set(ip, { count: 1, resetAt: now + WINDOW_MS });
-    return true;
-  }
-  if (entry.count >= RATE_LIMIT) return false;
-  entry.count++;
-  return true;
-}
+// Rate limit: max 100 requests per IP per minute (distributed via Redis)
+const imageLimiter = createRateLimiter({
+  prefix: "rl:images",
+  limit: 100,
+  windowMs: 60_000,
+});
 
 /**
  * Public image proxy for MinIO.
@@ -45,7 +28,7 @@ export async function GET(
   props: { params: Promise<{ key: string[] }> },
 ) {
   const ip = request.headers.get("x-forwarded-for") || "unknown";
-  if (!checkRateLimit(ip)) {
+  if (!(await imageLimiter.check(ip))) {
     return NextResponse.json({ error: "Too many requests" }, { status: 429 });
   }
 
