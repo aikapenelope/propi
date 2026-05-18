@@ -36,7 +36,7 @@ const gridFeatures = [
   { icon: "solar:home-smile-linear", title: "Inventario", desc: "Apartamentos, casas, terrenos. Precio en USD o bolivares. Galeria de fotos, GPS, filtros combinables." },
   { icon: "solar:calendar-mark-linear", title: "Calendario & Citas", desc: "Agenda visitas, vincula al contacto y la propiedad. Ve tus citas de la semana directamente en el dashboard." },
   { icon: "solar:document-text-linear", title: "Documentos", desc: "Contratos, escrituras, avaluos, planos. Todo vinculado al contacto y la propiedad. Descarga totalmente segura." },
-  { icon: "solar:letter-opened-linear", title: "Email Marketing", desc: "Campanas HTML a segmentos por tag. Powered by Resend. 3,000 emails gratis al mes incluidos." },
+  { icon: "solar:letter-opened-linear", title: "Reportes & PDFs", desc: "Reporte profesional de 5 paginas descargable. Ficha de propiedad con foto y branding. Comparables de mercado automaticos." },
   { icon: "solar:chart-square-linear", title: "Metricas", desc: "Propiedades por tipo, contactos por fuente, citas de la semana. Dashboard con graficos y KPIs de tu negocio." },
 ];
 
@@ -53,7 +53,7 @@ const integrations = [
   { icon: "logos:whatsapp-icon", title: "WhatsApp", desc: "Comparte propiedades con un tap. Link directo con mensaje y fotos listas para enviar." },
   { icon: "wasi", title: "Portales", desc: "Publica en MercadoLibre, Wasi y Facebook Marketplace con texto pre-generado y un click." },
   { icon: "simple-icons:mercadolibre", title: "MercadoLibre", desc: "Datos de mercado en tiempo real. Precios, tendencias y comparables para Propi Magic. No necesitas cuenta." },
-  { icon: "simple-icons:resend", title: "Resend", desc: "Email marketing a segmentos personalizados. Disfruta de 3,000 emails gratis al mes." },
+  { icon: "simple-icons:resend", title: "Comparables", desc: "Tasacion automatica con datos de MercadoLibre. Precio promedio, rango y propiedades similares para justificar tu precio." },
 ];
 
 const testimonials = [
@@ -69,6 +69,7 @@ const faqItems = [
   { q: "Mis datos estan seguros?", a: "Completamente. Tus datos estan encriptados bajo HTTPS, con bases de datos privadas y sistemas de autenticacion de nivel bancario." },
   { q: "Puedo publicar en portales inmobiliarios?", a: "Si. Desde el detalle de cada propiedad, Propi genera el texto y te lleva directo a MercadoLibre, Wasi y Facebook Marketplace para publicar rapidamente." },
   { q: "Que es Propi Magic?", a: "Es nuestra inteligencia artificial integrada. Le puedes pedir que analice precios en una zona especifica, te redacte la descripcion de una propiedad o responda preguntas basicas." },
+  { q: "Puedo generar reportes para mi broker?", a: "Si. Propi genera un PDF profesional de 5 paginas con portada, resumen ejecutivo, transacciones, pipeline y inventario. Tambien puedes descargar fichas de propiedad individuales con tu marca." },
 ];
 
 // ---------------------------------------------------------------------------
@@ -489,13 +490,14 @@ export default function LandingPage() {
                   "Pipeline Kanban con drag & drop",
                   "Propiedades ilimitadas (4 fotos c/u)",
                   "Propi Magic: inteligencia de mercado con IA",
-                  "KPIs de mercado por ciudad y zona",
-                  "Publicacion rapida en 5+ portales",
+                  "Comparables de mercado automaticos",
+                  "Publicacion rapida en portales (ML, Wasi, FB)",
+                  "Reportes PDF profesionales (5 paginas)",
+                  "Ficha de propiedad PDF con branding",
                   "Calendario y citas vinculadas",
                   "Tareas y recordatorios",
                   "Documentos y contratos en la nube",
-                  "Email marketing (3,000 emails/mes)",
-                  "Secuencias drip automatizadas",
+                  "Marca de empresa personalizable",
                   "Importacion de contactos (CSV, vCard)",
                   "Pagina publica para compartir propiedades",
                   "App movil PWA (funciona sin internet)",
