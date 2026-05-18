@@ -136,7 +136,7 @@ export default function SubscribePage() {
 
         {/* CTA — WhatsApp */}
         <a
-          href={`https://wa.me/584242840000?text=${encodeURIComponent(whatsappMessage)}`}
+          href={`https://wa.me/13203731567?text=${encodeURIComponent(whatsappMessage)}`}
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-[#25D366] px-6 py-4 text-base font-semibold text-white shadow-[0_0_20px_rgba(37,211,102,0.3)] transition-all hover:brightness-110"
