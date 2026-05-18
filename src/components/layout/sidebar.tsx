@@ -24,6 +24,7 @@ import {
   Handshake,
   History,
   HelpCircle,
+  Scale,
 } from "lucide-react";
 import { UnreadBadge } from "./unread-badge";
 import { SharePortalButton } from "./share-portal-button";
@@ -43,6 +44,7 @@ const navItems = [
 ];
 
 const intelligenceItems = [
+  { href: "/valuation", label: "Tasacion", icon: Scale, exact: true },
   { href: "/market-analysis", label: "Propi Magic", icon: Sparkles, exact: true },
   { href: "/market-analysis/kpis", label: "KPIs Mercado", icon: BarChart3, exact: true },
   { href: "/market-analysis/searches", label: "Busquedas", icon: History, exact: true },
