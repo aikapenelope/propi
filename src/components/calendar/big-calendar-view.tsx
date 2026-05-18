@@ -97,7 +97,9 @@ export function BigCalendarView({ events }: BigCalendarViewProps) {
 
   const handleDateSelect = useCallback(
     (selectInfo: DateSelectArg) => {
-      const dateStr = selectInfo.start.toISOString().slice(0, 16);
+      // Use local date components to avoid timezone shift
+      const d = selectInfo.start;
+      const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}T${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
       router.push(`/calendar/new?date=${dateStr}`);
       selectInfo.view.calendar.unselect();
       hapticLight();
@@ -109,7 +111,8 @@ export function BigCalendarView({ events }: BigCalendarViewProps) {
   const handleDateClick = useCallback(
     (info: { date: Date }) => {
       if (!isMobile) return;
-      const dateStr = info.date.toISOString().slice(0, 16);
+      const d = info.date;
+      const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}T${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
       router.push(`/calendar/new?date=${dateStr}`);
       hapticLight();
     },
