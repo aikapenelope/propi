@@ -7,9 +7,7 @@ import {
   Check,
   ExternalLink,
   ShoppingBag,
-  Globe,
   Store,
-  Newspaper,
 } from "lucide-react";
 import { updatePropertyLinks } from "@/server/actions/properties";
 
@@ -33,9 +31,9 @@ const PORTALS: Portal[] = [
     name: "MercadoLibre",
     icon: <ShoppingBag className="h-4 w-4" />,
     color: "text-yellow-500",
-    publishUrl: "https://inmuebles.mercadolibre.com.ve/publicar",
+    publishUrl: "https://www.mercadolibre.com.ve/publicar",
     description: "El marketplace mas grande de Venezuela",
-    tip: "Usa la categoria correcta (Apartamento, Casa, etc.) y sube al menos 5 fotos para mejor visibilidad.",
+    tip: "Selecciona la categoria de Inmuebles, elige el tipo (Apartamento, Casa, etc.) y sube al menos 5 fotos para mejor visibilidad.",
   },
   {
     id: "wasi",
@@ -45,24 +43,6 @@ const PORTALS: Portal[] = [
     publishUrl: "https://wasi.co/login",
     description: "CRM y portal para agentes inmobiliarios",
     tip: "Wasi distribuye tu propiedad a portales asociados (Inmuebles24, Properati, etc.) automaticamente.",
-  },
-  {
-    id: "tuinmueble",
-    name: "TuInmueble",
-    icon: <Globe className="h-4 w-4" />,
-    color: "text-blue-500",
-    publishUrl: "https://tuinmueble.com.ve/publicar",
-    description: "Portal inmobiliario popular en Venezuela",
-    tip: "Incluye la ubicacion exacta y el precio en USD para mejor posicionamiento.",
-  },
-  {
-    id: "corotos",
-    name: "Corotos",
-    icon: <Newspaper className="h-4 w-4" />,
-    color: "text-green-500",
-    publishUrl: "https://www.corotos.com.ve/publicar",
-    description: "Clasificados gratuitos de Venezuela",
-    tip: "Publica gratis. Usa un titulo descriptivo con tipo, zona y precio.",
   },
   {
     id: "fb-marketplace",
