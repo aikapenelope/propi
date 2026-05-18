@@ -5,7 +5,6 @@ import {
   contacts,
   properties,
   appointments,
-  emailCampaigns,
   contactNotes,
 } from "@/server/schema";
 import { sql, eq, and, gte, lte, desc } from "drizzle-orm";
@@ -223,17 +222,8 @@ export async function buildReport(
         ),
       ),
 
-    // Activity: total emails sent in period (sum of sentCount across campaigns)
-    db
-      .select({ count: sql<number>`COALESCE(SUM(${emailCampaigns.sentCount}), 0)::int` })
-      .from(emailCampaigns)
-      .where(
-        and(
-          eq(emailCampaigns.userId, userId),
-          gte(emailCampaigns.createdAt, start),
-          lte(emailCampaigns.createdAt, end),
-        ),
-      ),
+    // Activity: emails sent (email campaigns removed — always 0)
+    Promise.resolve([{ count: 0 }]),
 
     // Comparison: previous period closed deals
     db

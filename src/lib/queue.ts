@@ -42,14 +42,3 @@ export const marketSyncQueue = new Queue("market-sync", {
     removeOnFail: { count: 500 },
   },
 });
-
-/** Queue for email campaign sends (offloaded from request to avoid timeout) */
-export const emailCampaignQueue = new Queue("email-campaign", {
-  connection: redisConnection,
-  defaultJobOptions: {
-    attempts: 3,
-    backoff: { type: "exponential", delay: 10_000 },
-    removeOnComplete: { count: 50 },
-    removeOnFail: { count: 200 },
-  },
-});

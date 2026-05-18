@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   getTemplate,
   saveTemplate,
@@ -13,12 +13,11 @@ import {
  * Template is stored in localStorage (client-side, no DB).
  */
 export function WhatsAppTemplateConfig() {
-  const [template, setTemplate] = useState(DEFAULT_TEMPLATE);
+  const [template, setTemplate] = useState(() => {
+    if (typeof window === "undefined") return DEFAULT_TEMPLATE;
+    return getTemplate();
+  });
   const [saved, setSaved] = useState(false);
-
-  useEffect(() => {
-    setTemplate(getTemplate());
-  }, []);
 
   function handleSave() {
     saveTemplate(template);

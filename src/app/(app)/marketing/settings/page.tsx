@@ -1,8 +1,7 @@
-import { Instagram, Facebook, MessageCircle, Mail, Wallet, ChevronRight } from "lucide-react";
+import { Instagram, Facebook, MessageCircle, Wallet, ChevronRight } from "lucide-react";
 import { getAllSocialAccounts } from "@/server/actions/social-accounts";
 import { formatDate } from "@/lib/utils";
 import { SocialAccountForm } from "@/components/marketing/social-account-form";
-import { ResendConfigForm } from "@/components/marketing/resend-config-form";
 import { TokenExpiryWarning } from "@/components/marketing/token-expiry-warning";
 import { SetupGuide } from "@/components/marketing/setup-guide";
 import { WhatsAppTemplateConfig } from "@/components/marketing/whatsapp-template-config";
@@ -15,7 +14,6 @@ export default async function MarketingSettingsPage() {
   const igAccount = accounts.find((a) => a.platform === "instagram");
   const fbAccount = accounts.find((a) => a.platform === "facebook");
   const waAccount = accounts.find((a) => a.platform === "whatsapp");
-  const resendAccount = accounts.find((a) => a.platform === "resend");
 
   return (
     <div className="p-4 md:p-6">
@@ -300,28 +298,6 @@ export default async function MarketingSettingsPage() {
         </div>
           </>
         )}
-
-        {/* Email (Resend) — per-user API key */}
-        <div className="rounded-lg border border-border p-4">
-          <div className="mb-4 flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-500/10">
-              <Mail className="h-5 w-5 text-amber-500" />
-            </div>
-            <div>
-              <h2 className="font-semibold text-foreground">Email (Resend)</h2>
-              <p className="text-xs text-muted-foreground">
-                {resendAccount ? "Conectado — tu propia API key" : "No configurado"}
-              </p>
-            </div>
-          </div>
-          <ResendConfigForm
-            existing={
-              resendAccount
-                ? { apiKey: resendAccount.accessToken }
-                : undefined
-            }
-          />
-        </div>
 
         {/* WhatsApp Appointment Template */}
         <div className="rounded-2xl border border-border p-5">
