@@ -256,15 +256,3 @@ export const metricShareSchema = z.object({
 
 export type ValidatedMetricShareData = z.infer<typeof metricShareSchema>;
 
-// ---------------------------------------------------------------------------
-// Scheduled Reports
-// ---------------------------------------------------------------------------
-
-export const scheduledReportSchema = z.object({
-  recipientEmail: z.string().email("Email invalido"),
-  frequency: z.enum(["weekly", "monthly"]),
-});
-
-export type ValidatedScheduledReportData = z.infer<
-  typeof scheduledReportSchema
->;

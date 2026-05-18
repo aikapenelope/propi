@@ -856,36 +856,3 @@ export const metricShares = pgTable(
   ],
 );
 
-// ---------------------------------------------------------------------------
-// Scheduled Reports (automatic email reports to broker/self)
-// ---------------------------------------------------------------------------
-
-export const reportFrequencyEnum = pgEnum("report_frequency", [
-  "weekly",
-  "monthly",
-]);
-
-export const scheduledReports = pgTable(
-  "scheduled_reports",
-  {
-    id: uuid("id").primaryKey().defaultRandom(),
-    /** The agent whose report is sent (Clerk userId) */
-    userId: text("user_id").notNull(),
-    /** Recipient email (broker or self) */
-    recipientEmail: varchar("recipient_email", { length: 255 }).notNull(),
-    /** How often to send */
-    frequency: reportFrequencyEnum("frequency").notNull().default("monthly"),
-    /** Whether this schedule is active */
-    active: boolean("active").notNull().default(true),
-    lastSentAt: timestamp("last_sent_at", { withTimezone: true }),
-    nextRunAt: timestamp("next_run_at", { withTimezone: true }),
-    createdAt: timestamp("created_at", { withTimezone: true })
-      .notNull()
-      .defaultNow(),
-  },
-  (table) => [
-    index("scheduled_reports_user_idx").on(table.userId),
-    index("scheduled_reports_next_run_idx").on(table.nextRunAt),
-    index("scheduled_reports_active_idx").on(table.active),
-  ],
-);
