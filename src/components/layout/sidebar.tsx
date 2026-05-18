@@ -23,6 +23,7 @@ import {
   ChevronRight,
   Sparkles,
   BarChart3,
+  Handshake,
   History,
   HelpCircle,
 } from "lucide-react";
@@ -40,6 +41,7 @@ const navItems = [
   { href: "/reports", label: "Reportes", icon: BarChart3 },
   { href: "/commissions", label: "Comisiones", icon: Calculator },
   { href: "/documents", label: "Documentos", icon: FileText },
+  { href: "/matches", label: "Matches", icon: Handshake },
 ];
 
 const intelligenceItems = [

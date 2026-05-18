@@ -35,9 +35,11 @@ const propertyTypeOptions = [
 
 const operationOptions = [
   { value: "", label: "Sin preferencia" },
-  { value: "sale", label: "Comprar" },
-  { value: "rent", label: "Alquilar" },
-  { value: "sale_rent", label: "Comprar o Alquilar" },
+  { value: "sale", label: "Quiere comprar" },
+  { value: "rent", label: "Quiere alquilar" },
+  { value: "sale_rent", label: "Comprar o alquilar" },
+  { value: "sell", label: "Quiere vender" },
+  { value: "lease", label: "Quiere arrendar" },
 ];
 
 interface Tag {

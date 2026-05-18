@@ -18,6 +18,7 @@ import {
   Settings,
   X,
   HelpCircle,
+  Handshake,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SharePortalButton } from "./share-portal-button";
@@ -34,6 +35,7 @@ const quickItems = [
   { href: "/tasks", label: "Tareas", icon: CheckSquare },
   { href: "/market-analysis", label: "Propi Magic", icon: Sparkles },
   { href: "/documents", label: "Documentos", icon: FileText },
+  { href: "/matches", label: "Matches", icon: Handshake },
   { href: "/search", label: "Busqueda", icon: Search },
 ];
 

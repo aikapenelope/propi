@@ -30,8 +30,8 @@ export const propertyTypeEnum = pgEnum("property_type", [
   "other",
 ]);
 
-/** Operation: sale, rent, or both */
-export const operationEnum = pgEnum("operation", ["sale", "rent", "sale_rent"]);
+/** Operation: sale, rent, both, or owner-side (sell, lease) */
+export const operationEnum = pgEnum("operation", ["sale", "rent", "sale_rent", "sell", "lease"]);
 
 /** Property listing status */
 export const propertyStatusEnum = pgEnum("property_status", [
