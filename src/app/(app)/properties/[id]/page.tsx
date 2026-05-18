@@ -19,6 +19,7 @@ import { SharePropertyButton } from "@/components/properties/share-property-butt
 import { PublishToggle } from "@/components/properties/publish-toggle";
 import { PublishSection } from "@/components/properties/publish-section";
 import { PropertyMatches } from "@/components/properties/property-matches";
+import { PropertyComparables } from "@/components/properties/property-comparables";
 import { SendPropertyEmailButton } from "@/components/properties/send-property-email-button";
 import { InfoTooltip } from "@/components/ui/info-tooltip";
 import { getContacts } from "@/server/actions/contacts";
@@ -309,6 +310,9 @@ export default async function PropertyDetailPage({
 
         {/* Property-Contact Matching */}
         <PropertyMatches propertyId={id} />
+
+        {/* Market Comparables */}
+        <PropertyComparables propertyId={id} />
       </div>
     </div>
   );
