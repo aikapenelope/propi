@@ -61,6 +61,37 @@ export interface ReportData {
   };
 }
 
+/** Extended report data for the professional PDF export. */
+export interface FullReportData extends ReportData {
+  agentName: string;
+  generatedAt: string;
+  inventory: {
+    items: {
+      id: string;
+      title: string;
+      type: string;
+      operation: string;
+      price: number;
+      currency: string;
+      city: string;
+      daysOnMarket: number;
+    }[];
+    totalActive: number;
+    avgPrice: number;
+  };
+  transactionSubtotals: {
+    sales: { count: number; volume: number; commission: number };
+    rentals: { count: number; volume: number; commission: number };
+    avgCommissionRate: number;
+  };
+  activityComparison: {
+    metric: string;
+    current: number;
+    previous: number;
+    delta: number;
+  }[];
+}
+
 // ---------------------------------------------------------------------------
 // Public API (requires auth)
 // ---------------------------------------------------------------------------
@@ -68,6 +99,14 @@ export interface ReportData {
 export async function getReportData(period: ReportPeriod): Promise<ReportData> {
   const userId = await requireUserId();
   return buildReport(userId, period);
+}
+
+/** Build the full report with inventory and subtotals for PDF export. */
+export async function getFullReportData(
+  period: ReportPeriod,
+): Promise<FullReportData> {
+  const userId = await requireUserId();
+  return buildFullReport(userId, period);
 }
 
 // ---------------------------------------------------------------------------
@@ -295,5 +334,151 @@ export async function buildReport(
       leadsDelta: delta(currentLeads, prevContacts[0]?.count ?? 0),
       appointmentsDelta: delta(currentApts, prevApts[0]?.count ?? 0),
     },
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Full report builder (adds inventory, subtotals, agent name for PDF)
+// ---------------------------------------------------------------------------
+
+export async function buildFullReport(
+  userId: string,
+  period: ReportPeriod,
+): Promise<FullReportData> {
+  const base = await buildReport(userId, period);
+  const now = new Date();
+
+  // Fetch agent name from Clerk
+  let agentName = "Agente";
+  try {
+    const { clerkClient } = await import("@clerk/nextjs/server");
+    const client = await clerkClient();
+    const user = await client.users.getUser(userId);
+    agentName =
+      [user.firstName, user.lastName].filter(Boolean).join(" ") || "Agente";
+  } catch {
+    // Clerk unavailable — use fallback
+  }
+
+  // Active inventory with days on market
+  const activeProperties = await db
+    .select({
+      id: properties.id,
+      title: properties.title,
+      type: properties.type,
+      operation: properties.operation,
+      price: properties.price,
+      currency: properties.currency,
+      city: properties.city,
+      createdAt: properties.createdAt,
+    })
+    .from(properties)
+    .where(and(eq(properties.userId, userId), eq(properties.status, "active")))
+    .orderBy(desc(properties.createdAt));
+
+  const inventoryItems = activeProperties.map((p) => ({
+    id: p.id,
+    title: p.title,
+    type: p.type,
+    operation: p.operation,
+    price: parseFloat(p.price || "0"),
+    currency: p.currency || "USD",
+    city: p.city || "",
+    daysOnMarket: Math.floor(
+      (now.getTime() - new Date(p.createdAt).getTime()) / (1000 * 60 * 60 * 24),
+    ),
+  }));
+
+  const avgPrice =
+    inventoryItems.length > 0
+      ? Math.round(
+          inventoryItems.reduce((s, i) => s + i.price, 0) /
+            inventoryItems.length,
+        )
+      : 0;
+
+  // Transaction subtotals by operation
+  const salesDeals = base.transactions.deals.filter(
+    (d) => d.operation === "sale" || d.operation === "sell",
+  );
+  const rentalDeals = base.transactions.deals.filter(
+    (d) => d.operation === "rent" || d.operation === "lease",
+  );
+
+  const allRates = base.transactions.deals.map((d) => d.commissionRate);
+  const avgCommissionRate =
+    allRates.length > 0
+      ? Math.round(
+          (allRates.reduce((s, r) => s + r, 0) / allRates.length) * 100,
+        ) / 100
+      : 0;
+
+  // Activity comparison table (current vs previous period)
+  const prevApts = base.comparison.appointmentsDelta;
+  const prevLeads = base.comparison.leadsDelta;
+  const prevTx = base.comparison.transactionsDelta;
+
+  const activityComparison = [
+    {
+      metric: "Transacciones cerradas",
+      current: base.transactions.closed,
+      previous: prevTx === 0 ? base.transactions.closed : Math.round(base.transactions.closed / (1 + prevTx / 100)),
+      delta: prevTx,
+    },
+    {
+      metric: "Leads nuevos",
+      current: base.pipeline.newLeads,
+      previous: prevLeads === 0 ? base.pipeline.newLeads : Math.round(base.pipeline.newLeads / (1 + prevLeads / 100)),
+      delta: prevLeads,
+    },
+    {
+      metric: "Citas creadas",
+      current: base.activity.appointmentsCreated,
+      previous: prevApts === 0 ? base.activity.appointmentsCreated : Math.round(base.activity.appointmentsCreated / (1 + prevApts / 100)),
+      delta: prevApts,
+    },
+    {
+      metric: "Citas completadas",
+      current: base.activity.appointmentsCompleted,
+      previous: 0,
+      delta: 0,
+    },
+    {
+      metric: "Notas tomadas",
+      current: base.activity.notesTaken,
+      previous: 0,
+      delta: 0,
+    },
+    {
+      metric: "Emails enviados",
+      current: base.activity.emailsSent,
+      previous: 0,
+      delta: 0,
+    },
+  ];
+
+  return {
+    ...base,
+    agentName,
+    generatedAt: now.toISOString(),
+    inventory: {
+      items: inventoryItems,
+      totalActive: inventoryItems.length,
+      avgPrice,
+    },
+    transactionSubtotals: {
+      sales: {
+        count: salesDeals.length,
+        volume: salesDeals.reduce((s, d) => s + d.soldPrice, 0),
+        commission: salesDeals.reduce((s, d) => s + d.commission, 0),
+      },
+      rentals: {
+        count: rentalDeals.length,
+        volume: rentalDeals.reduce((s, d) => s + d.soldPrice, 0),
+        commission: rentalDeals.reduce((s, d) => s + d.commission, 0),
+      },
+      avgCommissionRate,
+    },
+    activityComparison,
   };
 }
