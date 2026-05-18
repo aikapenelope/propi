@@ -1,0 +1,1 @@
+CREATE INDEX "market_listings_kpi_idx" ON "market_listings" USING btree ("city","property_type","operation","neighborhood");
