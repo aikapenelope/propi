@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useToast } from "@/components/ui/toast";
 import {
   createProperty,
   updateProperty,
@@ -78,6 +79,7 @@ export function PropertyForm({
   availableTags,
 }: PropertyFormProps) {
   const router = useRouter();
+  const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [tagIds, setTagIds] = useState<string[]>(selectedTagIds);
 
@@ -119,9 +121,11 @@ export function PropertyForm({
     try {
       if (isEditing) {
         await updateProperty(property.id, data);
+        toast("Propiedad actualizada");
         router.push(`/properties/${property.id}`);
       } else {
         const newProp = await createProperty(data);
+        toast("Propiedad creada");
         router.push(`/properties/${newProp.id}`);
       }
     } finally {
