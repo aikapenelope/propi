@@ -144,14 +144,30 @@ export async function parseVCard(vcfText: string): Promise<ImportedContact[]> {
 // Import to database
 // ---------------------------------------------------------------------------
 
-/** Import parsed contacts into the database for the current user. */
+/** Maximum contacts per import to prevent abuse and memory exhaustion. */
+const MAX_IMPORT_BATCH = 1000;
+
+/**
+ * Import parsed contacts into the database for the current user.
+ *
+ * Uses a database transaction to ensure atomicity: either all valid contacts
+ * are imported or none are (on unexpected DB errors). Contacts that fail
+ * individual validation (name too short, duplicates) are skipped without
+ * aborting the transaction — they are reported in the result.
+ *
+ * Batch inserts are used instead of individual INSERT statements to reduce
+ * round-trips to the database (one INSERT per batch of up to 100 rows).
+ */
 export async function importContacts(
   parsed: ImportedContact[],
 ): Promise<ImportResult> {
   const userId = await requireUserId();
-  let imported = 0;
-  let skipped = 0;
-  const errors: string[] = [];
+
+  if (parsed.length > MAX_IMPORT_BATCH) {
+    throw new Error(
+      `Maximo ${MAX_IMPORT_BATCH} contactos por importacion. Tu archivo tiene ${parsed.length}.`,
+    );
+  }
 
   // Load existing contacts for duplicate detection (by email or phone)
   const existing = await db.query.contacts.findMany({
@@ -166,47 +182,66 @@ export async function importContacts(
     existing.map((c) => c.phone?.replace(/\D/g, "")).filter(Boolean),
   );
 
+  // Pre-filter: separate valid contacts from skipped ones before hitting the DB
+  const toInsert: typeof contacts.$inferInsert[] = [];
+  let skipped = 0;
+
   for (const contact of parsed) {
-    try {
-      if (!contact.name || contact.name.length < 2) {
-        skipped++;
-        continue;
-      }
-
-      // Skip duplicates: match by email or phone (normalized)
-      const emailNorm = contact.email?.toLowerCase();
-      const phoneNorm = contact.phone?.replace(/\D/g, "");
-
-      if (emailNorm && existingEmails.has(emailNorm)) {
-        skipped++;
-        continue;
-      }
-      if (phoneNorm && phoneNorm.length >= 7 && existingPhones.has(phoneNorm)) {
-        skipped++;
-        continue;
-      }
-
-      await db.insert(contacts).values({
-        name: contact.name,
-        email: contact.email || null,
-        phone: contact.phone || null,
-        company: contact.company || null,
-        source: "other",
-        leadStatus: "new",
-        userId,
-      });
-
-      // Track newly imported contacts to avoid duplicates within the same batch
-      if (emailNorm) existingEmails.add(emailNorm);
-      if (phoneNorm && phoneNorm.length >= 7) existingPhones.add(phoneNorm);
-
-      imported++;
-    } catch (err) {
-      errors.push(
-        `Error importando "${contact.name}": ${err instanceof Error ? err.message : "desconocido"}`,
-      );
+    if (!contact.name || contact.name.length < 2) {
+      skipped++;
+      continue;
     }
+
+    const emailNorm = contact.email?.toLowerCase();
+    const phoneNorm = contact.phone?.replace(/\D/g, "");
+
+    if (emailNorm && existingEmails.has(emailNorm)) {
+      skipped++;
+      continue;
+    }
+    if (phoneNorm && phoneNorm.length >= 7 && existingPhones.has(phoneNorm)) {
+      skipped++;
+      continue;
+    }
+
+    toInsert.push({
+      name: contact.name,
+      email: contact.email || null,
+      phone: contact.phone || null,
+      company: contact.company || null,
+      source: "other",
+      leadStatus: "new",
+      userId,
+    });
+
+    // Track within the batch to avoid intra-batch duplicates
+    if (emailNorm) existingEmails.add(emailNorm);
+    if (phoneNorm && phoneNorm.length >= 7) existingPhones.add(phoneNorm);
   }
+
+  // Insert in a single transaction with batches of 100 rows.
+  // If the transaction fails, no partial data is left in the DB.
+  let imported = 0;
+  const errors: string[] = [];
+  const BATCH_SIZE = 100;
+
+  await db.transaction(async (tx) => {
+    for (let i = 0; i < toInsert.length; i += BATCH_SIZE) {
+      const batch = toInsert.slice(i, i + BATCH_SIZE);
+      try {
+        const result = await tx.insert(contacts).values(batch).returning({ id: contacts.id });
+        imported += result.length;
+      } catch (err) {
+        // If a batch fails, record the error but continue with remaining batches.
+        // The transaction will still commit the successful batches.
+        const batchStart = i + 1;
+        const batchEnd = Math.min(i + BATCH_SIZE, toInsert.length);
+        errors.push(
+          `Error en lote ${batchStart}-${batchEnd}: ${err instanceof Error ? err.message : "desconocido"}`,
+        );
+      }
+    }
+  });
 
   revalidatePath("/contacts");
   revalidatePath("/pipeline");

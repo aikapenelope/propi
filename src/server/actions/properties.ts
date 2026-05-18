@@ -8,7 +8,7 @@ import { DeleteObjectCommand } from "@aws-sdk/client-s3";
 import { sanitizeLike } from "@/lib/sanitize";
 import { s3, MEDIA_BUCKET } from "@/lib/s3";
 import { requireUserId } from "@/lib/auth-helper";
-import { propertySchema } from "@/lib/validators";
+import { propertySchema, parseUuid } from "@/lib/validators";
 import { checkStorageQuota } from "@/lib/storage-quota";
 
 // ---------------------------------------------------------------------------
@@ -120,6 +120,7 @@ export async function getProperties(filters: PropertyFilters = {}) {
 }
 
 export async function getProperty(id: string) {
+  parseUuid(id, "Property ID");
   const userId = await requireUserId();
 
   return db.query.properties.findFirst({
@@ -222,6 +223,7 @@ export async function updatePropertyStatus(
 }
 
 export async function updateProperty(id: string, data: PropertyFormData) {
+  parseUuid(id, "Property ID");
   const userId = await requireUserId();
   const validated = propertySchema.parse(data);
 
@@ -280,6 +282,7 @@ export async function updateProperty(id: string, data: PropertyFormData) {
 }
 
 export async function deleteProperty(id: string) {
+  parseUuid(id, "Property ID");
   const userId = await requireUserId();
 
   // Fetch images BEFORE deleting the property (cascade will remove DB rows)
