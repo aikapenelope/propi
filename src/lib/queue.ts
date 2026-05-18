@@ -2,18 +2,24 @@ import { Queue } from "bullmq";
 import IORedis from "ioredis";
 
 /**
- * Redis connection for BullMQ job queues.
+ * Redis connection and BullMQ queues for Propi.
  * Uses the same Redis instance as the Data Plane (DB 3 for Propi).
  *
  * BullMQ requires maxmemory-policy=noeviction on Redis.
  * Redis is configured with --maxmemory 1gb --maxmemory-policy noeviction.
  *
- * Connection is created lazily so the module can be imported at build time
- * (when REDIS_URL is absent) without throwing. The error surfaces at runtime
- * when a queue operation is actually attempted.
+ * Everything is created lazily via getter functions so this module can be
+ * imported at Next.js build time (when REDIS_URL is absent) without throwing.
+ * The error surfaces at runtime when a queue operation is actually attempted.
  */
 
+// ---------------------------------------------------------------------------
+// Lazy singletons
+// ---------------------------------------------------------------------------
+
 let _connection: IORedis | null = null;
+let _marketSyncQueue: Queue | null = null;
+let _emailCampaignQueue: Queue | null = null;
 
 function getRedisConnection(): IORedis {
   if (_connection) return _connection;
@@ -34,35 +40,42 @@ function getRedisConnection(): IORedis {
   return _connection;
 }
 
-/** Shared Redis connection for queue producers (adding jobs from Next.js) */
-export const redisConnection = new Proxy({} as IORedis, {
-  get(_target, prop) {
-    return Reflect.get(getRedisConnection(), prop);
-  },
-});
-
 // ---------------------------------------------------------------------------
 // Queues (producers - used in Next.js API routes)
 // ---------------------------------------------------------------------------
 
 /** Queue for MercadoLibre market sync jobs */
-export const marketSyncQueue = new Queue("market-sync", {
-  connection: redisConnection,
-  defaultJobOptions: {
-    attempts: 3,
-    backoff: { type: "exponential", delay: 5000 },
-    removeOnComplete: { count: 100 },
-    removeOnFail: { count: 500 },
+export const marketSyncQueue = {
+  get add() {
+    if (!_marketSyncQueue) {
+      _marketSyncQueue = new Queue("market-sync", {
+        connection: getRedisConnection(),
+        defaultJobOptions: {
+          attempts: 3,
+          backoff: { type: "exponential", delay: 5000 },
+          removeOnComplete: { count: 100 },
+          removeOnFail: { count: 500 },
+        },
+      });
+    }
+    return _marketSyncQueue.add.bind(_marketSyncQueue);
   },
-});
+} as Queue;
 
 /** Queue for email campaign sends (offloaded from request to avoid timeout) */
-export const emailCampaignQueue = new Queue("email-campaign", {
-  connection: redisConnection,
-  defaultJobOptions: {
-    attempts: 3,
-    backoff: { type: "exponential", delay: 10_000 },
-    removeOnComplete: { count: 50 },
-    removeOnFail: { count: 200 },
+export const emailCampaignQueue = {
+  get add() {
+    if (!_emailCampaignQueue) {
+      _emailCampaignQueue = new Queue("email-campaign", {
+        connection: getRedisConnection(),
+        defaultJobOptions: {
+          attempts: 3,
+          backoff: { type: "exponential", delay: 10_000 },
+          removeOnComplete: { count: 50 },
+          removeOnFail: { count: 200 },
+        },
+      });
+    }
+    return _emailCampaignQueue.add.bind(_emailCampaignQueue);
   },
-});
+} as Queue;
