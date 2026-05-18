@@ -184,9 +184,9 @@ export async function buildReport(
         ),
       ),
 
-    // Activity: email campaigns in period
+    // Activity: total emails sent in period (sum of sentCount across campaigns)
     db
-      .select({ count: sql<number>`count(*)::int` })
+      .select({ count: sql<number>`COALESCE(SUM(${emailCampaigns.sentCount}), 0)::int` })
       .from(emailCampaigns)
       .where(
         and(

@@ -50,12 +50,13 @@ export async function GET(request: Request) {
           apiKey: userKey || undefined,
         });
         sent++;
+        // Only advance after a successful send so failed emails are retried
+        // on the next cron run instead of being silently skipped.
+        await advanceEnrollment(enrollment.id, steps.length);
       } catch (err) {
         console.error(`Drip email failed for ${enrollment.contact.email}:`, err);
         failed++;
       }
-
-      await advanceEnrollment(enrollment.id, steps.length);
     }
 
     return NextResponse.json({

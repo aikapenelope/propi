@@ -148,43 +148,47 @@ export async function createProperty(data: PropertyFormData) {
   const userId = await requireUserId();
   const validated = propertySchema.parse(data);
 
-  const [property] = await db
-    .insert(properties)
-    .values({
-      title: validated.title,
-      description: validated.description || null,
-      type: validated.type || "apartment",
-      operation: validated.operation || "sale",
-      status: validated.status || "draft",
-      price: validated.price || null,
-      currency: validated.currency || "USD",
-      area: validated.area || null,
-      bedrooms: validated.bedrooms ? parseInt(validated.bedrooms) : null,
-      bathrooms: validated.bathrooms ? parseInt(validated.bathrooms) : null,
-      parkingSpaces: validated.parkingSpaces ? parseInt(validated.parkingSpaces) : null,
-      address: validated.address || null,
-      city: validated.city || null,
-      state: validated.state || null,
-      zipCode: validated.zipCode || null,
-      country: validated.country || "VE",
-      latitude: validated.latitude || null,
-      longitude: validated.longitude || null,
-      externalLinks: validated.externalLinks ?? null,
-      closedAt: validated.closedAt ? new Date(validated.closedAt) : null,
-      soldPrice: validated.soldPrice || null,
-      commissionRate: validated.commissionRate || null,
-      userId,
-    })
-    .returning();
+  const property = await db.transaction(async (tx) => {
+    const [created] = await tx
+      .insert(properties)
+      .values({
+        title: validated.title,
+        description: validated.description || null,
+        type: validated.type || "apartment",
+        operation: validated.operation || "sale",
+        status: validated.status || "draft",
+        price: validated.price || null,
+        currency: validated.currency || "USD",
+        area: validated.area || null,
+        bedrooms: validated.bedrooms ? parseInt(validated.bedrooms) : null,
+        bathrooms: validated.bathrooms ? parseInt(validated.bathrooms) : null,
+        parkingSpaces: validated.parkingSpaces ? parseInt(validated.parkingSpaces) : null,
+        address: validated.address || null,
+        city: validated.city || null,
+        state: validated.state || null,
+        zipCode: validated.zipCode || null,
+        country: validated.country || "VE",
+        latitude: validated.latitude || null,
+        longitude: validated.longitude || null,
+        externalLinks: validated.externalLinks ?? null,
+        closedAt: validated.closedAt ? new Date(validated.closedAt) : null,
+        soldPrice: validated.soldPrice || null,
+        commissionRate: validated.commissionRate || null,
+        userId,
+      })
+      .returning();
 
-  if (validated.tagIds && validated.tagIds.length > 0) {
-    await db.insert(propertyTags).values(
-      validated.tagIds.map((tagId) => ({
-        propertyId: property.id,
-        tagId,
-      })),
-    );
-  }
+    if (validated.tagIds && validated.tagIds.length > 0) {
+      await tx.insert(propertyTags).values(
+        validated.tagIds.map((tagId) => ({
+          propertyId: created.id,
+          tagId,
+        })),
+      );
+    }
+
+    return created;
+  });
 
   revalidatePath("/properties");
   revalidateTag(`dashboard-${userId}`, "max");
@@ -346,7 +350,7 @@ export async function addPropertyImage(
   return image;
 }
 
-export async function deletePropertyImage(imageId: string, key: string) {
+export async function deletePropertyImage(imageId: string, _key?: string) {
   // Verify the image belongs to a property owned by the user
   const userId = await requireUserId();
   const image = await db.query.propertyImages.findFirst({
@@ -357,12 +361,13 @@ export async function deletePropertyImage(imageId: string, key: string) {
     throw new Error("Image not found");
   }
 
-  // Delete from MinIO (don't fail if the file doesn't exist)
+  // Use the key from the DB record, not the client parameter, to prevent
+  // a malicious client from deleting arbitrary MinIO objects.
   try {
     await s3.send(
       new DeleteObjectCommand({
         Bucket: MEDIA_BUCKET,
-        Key: key,
+        Key: image.key,
       }),
     );
   } catch (err) {
