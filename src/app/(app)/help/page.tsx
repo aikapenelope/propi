@@ -91,7 +91,7 @@ const allSections: Section[] = [
       },
       {
         q: "Como usar tags para segmentar?",
-        a: "Los tags son etiquetas de colores que puedes asignar a contactos y propiedades. Crea tags como 'VIP', 'Comprador', 'Inversor'. Usa los tags para filtrar y para enviar campanas de email a segmentos especificos.",
+        a: "Los tags son etiquetas de colores que puedes asignar a contactos y propiedades. Crea tags como 'VIP', 'Comprador', 'Inversor'. Usa los tags para filtrar contactos rapidamente.",
       },
       {
         q: "Como llamar a un contacto desde el telefono?",
@@ -168,6 +168,29 @@ const allSections: Section[] = [
     ],
   },
   {
+    id: "reports",
+    icon: FileText,
+    title: "Reportes y PDFs",
+    items: [
+      {
+        q: "Como generar un reporte?",
+        a: "Ve a Reportes en el sidebar. Selecciona el periodo (mes, trimestre, ano, o personalizado) y toca 'Generar'. Luego descarga el PDF de 5 paginas con portada, resumen ejecutivo, transacciones, pipeline e inventario.",
+      },
+      {
+        q: "Como descargar la ficha de una propiedad?",
+        a: "En el detalle de la propiedad, toca el boton 'Ficha PDF'. Se genera un PDF de 1 pagina con foto, titulo, precio, specs, descripcion y tu nombre/empresa.",
+      },
+      {
+        q: "Como poner el nombre de mi empresa en los PDFs?",
+        a: "Ve a Configuracion > Marca de la Empresa. Ingresa el nombre de tu inmobiliaria y sube tu logo. Aparecera en la portada de reportes y en el header de fichas de propiedad.",
+      },
+      {
+        q: "Que son los comparables de mercado?",
+        a: "En el detalle de cada propiedad, Propi busca automaticamente 3-5 propiedades similares en MercadoLibre (mismo tipo, ciudad, rango de precio) y te muestra el precio promedio, minimo, maximo y precio por m2. Util para justificar precios ante clientes.",
+      },
+    ],
+  },
+  {
     id: "tokens",
     icon: Key,
     title: "Tokens y Conexiones",
@@ -190,7 +213,7 @@ const allSections: Section[] = [
       },
       {
         q: "Como configurar el email?",
-        a: "Propi usa Resend para email marketing. Crea una cuenta gratis en resend.com, obtiene tu API key, y agregala como RESEND_API_KEY en las variables de entorno de Coolify.",
+        a: "Propi usa Resend para enviar fichas de propiedad por email. La API key global se configura como variable de entorno RESEND_API_KEY en Coolify. No necesitas configurar nada en la app.",
       },
       {
         q: "Como configurar el webhook de Meta?",
@@ -205,15 +228,23 @@ const allSections: Section[] = [
     items: [
       {
         q: "Que puedo hacer en el telefono?",
-        a: "Inbox (responder mensajes), Contactos (ver, buscar, llamar), Propiedades (ver, compartir), Calendario (ver citas). Todo lo demas (dashboard, documentos, marketing, Propi Magic) esta en el menu 'Mas'.",
+        a: "Tareas, Contactos (ver, buscar, llamar), Propiedades (ver, compartir, ficha PDF), Calendario (ver citas). Todo lo demas (dashboard, reportes, Propi Magic, configuracion) esta en el boton central del menu.",
       },
       {
         q: "Funciona sin internet?",
-        a: "Parcialmente. Las paginas que ya visitaste se cachean y se muestran offline. Pero para crear contactos, enviar mensajes o buscar propiedades necesitas conexion.",
+        a: "Parcialmente. Las paginas que ya visitaste se cachean y se muestran offline. Las fotos de propiedades tambien se cachean. Pero para crear contactos o buscar propiedades necesitas conexion.",
       },
       {
         q: "Como actualizar la app?",
-        a: "La PWA se actualiza automaticamente. El service worker verifica actualizaciones cada 60 minutos. Si hay una nueva version, se descarga en segundo plano y se activa en la proxima visita.",
+        a: "La PWA se actualiza automaticamente. El service worker verifica actualizaciones cada vez que abres la app. Si hay una nueva version, se descarga en segundo plano y se activa en la proxima visita.",
+      },
+      {
+        q: "Que son los shortcuts?",
+        a: "Si mantienes presionado el icono de Propi en tu pantalla de inicio (Android), aparece un menu rapido con: Nueva Propiedad, Contactos, y Calendario. Acceso directo sin abrir la app completa.",
+      },
+      {
+        q: "Como importar contactos del telefono?",
+        a: "En Contactos, toca 'Importar'. En Android con Chrome, puedes seleccionar contactos directamente del telefono. En iPhone, exporta tus contactos como archivo .vcf desde la app de Contactos y subelo a Propi.",
       },
     ],
   },
