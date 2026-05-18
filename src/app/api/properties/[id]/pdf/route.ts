@@ -49,10 +49,33 @@ export async function GET(
     // Fallback
   }
 
-  // Build cover image URL (absolute for PDF rendering)
+  // Read cover image directly from MinIO as buffer (avoids self-HTTP fetch issues)
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://propi.aikalabs.cc";
   const coverImage = property.images[0];
-  const coverImageUrl = coverImage ? `${baseUrl}/api/images/${coverImage.key}` : null;
+  let coverImageUrl: string | null = null;
+
+  if (coverImage) {
+    try {
+      const { GetObjectCommand } = await import("@aws-sdk/client-s3");
+      const { s3, MEDIA_BUCKET } = await import("@/lib/s3");
+      const response = await s3.send(
+        new GetObjectCommand({ Bucket: MEDIA_BUCKET, Key: coverImage.key }),
+      );
+      if (response.Body) {
+        const chunks: Uint8Array[] = [];
+        const stream = response.Body as AsyncIterable<Uint8Array>;
+        for await (const chunk of stream) {
+          chunks.push(chunk);
+        }
+        const buffer = Buffer.concat(chunks);
+        const contentType = response.ContentType || "image/jpeg";
+        coverImageUrl = `data:${contentType};base64,${buffer.toString("base64")}`;
+      }
+    } catch {
+      // Image unavailable — PDF will render without it
+    }
+  }
+
   const publicUrl = `${baseUrl}/p/${property.id}`;
 
   try {
