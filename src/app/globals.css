@@ -127,6 +127,17 @@ body {
   text-shadow: none;
 }
 
+/* Ambient background glows: toggle by theme */
+.light .ambient-dark {
+  display: none !important;
+}
+.ambient-light {
+  display: none !important;
+}
+.light .ambient-light {
+  display: block !important;
+}
+
 /* Smooth scrolling for PWA feel */
 * {
   -webkit-tap-highlight-color: transparent;
