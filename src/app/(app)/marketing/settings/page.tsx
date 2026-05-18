@@ -1,14 +1,12 @@
-import { Instagram, Facebook, MessageCircle, Mail, ShoppingBag, Wallet, ChevronRight } from "lucide-react";
+import { Instagram, Facebook, MessageCircle, Mail, Wallet, ChevronRight } from "lucide-react";
 import { getAllSocialAccounts } from "@/server/actions/social-accounts";
 import { formatDate } from "@/lib/utils";
 import { SocialAccountForm } from "@/components/marketing/social-account-form";
-import { WasiConfigForm } from "@/components/marketing/wasi-config-form";
 import { ResendConfigForm } from "@/components/marketing/resend-config-form";
 import { TokenExpiryWarning } from "@/components/marketing/token-expiry-warning";
 import { SetupGuide } from "@/components/marketing/setup-guide";
 import { WhatsAppTemplateConfig } from "@/components/marketing/whatsapp-template-config";
 import { ENABLE_META_INBOX } from "@/lib/feature-flags";
-import { InfoTooltip } from "@/components/ui/info-tooltip";
 
 export const dynamic = "force-dynamic";
 
@@ -17,7 +15,6 @@ export default async function MarketingSettingsPage() {
   const igAccount = accounts.find((a) => a.platform === "instagram");
   const fbAccount = accounts.find((a) => a.platform === "facebook");
   const waAccount = accounts.find((a) => a.platform === "whatsapp");
-  const wasiAccount = accounts.find((a) => a.platform === "wasi");
   const resendAccount = accounts.find((a) => a.platform === "resend");
 
   return (
@@ -82,36 +79,6 @@ export default async function MarketingSettingsPage() {
           </div>
           <ChevronRight className="h-4 w-4 text-muted-foreground/40" />
         </a>
-
-        {/* Wasi */}
-        <div className="rounded-lg border border-border p-4">
-          <div className="mb-4 flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-orange-500/10">
-              <ShoppingBag className="h-5 w-5 text-orange-500" />
-            </div>
-            <div>
-              <h2 className="font-semibold text-foreground">Wasi</h2>
-              <p className="text-xs text-muted-foreground flex items-center gap-1">
-                {wasiAccount
-                  ? `Conectado: ${wasiAccount.platformAccountId}`
-                  : "No conectado"}
-                <InfoTooltip text="Conecta tu cuenta de Wasi para publicar propiedades con un click desde Propi." />
-              </p>
-            </div>
-          </div>
-          <WasiConfigForm
-            existing={
-              wasiAccount
-                ? {
-                    idCompany: wasiAccount.platformAccountId,
-                    wasiToken:
-                      (wasiAccount.metadata as Record<string, string> | null)
-                        ?.wasiToken || wasiAccount.accessToken,
-                  }
-                : undefined
-            }
-          />
-        </div>
 
         {ENABLE_META_INBOX && (
           <>

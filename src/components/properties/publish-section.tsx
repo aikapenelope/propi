@@ -7,11 +7,77 @@ import {
   Check,
   ExternalLink,
   ShoppingBag,
-  Loader2,
-  Zap,
+  Globe,
+  Store,
+  Newspaper,
 } from "lucide-react";
 import { updatePropertyLinks } from "@/server/actions/properties";
-import { publishPropertyToWasi } from "@/server/actions/wasi-publish";
+
+// ---------------------------------------------------------------------------
+// Portal definitions
+// ---------------------------------------------------------------------------
+
+interface Portal {
+  id: string;
+  name: string;
+  icon: React.ReactNode;
+  color: string;
+  publishUrl: string;
+  description: string;
+  tip: string;
+}
+
+const PORTALS: Portal[] = [
+  {
+    id: "mercadolibre",
+    name: "MercadoLibre",
+    icon: <ShoppingBag className="h-4 w-4" />,
+    color: "text-yellow-500",
+    publishUrl: "https://inmuebles.mercadolibre.com.ve/publicar",
+    description: "El marketplace mas grande de Venezuela",
+    tip: "Usa la categoria correcta (Apartamento, Casa, etc.) y sube al menos 5 fotos para mejor visibilidad.",
+  },
+  {
+    id: "wasi",
+    name: "Wasi",
+    icon: <Store className="h-4 w-4" />,
+    color: "text-orange-500",
+    publishUrl: "https://wasi.co/login",
+    description: "CRM y portal para agentes inmobiliarios",
+    tip: "Wasi distribuye tu propiedad a portales asociados (Inmuebles24, Properati, etc.) automaticamente.",
+  },
+  {
+    id: "tuinmueble",
+    name: "TuInmueble",
+    icon: <Globe className="h-4 w-4" />,
+    color: "text-blue-500",
+    publishUrl: "https://tuinmueble.com.ve/publicar",
+    description: "Portal inmobiliario popular en Venezuela",
+    tip: "Incluye la ubicacion exacta y el precio en USD para mejor posicionamiento.",
+  },
+  {
+    id: "corotos",
+    name: "Corotos",
+    icon: <Newspaper className="h-4 w-4" />,
+    color: "text-green-500",
+    publishUrl: "https://www.corotos.com.ve/publicar",
+    description: "Clasificados gratuitos de Venezuela",
+    tip: "Publica gratis. Usa un titulo descriptivo con tipo, zona y precio.",
+  },
+  {
+    id: "fb-marketplace",
+    name: "Facebook Marketplace",
+    icon: <Store className="h-4 w-4" />,
+    color: "text-blue-600",
+    publishUrl: "https://www.facebook.com/marketplace/create/rental",
+    description: "Llega a compradores locales en Facebook",
+    tip: "Selecciona 'Propiedades en venta/alquiler'. Las publicaciones con fotos de calidad reciben 3x mas contactos.",
+  },
+];
+
+// ---------------------------------------------------------------------------
+// Props
+// ---------------------------------------------------------------------------
 
 interface PublishSectionProps {
   propertyId: string;
@@ -29,12 +95,15 @@ interface PublishSectionProps {
   state: string | null;
   address: string | null;
   externalLinks: string[];
-  hasWasiToken: boolean;
-  wasiId?: string;
 }
+
+// ---------------------------------------------------------------------------
+// Component
+// ---------------------------------------------------------------------------
 
 export function PublishSection(props: PublishSectionProps) {
   const [copied, setCopied] = useState(false);
+  const [expandedPortal, setExpandedPortal] = useState<string | null>(null);
   const [links, setLinks] = useState<string[]>([
     props.externalLinks[0] || "",
     props.externalLinks[1] || "",
@@ -57,6 +126,8 @@ export function PublishSection(props: PublishSectionProps) {
     sale: "VENTA",
     rent: "ALQUILER",
     sale_rent: "VENTA / ALQUILER",
+    sell: "VENTA",
+    lease: "ALQUILER",
   };
 
   const typeLabel: Record<string, string> = {
@@ -94,6 +165,15 @@ export function PublishSection(props: PublishSectionProps) {
     });
   }
 
+  /** Copy text to clipboard, then open the portal in a new tab. */
+  function handlePortalClick(portal: Portal) {
+    navigator.clipboard.writeText(listingText).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+      window.open(portal.publishUrl, "_blank", "noopener,noreferrer");
+    });
+  }
+
   async function handleSaveLinks() {
     setSaving(true);
     try {
@@ -119,7 +199,7 @@ export function PublishSection(props: PublishSectionProps) {
       <div className="mb-5">
         <div className="flex items-center justify-between mb-2">
           <span className="text-xs text-muted-foreground">
-            Texto listo para copiar y pegar
+            Texto listo para copiar y pegar en cualquier portal
           </span>
           <button
             onClick={handleCopy}
@@ -146,41 +226,56 @@ export function PublishSection(props: PublishSectionProps) {
       {/* Portal buttons */}
       <div className="mb-5">
         <span className="text-xs text-muted-foreground block mb-2">
-          Publicar en portales
+          Publicar rapidamente (copia el texto y abre el portal)
         </span>
-        <div className="flex flex-wrap gap-2">
-          {/* Wasi: auto-publish if token configured */}
-          {props.hasWasiToken ? (
-            props.wasiId ? (
-              <span className="inline-flex items-center gap-1.5 rounded-lg bg-green-500/10 border border-green-500/20 px-3 py-2 text-xs font-medium text-green-400">
-                <Check className="h-3.5 w-3.5" />
-                Wasi #{props.wasiId}
-              </span>
-            ) : (
-              <WasiPublishButton propertyId={props.propertyId} />
-            )
-          ) : (
-            <a
-              href="https://wasi.co/login"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-xs font-medium text-foreground hover:bg-muted transition-colors"
-            >
-              <ShoppingBag className="h-3.5 w-3.5 text-orange-500" />
-              Wasi (manual)
-              <ExternalLink className="h-3 w-3 opacity-40" />
-            </a>
-          )}
+        <div className="space-y-2">
+          {PORTALS.map((portal) => (
+            <div key={portal.id} className="rounded-xl border border-border overflow-hidden">
+              <div className="flex items-center gap-3 p-3">
+                <button
+                  onClick={() => handlePortalClick(portal)}
+                  className="flex items-center gap-2.5 flex-1 min-w-0 text-left group"
+                >
+                  <div className={`w-8 h-8 rounded-lg bg-muted flex items-center justify-center shrink-0 ${portal.color}`}>
+                    {portal.icon}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium text-foreground group-hover:text-primary transition-colors">
+                      {portal.name}
+                    </p>
+                    <p className="text-[10px] text-muted-foreground truncate">
+                      {portal.description}
+                    </p>
+                  </div>
+                  <ExternalLink className="h-3.5 w-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                </button>
+                <button
+                  onClick={() =>
+                    setExpandedPortal(
+                      expandedPortal === portal.id ? null : portal.id,
+                    )
+                  }
+                  className="text-[10px] text-muted-foreground hover:text-foreground transition-colors px-2 py-1 rounded-md hover:bg-muted shrink-0"
+                >
+                  {expandedPortal === portal.id ? "Ocultar" : "Tip"}
+                </button>
+              </div>
+              {expandedPortal === portal.id && (
+                <div className="px-3 pb-3 pt-0">
+                  <p className="text-[10px] text-muted-foreground bg-muted rounded-lg p-2.5 leading-relaxed">
+                    {portal.tip}
+                  </p>
+                </div>
+              )}
+            </div>
+          ))}
         </div>
-        <p className="text-[10px] text-muted-foreground mt-2">
-          Se publican las 4 fotos de Propi. Para agregar mas fotos, edita la propiedad directamente en el portal.
-        </p>
       </div>
 
       {/* Link inputs */}
       <div>
         <span className="text-xs text-muted-foreground block mb-2">
-          Pega los links de tu publicacion
+          Pega los links de tu publicacion (aparecen en la pagina publica)
         </span>
         <div className="space-y-2">
           {[0, 1, 2].map((i) => (
@@ -195,9 +290,9 @@ export function PublishSection(props: PublishSectionProps) {
               }}
               placeholder={
                 i === 0
-                  ? "https://wasi.co/..."
+                  ? "https://inmuebles.mercadolibre.com.ve/..."
                   : i === 1
-                    ? "https://inmuebles24.com/..."
+                    ? "https://tuinmueble.com/..."
                     : "https://..."
               }
               className="w-full rounded-lg border border-border bg-background px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-primary"
@@ -219,49 +314,6 @@ export function PublishSection(props: PublishSectionProps) {
           )}
         </button>
       </div>
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Wasi auto-publish button (only shown when token is configured)
-// ---------------------------------------------------------------------------
-
-function WasiPublishButton({ propertyId }: { propertyId: string }) {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const router = useRouter();
-
-  async function handlePublish() {
-    setLoading(true);
-    setError(null);
-    try {
-      await publishPropertyToWasi(propertyId);
-      router.refresh();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Error al publicar");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  return (
-    <div className="inline-flex flex-col gap-1">
-      <button
-        onClick={handlePublish}
-        disabled={loading}
-        className="inline-flex items-center gap-1.5 rounded-lg bg-orange-500 px-3 py-2 text-xs font-medium text-white hover:bg-orange-600 transition-colors disabled:opacity-50"
-      >
-        {loading ? (
-          <Loader2 className="h-3.5 w-3.5 animate-spin" />
-        ) : (
-          <Zap className="h-3.5 w-3.5" />
-        )}
-        {loading ? "Publicando..." : "Publicar en Wasi"}
-      </button>
-      {error && (
-        <span className="text-[10px] text-red-400">{error}</span>
-      )}
     </div>
   );
 }

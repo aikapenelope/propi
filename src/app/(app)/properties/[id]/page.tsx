@@ -11,7 +11,6 @@ import {
   Calendar,
 } from "lucide-react";
 import { getProperty, getImageUrl } from "@/server/actions/properties";
-import { getSocialAccount } from "@/server/actions/social-accounts";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { DeletePropertyButton } from "@/components/properties/delete-property-button";
 import { PropertyImageUpload } from "@/components/properties/property-image-upload";
@@ -71,8 +70,8 @@ export default async function PropertyDetailPage({
     notFound();
   }
 
-  // Resolve image URLs, check Wasi connection, and get contacts for email
-  const [imagesWithUrls, wasiAccount, contactList] = await Promise.all([
+  // Resolve image URLs and get contacts for email
+  const [imagesWithUrls, contactList] = await Promise.all([
     Promise.all(
       property.images.map(async (img) => {
         try {
@@ -83,7 +82,6 @@ export default async function PropertyDetailPage({
         }
       }),
     ),
-    getSocialAccount("wasi"),
     getContacts(),
   ]);
 
@@ -280,7 +278,7 @@ export default async function PropertyDetailPage({
         {/* Publish to portals */}
         <div className="flex items-center gap-1.5 mb-2">
           <h2 className="text-sm font-medium text-muted-foreground">Publicar en portales</h2>
-          <InfoTooltip text="Publica esta propiedad en Wasi con un click. Las fotos se suben automaticamente." />
+          <InfoTooltip text="Copia el texto de tu propiedad y publicala en los portales inmobiliarios mas populares." />
         </div>
         <PublishSection
           propertyId={id}
@@ -298,8 +296,6 @@ export default async function PropertyDetailPage({
           state={property.state}
           address={property.address}
           externalLinks={(property.externalLinks as string[] | null) || []}
-          hasWasiToken={!!wasiAccount}
-          wasiId={(property.externalIds as Record<string, string> | null)?.wasi}
         />
 
         {/* Property-Contact Matching */}

@@ -71,8 +71,8 @@ const allSections: Section[] = [
         a: "En el detalle de la propiedad, toca el boton verde 'Compartir'. Selecciona WhatsApp, Instagram, Facebook o Copiar Link. Se genera un mensaje con titulo, precio y link directo.",
       },
       {
-        q: "Como publicar en Wasi?",
-        a: "Primero configura tus credenciales de Wasi en Configuracion (id_company + wasi_token). Luego, en el detalle de cada propiedad, toca 'Publicar en Wasi'. Las imagenes se suben automaticamente.",
+        q: "Como publicar en portales?",
+        a: "En el detalle de la propiedad, baja a 'Publicar en Portales'. Copia el texto pre-generado y usa los botones para abrir MercadoLibre, Wasi, TuInmueble, Corotos o Facebook Marketplace directamente.",
       },
       {
         q: "Que monedas soporta?",
@@ -185,8 +185,8 @@ const allSections: Section[] = [
         a: "Propi extrae datos de MercadoLibre Venezuela automaticamente para Propi Magic (inteligencia de mercado). No necesitas conectar tu cuenta. Los datos se sincronizan diariamente y se usan para calcular KPIs de precios, tendencias y comparables.",
       },
       {
-        q: "Como conectar Wasi?",
-        a: "Ve a Configuracion > Wasi. Ingresa tu id_company y wasi_token (los obtienes en el dashboard de Wasi: api.wasi.co). No expiran.",
+        q: "Como publicar en Wasi?",
+        a: "En el detalle de la propiedad, usa el boton 'Wasi' para abrir wasi.co directamente. Copia el texto pre-generado y pegalo en el formulario de Wasi.",
       },
       {
         q: "Como configurar el email?",
@@ -238,7 +238,7 @@ const quickLinks = [
   { label: "Meta Developer Dashboard", url: "https://developers.facebook.com", icon: Facebook },
   { label: "Clerk Dashboard", url: "https://clerk.com", icon: Shield },
   { label: "Resend (Email)", url: "https://resend.com", icon: Mail },
-  { label: "Wasi API", url: "https://api.wasi.co", icon: ShoppingBag },
+  { label: "Wasi", url: "https://wasi.co", icon: ShoppingBag },
   { label: "MercadoLibre Developers", url: "https://developers.mercadolibre.com.ve", icon: ShoppingBag },
   { label: "Groq Console", url: "https://console.groq.com", icon: Sparkles },
 ];
