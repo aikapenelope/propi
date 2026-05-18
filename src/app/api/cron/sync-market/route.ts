@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { marketSyncQueue } from "@/lib/queue";
 
 export const dynamic = "force-dynamic";
 
@@ -27,6 +26,8 @@ export async function GET(request: Request) {
   }
 
   try {
+    // Dynamic import to avoid loading Redis/BullMQ at build time
+    const { marketSyncQueue } = await import("@/lib/queue");
     const job = await marketSyncQueue.add(
       "sync",
       { type: "global" },
