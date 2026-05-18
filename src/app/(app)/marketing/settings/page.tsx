@@ -1,16 +1,21 @@
-import { Instagram, Facebook, MessageCircle, Wallet, ChevronRight } from "lucide-react";
+import { Instagram, Facebook, MessageCircle, Building2, Wallet, ChevronRight } from "lucide-react";
 import { getAllSocialAccounts } from "@/server/actions/social-accounts";
+import { getUserSettings } from "@/server/actions/user-settings";
 import { formatDate } from "@/lib/utils";
 import { SocialAccountForm } from "@/components/marketing/social-account-form";
 import { TokenExpiryWarning } from "@/components/marketing/token-expiry-warning";
 import { SetupGuide } from "@/components/marketing/setup-guide";
 import { WhatsAppTemplateConfig } from "@/components/marketing/whatsapp-template-config";
+import { BrandingConfigForm } from "@/components/marketing/branding-config-form";
 import { ENABLE_META_INBOX } from "@/lib/feature-flags";
 
 export const dynamic = "force-dynamic";
 
 export default async function MarketingSettingsPage() {
-  const accounts = await getAllSocialAccounts();
+  const [accounts, settings] = await Promise.all([
+    getAllSocialAccounts(),
+    getUserSettings(),
+  ]);
   const igAccount = accounts.find((a) => a.platform === "instagram");
   const fbAccount = accounts.find((a) => a.platform === "facebook");
   const waAccount = accounts.find((a) => a.platform === "whatsapp");
@@ -298,6 +303,29 @@ export default async function MarketingSettingsPage() {
         </div>
           </>
         )}
+
+        {/* Company Branding */}
+        <div className="rounded-2xl border border-border p-5">
+          <div className="mb-4 flex items-center gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10">
+              <Building2 className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <h2 className="font-semibold text-foreground">
+                Marca de la Empresa
+              </h2>
+              <p className="text-xs text-muted-foreground">
+                Nombre y logo que aparecen en reportes y fichas PDF
+              </p>
+            </div>
+          </div>
+          <BrandingConfigForm
+            existing={{
+              companyName: settings.companyName ?? null,
+              companyLogoKey: settings.companyLogoKey ?? null,
+            }}
+          />
+        </div>
 
         {/* WhatsApp Appointment Template */}
         <div className="rounded-2xl border border-border p-5">

@@ -38,13 +38,21 @@ export async function GET(
     return NextResponse.json({ error: "Propiedad no encontrada" }, { status: 404 });
   }
 
-  // Get agent name from Clerk
+  // Get agent name and company branding
   let agentName = "Agente";
+  let companyName: string | null = null;
   try {
     const { clerkClient } = await import("@clerk/nextjs/server");
     const client = await clerkClient();
     const user = await client.users.getUser(userId);
     agentName = [user.firstName, user.lastName].filter(Boolean).join(" ") || "Agente";
+  } catch {
+    // Fallback
+  }
+  try {
+    const { getUserSettingsByUserId } = await import("@/server/actions/user-settings");
+    const settings = await getUserSettingsByUserId(userId);
+    companyName = settings.companyName ?? null;
   } catch {
     // Fallback
   }
@@ -76,6 +84,7 @@ export async function GET(
         state: property.state,
         coverImageUrl,
         agentName,
+        companyName,
         publicUrl,
       },
     });

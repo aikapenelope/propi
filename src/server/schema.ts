@@ -856,3 +856,23 @@ export const metricShares = pgTable(
   ],
 );
 
+
+// ---------------------------------------------------------------------------
+// User Settings (company branding for PDFs and public pages)
+// ---------------------------------------------------------------------------
+
+export const userSettings = pgTable("user_settings", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: text("user_id").notNull().unique(),
+  /** Company or brokerage name displayed on PDFs and public pages */
+  companyName: varchar("company_name", { length: 255 }),
+  /** MinIO key for the company logo image */
+  companyLogoKey: text("company_logo_key"),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow()
+    .$onUpdate(() => new Date()),
+});

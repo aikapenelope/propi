@@ -28,6 +28,7 @@ export interface PropertySheetData {
   state: string | null;
   coverImageUrl: string | null;
   agentName: string;
+  companyName: string | null;
   publicUrl: string;
 }
 
@@ -217,7 +218,9 @@ export function PropertySheetPDF({ data }: { data: PropertySheetData }) {
       <Page size="LETTER" style={s.page}>
         {/* Header band */}
         <View style={s.header}>
-          <Text style={s.headerTitle}>PROPI</Text>
+          <Text style={s.headerTitle}>
+            {data.companyName?.toUpperCase() || "PROPI"}
+          </Text>
           <Text style={s.headerBadge}>
             {opLabels[data.operation] || data.operation}
           </Text>
@@ -269,7 +272,7 @@ export function PropertySheetPDF({ data }: { data: PropertySheetData }) {
         <View style={s.footer} fixed>
           <View>
             <Text style={s.footerAgent}>{data.agentName}</Text>
-            <Text style={s.footerText}>Propi CRM</Text>
+            <Text style={s.footerText}>{data.companyName || "Propi CRM"}</Text>
           </View>
           <Text style={s.footerText}>{data.publicUrl}</Text>
         </View>
