@@ -75,7 +75,7 @@ async function syncCategory(
   cutoff: Date,
 ): Promise<{ inserted: number; updated: number; skipped: number }> {
   let inserted = 0;
-  let updated = 0;
+  const updated = 0;
   let skipped = 0;
 
   for (let page = 0; page < MAX_PAGES; page++) {
@@ -187,7 +187,12 @@ async function syncCategory(
 // Worker
 // ---------------------------------------------------------------------------
 
-const REDIS_URL = process.env.REDIS_URL || "redis://:password@10.0.1.20:6379/3";
+const REDIS_URL = process.env.REDIS_URL;
+if (!REDIS_URL) {
+  throw new Error(
+    "REDIS_URL is not set. The worker cannot start without a Redis connection.",
+  );
+}
 
 /** Refresh ML service token using client credentials */
 async function refreshServiceToken(refreshToken: string) {
