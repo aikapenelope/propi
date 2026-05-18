@@ -647,6 +647,8 @@ export const tasks = pgTable(
     }),
     dueAt: timestamp("due_at", { withTimezone: true }),
     notes: text("notes"),
+    /** Recurrence pattern. When completed, a new task is created with the next due date. */
+    recurrence: varchar("recurrence", { length: 20 }),
     completed: boolean("completed").notNull().default(false),
     completedAt: timestamp("completed_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true })

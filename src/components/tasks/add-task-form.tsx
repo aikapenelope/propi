@@ -1,14 +1,22 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Plus, Calendar } from "lucide-react";
+import { Plus, Calendar, Repeat } from "lucide-react";
 import { createTask } from "@/server/actions/tasks";
 import { useRouter } from "next/navigation";
+
+const RECURRENCE_OPTIONS = [
+  { value: "", label: "No repetir" },
+  { value: "daily", label: "Diario" },
+  { value: "weekly", label: "Semanal" },
+  { value: "monthly", label: "Mensual" },
+] as const;
 
 export function AddTaskForm() {
   const router = useRouter();
   const [title, setTitle] = useState("");
   const [dueAt, setDueAt] = useState("");
+  const [recurrence, setRecurrence] = useState("");
   const [isPending, startTransition] = useTransition();
 
   function handleAdd() {
@@ -16,10 +24,15 @@ export function AddTaskForm() {
     const t = title.trim();
     setTitle("");
     setDueAt("");
+    setRecurrence("");
 
     startTransition(async () => {
       try {
-        await createTask({ title: t, dueAt: dueAt || undefined });
+        await createTask({
+          title: t,
+          dueAt: dueAt || undefined,
+          recurrence: (recurrence as "daily" | "weekly" | "monthly") || undefined,
+        });
         router.refresh();
       } catch {
         setTitle(t);
@@ -28,7 +41,7 @@ export function AddTaskForm() {
   }
 
   return (
-    <div className="flex gap-2 mb-6">
+    <div className="flex flex-wrap gap-2 mb-6">
       <input
         type="text"
         value={title}
@@ -37,7 +50,7 @@ export function AddTaskForm() {
           if (e.key === "Enter") handleAdd();
         }}
         placeholder="Nueva tarea... (Enter para guardar)"
-        className="flex-1 rounded-xl border border-border bg-background px-4 py-3 text-sm outline-none focus:ring-1 focus:ring-primary/20"
+        className="flex-1 min-w-[200px] rounded-xl border border-border bg-background px-4 py-3 text-sm outline-none focus:ring-1 focus:ring-primary/20"
         disabled={isPending}
       />
       <div className="relative">
@@ -48,6 +61,20 @@ export function AddTaskForm() {
           className="rounded-xl border border-border bg-background px-3 py-3 text-xs text-muted-foreground outline-none focus:ring-1 focus:ring-primary/20 w-[170px]"
         />
         <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+      </div>
+      <div className="relative">
+        <select
+          value={recurrence}
+          onChange={(e) => setRecurrence(e.target.value)}
+          className="rounded-xl border border-border bg-background px-3 py-3 pr-8 text-xs text-muted-foreground outline-none focus:ring-1 focus:ring-primary/20 appearance-none"
+        >
+          {RECURRENCE_OPTIONS.map((opt) => (
+            <option key={opt.value} value={opt.value}>
+              {opt.label}
+            </option>
+          ))}
+        </select>
+        <Repeat className="absolute right-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
       </div>
       <button
         onClick={handleAdd}

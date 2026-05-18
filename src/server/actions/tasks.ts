@@ -7,6 +7,29 @@ import { requireUserId } from "@/lib/auth-helper";
 import { revalidatePath } from "next/cache";
 
 // ---------------------------------------------------------------------------
+// Recurrence helpers
+// ---------------------------------------------------------------------------
+
+type Recurrence = "daily" | "weekly" | "monthly" | null;
+
+/** Advance a date by the given recurrence interval. */
+function advanceDate(date: Date, recurrence: string): Date {
+  const next = new Date(date);
+  switch (recurrence) {
+    case "daily":
+      next.setDate(next.getDate() + 1);
+      break;
+    case "weekly":
+      next.setDate(next.getDate() + 7);
+      break;
+    case "monthly":
+      next.setMonth(next.getMonth() + 1);
+      break;
+  }
+  return next;
+}
+
+// ---------------------------------------------------------------------------
 // Get tasks (with optional filters)
 // ---------------------------------------------------------------------------
 
@@ -76,6 +99,7 @@ export async function createTask(data: {
   dueAt?: string;
   contactId?: string;
   propertyId?: string;
+  recurrence?: Recurrence;
 }) {
   const userId = await requireUserId();
 
@@ -89,6 +113,7 @@ export async function createTask(data: {
       dueAt: data.dueAt ? new Date(data.dueAt) : null,
       contactId: data.contactId || null,
       propertyId: data.propertyId || null,
+      recurrence: data.recurrence || null,
     })
     .returning();
 
@@ -106,7 +131,16 @@ export async function toggleTask(taskId: string) {
 
   const task = await db.query.tasks.findFirst({
     where: and(eq(tasks.id, taskId), eq(tasks.userId, userId)),
-    columns: { id: true, completed: true },
+    columns: {
+      id: true,
+      completed: true,
+      title: true,
+      dueAt: true,
+      recurrence: true,
+      contactId: true,
+      propertyId: true,
+      notes: true,
+    },
   });
   if (!task) throw new Error("Tarea no encontrada");
 
@@ -119,6 +153,20 @@ export async function toggleTask(taskId: string) {
       completedAt: nowCompleted ? new Date() : null,
     })
     .where(eq(tasks.id, taskId));
+
+  // If completing a recurring task, create the next occurrence automatically
+  if (nowCompleted && task.recurrence && task.dueAt) {
+    const nextDue = advanceDate(new Date(task.dueAt), task.recurrence);
+    await db.insert(tasks).values({
+      userId,
+      title: task.title,
+      dueAt: nextDue,
+      contactId: task.contactId,
+      propertyId: task.propertyId,
+      recurrence: task.recurrence,
+      notes: task.notes,
+    });
+  }
 
   revalidatePath("/tasks");
   revalidatePath("/dashboard");

@@ -19,6 +19,7 @@ import {
   StickyNote,
   Save,
   Loader2,
+  Repeat,
 } from "lucide-react";
 import Link from "next/link";
 import { toggleTask, deleteTask, updateTaskNotes } from "@/server/actions/tasks";
@@ -29,6 +30,7 @@ interface Task {
   title: string;
   dueAt: Date | null;
   notes: string | null;
+  recurrence: string | null;
   completed: boolean;
   completedAt: Date | null;
   createdAt: Date;
@@ -306,6 +308,12 @@ function TaskItem({ task }: { task: Task }) {
                   <Clock className="h-2.5 w-2.5" />
                 )}
                 {formatDue(task.dueAt)}
+              </span>
+            )}
+            {task.recurrence && (
+              <span className="flex items-center gap-1 text-[10px] text-primary/70">
+                <Repeat className="h-2.5 w-2.5" />
+                {task.recurrence === "daily" ? "Diario" : task.recurrence === "weekly" ? "Semanal" : "Mensual"}
               </span>
             )}
             {task.contact && (
