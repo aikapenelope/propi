@@ -64,23 +64,35 @@ export function ContactPicker({
   className,
 }: ContactPickerProps) {
   const isControlled = controlledValue !== undefined;
-  const initialId = isControlled ? controlledValue : (defaultValue ?? "");
-  const initialContact = contacts.find((c) => c.id === initialId);
 
-  const [selectedId, setSelectedId] = useState(initialId);
-  const [query, setQuery] = useState(initialContact?.name ?? "");
+  // Internal state for uncontrolled mode
+  const [internalId, setInternalId] = useState(defaultValue ?? "");
+  const [internalQuery, setInternalQuery] = useState(() => {
+    const c = contacts.find((ct) => ct.id === (defaultValue ?? ""));
+    return c?.name ?? "";
+  });
   const [open, setOpen] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Sync controlled value
-  useEffect(() => {
-    if (isControlled) {
-      setSelectedId(controlledValue);
-      const contact = contacts.find((c) => c.id === controlledValue);
-      setQuery(contact?.name ?? "");
-    }
-  }, [controlledValue, contacts, isControlled]);
+  // Derive the effective selected ID and display query.
+  // In controlled mode, the parent prop is the source of truth.
+  // In uncontrolled mode, internal state is the source of truth.
+  const selectedId = isControlled ? (controlledValue ?? "") : internalId;
+  const selectedContact = contacts.find((c) => c.id === selectedId);
+  // For the query (text input), we use internal state in both modes
+  // because the user types freely. But when a controlled value changes
+  // externally (e.g., form reset), we need to reflect the contact name.
+  const [prevControlledValue, setPrevControlledValue] = useState(controlledValue);
+  let query = internalQuery;
+  if (isControlled && controlledValue !== prevControlledValue) {
+    // Controlled value changed externally — sync display text
+    const newQuery = selectedContact?.name ?? "";
+    query = newQuery;
+    // Schedule state update for next render (React 19 pattern)
+    setPrevControlledValue(controlledValue);
+    setInternalQuery(newQuery);
+  }
 
   // Close on click outside
   useEffect(() => {
@@ -90,7 +102,7 @@ export function ContactPicker({
         // Restore selected name if user typed but didn't pick
         if (selectedId) {
           const contact = contacts.find((c) => c.id === selectedId);
-          if (contact) setQuery(contact.name);
+          if (contact) setInternalQuery(contact.name);
         }
       }
     }
@@ -100,8 +112,8 @@ export function ContactPicker({
 
   const selectContact = useCallback(
     (contact: ContactPickerItem) => {
-      setSelectedId(contact.id);
-      setQuery(contact.name);
+      setInternalId(contact.id);
+      setInternalQuery(contact.name);
       setOpen(false);
       onChange?.(contact.id);
     },
@@ -109,8 +121,8 @@ export function ContactPicker({
   );
 
   function clearSelection() {
-    setSelectedId("");
-    setQuery("");
+    setInternalId("");
+    setInternalQuery("");
     setOpen(false);
     onChange?.("");
     inputRef.current?.focus();
@@ -118,11 +130,11 @@ export function ContactPicker({
 
   function handleInputChange(e: React.ChangeEvent<HTMLInputElement>) {
     const val = e.target.value;
-    setQuery(val);
+    setInternalQuery(val);
     setOpen(val.length >= 1);
     // Clear selection when user edits the text
     if (selectedId) {
-      setSelectedId("");
+      setInternalId("");
       onChange?.("");
     }
   }

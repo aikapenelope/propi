@@ -221,10 +221,11 @@ async function refreshServiceToken(refreshToken: string) {
   };
 }
 
-/** Send email alert when ML token dies. Uses workerSendEmail for rate limiting. */
+/** Send email alert when ML token dies. */
 async function sendTokenDeathAlert(errorMessage: string) {
   const alertEmail = process.env.ALERT_EMAIL || process.env.MAIL_FROM;
-  if (!alertEmail) return;
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!alertEmail || !apiKey) return;
 
   const from = process.env.MAIL_FROM || "Propi <noreply@propi.aikalabs.cc>";
   const to = alertEmail.replace(/.*<(.+)>/, "$1");
@@ -240,26 +241,17 @@ async function sendTokenDeathAlert(errorMessage: string) {
     `<p><a href="${reauthorizeUrl}">Click aqui para re-autorizar</a></p>` +
     `<p>Despues de autorizar, el proximo cron sincronizara automaticamente.</p>`;
 
-  await workerSendEmail(to, "[Propi] MercadoLibre token muerto — re-autorizar", html, from);
+  await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ from, to: [to], subject: "[Propi] MercadoLibre token muerto — re-autorizar", html }),
+  });
 }
 
 const connection = new IORedis(REDIS_URL, {
   maxRetriesPerRequest: null,
   enableReadyCheck: false,
 });
-
-// Separate Redis connection for rate limiting with short timeout.
-// The BullMQ connection above uses maxRetriesPerRequest: null (required by
-// BullMQ) which hangs forever if Redis is down. Rate limit checks must
-// fail fast so email sends aren't blocked.
-const rateLimitConnection = new IORedis(REDIS_URL, {
-  maxRetriesPerRequest: 1,
-  enableReadyCheck: false,
-  lazyConnect: true,
-  connectTimeout: 2_000,
-  commandTimeout: 2_000,
-});
-rateLimitConnection.on("error", () => {});
 
 const worker = new Worker(
   "market-sync",
@@ -383,163 +375,17 @@ worker.on("failed", (job, err) => {
 });
 
 // ---------------------------------------------------------------------------
-// Email Campaign Worker
-// ---------------------------------------------------------------------------
-
-interface EmailJobData {
-  campaignId: string;
-  userId: string;
-  resendApiKey?: string;
-  recipients: { id: string; email: string }[];
-  subject: string;
-  htmlBody: string;
-}
-
-const MONTHLY_EMAIL_LIMIT = 3_000;
-
-/** Check monthly email limit in Redis. Returns true if under limit. */
-async function checkWorkerEmailLimit(apiKey?: string): Promise<boolean> {
-  try {
-    const key = apiKey || process.env.RESEND_API_KEY || "global";
-    const prefix = key.slice(0, 16);
-    const month = new Date().toISOString().slice(0, 7);
-    const redisKey = `email:month:${month}:${prefix}`;
-    const val = await rateLimitConnection.get(redisKey);
-    return !val || parseInt(val, 10) < MONTHLY_EMAIL_LIMIT;
-  } catch {
-    return true; // Fail open
-  }
-}
-
-/** Increment monthly email counter after successful send. */
-async function incrementWorkerEmailCount(apiKey?: string): Promise<void> {
-  try {
-    const key = apiKey || process.env.RESEND_API_KEY || "global";
-    const prefix = key.slice(0, 16);
-    const month = new Date().toISOString().slice(0, 7);
-    const redisKey = `email:month:${month}:${prefix}`;
-    const count = await rateLimitConnection.incr(redisKey);
-    if (count === 1) await rateLimitConnection.expire(redisKey, 45 * 24 * 60 * 60);
-  } catch {
-    // Fail open
-  }
-}
-
-/** Minimal Resend client for the worker (no Next.js imports). */
-async function workerSendEmail(to: string, subject: string, html: string, from: string, apiKey?: string) {
-  const key = apiKey || process.env.RESEND_API_KEY;
-  if (!key) throw new Error("No Resend API key available (user or global)");
-
-  if (!(await checkWorkerEmailLimit(apiKey))) {
-    throw new Error(`Monthly email limit reached (${MONTHLY_EMAIL_LIMIT}/month)`);
-  }
-
-  const res = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${key}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ from, to: [to], subject, html }),
-  });
-
-  if (!res.ok) {
-    const err = await res.text().catch(() => "");
-    throw new Error(`Resend error ${res.status}: ${err}`);
-  }
-
-  await incrementWorkerEmailCount(apiKey);
-}
-
-const emailWorker = new Worker(
-  "email-campaign",
-  async (job) => {
-    const data = job.data as EmailJobData;
-    console.log(
-      `[email-campaign] Processing campaign ${data.campaignId}: ${data.recipients.length} recipients`,
-    );
-
-    const from = process.env.MAIL_FROM || "Propi <noreply@propi.aikalabs.cc>";
-    let sentCount = 0;
-    let failedCount = 0;
-
-    for (const recipient of data.recipients) {
-      try {
-        await workerSendEmail(recipient.email, data.subject, data.htmlBody, from, data.resendApiKey);
-
-        await db
-          .insert(schema.campaignRecipients)
-          .values({
-            campaignId: data.campaignId,
-            contactId: recipient.id,
-            status: "delivered",
-            sentAt: new Date(),
-          });
-
-        sentCount++;
-      } catch (err) {
-        console.error(`[email-campaign] Failed for ${recipient.email}:`, err);
-
-        await db
-          .insert(schema.campaignRecipients)
-          .values({
-            campaignId: data.campaignId,
-            contactId: recipient.id,
-            status: "failed",
-          });
-
-        failedCount++;
-      }
-
-      await job.updateProgress(
-        Math.round(((sentCount + failedCount) / data.recipients.length) * 100),
-      );
-    }
-
-    // Update campaign final status
-    await db
-      .update(schema.emailCampaigns)
-      .set({
-        status: failedCount === data.recipients.length ? "failed" : "sent",
-        sentCount,
-        failedCount,
-        sentAt: new Date(),
-      })
-      .where(eq(schema.emailCampaigns.id, data.campaignId));
-
-    console.log(
-      `[email-campaign] Done: ${sentCount} sent, ${failedCount} failed`,
-    );
-
-    return { sentCount, failedCount };
-  },
-  {
-    connection,
-    concurrency: 1, // Send one campaign at a time to respect Resend rate limits
-  },
-);
-
-emailWorker.on("completed", (job) => {
-  console.log(`[email-campaign] Job ${job.id} completed`);
-});
-
-emailWorker.on("failed", (job, err) => {
-  console.error(`[email-campaign] Job ${job?.id} failed:`, err.message);
-});
-
-// ---------------------------------------------------------------------------
 // Graceful shutdown
 // ---------------------------------------------------------------------------
 
 async function shutdown() {
   console.log("[workers] Shutting down...");
-  await Promise.all([worker.close(), emailWorker.close()]);
+  await worker.close();
   await connection.quit();
-  await rateLimitConnection.quit();
   process.exit(0);
 }
 
 process.on("SIGINT", shutdown);
 process.on("SIGTERM", shutdown);
 
-console.log("[workers] Started: market-sync + email-campaign");
+console.log("[workers] Started: market-sync");

@@ -378,62 +378,6 @@ export const socialAccounts = pgTable("social_accounts", {
 ]);
 
 // ---------------------------------------------------------------------------
-// Email Campaigns
-// ---------------------------------------------------------------------------
-
-export const campaignStatusEnum = pgEnum("campaign_status", [
-  "draft",
-  "scheduled",
-  "sending",
-  "sent",
-  "failed",
-]);
-
-export const emailCampaigns = pgTable(
-  "email_campaigns",
-  {
-    id: uuid("id").primaryKey().defaultRandom(),
-    subject: varchar("subject", { length: 500 }).notNull(),
-    htmlBody: text("html_body").notNull(),
-    /** Send to contacts with this tag (segment) */
-    tagId: uuid("tag_id").references(() => tags.id, { onDelete: "set null" }),
-    status: campaignStatusEnum("status").notNull().default("draft"),
-    sentCount: integer("sent_count").default(0),
-    failedCount: integer("failed_count").default(0),
-    scheduledAt: timestamp("scheduled_at", { withTimezone: true }),
-    sentAt: timestamp("sent_at", { withTimezone: true }),
-    userId: text("user_id").notNull(),
-    createdAt: timestamp("created_at", { withTimezone: true })
-      .notNull()
-      .defaultNow(),
-  },
-  (table) => [
-    index("email_campaigns_status_idx").on(table.status),
-    index("email_campaigns_user_idx").on(table.userId),
-  ],
-);
-
-export const campaignRecipients = pgTable(
-  "campaign_recipients",
-  {
-    id: uuid("id").primaryKey().defaultRandom(),
-    campaignId: uuid("campaign_id")
-      .notNull()
-      .references(() => emailCampaigns.id, { onDelete: "cascade" }),
-    contactId: uuid("contact_id")
-      .notNull()
-      .references(() => contacts.id, { onDelete: "cascade" }),
-    /** delivered, bounced, opened, etc. */
-    status: varchar("status", { length: 50 }).default("pending"),
-    sentAt: timestamp("sent_at", { withTimezone: true }),
-  },
-  (table) => [
-    index("campaign_recipients_campaign_idx").on(table.campaignId),
-    index("campaign_recipients_contact_idx").on(table.contactId),
-  ],
-);
-
-// ---------------------------------------------------------------------------
 // Unified Conversations & Messages (Instagram DMs, Facebook Messenger, WhatsApp)
 // ---------------------------------------------------------------------------
 
@@ -516,7 +460,6 @@ export const contactsRelations = relations(contacts, ({ many }) => ({
   contactTags: many(contactTags),
   appointments: many(appointments),
   documents: many(documents),
-  campaignRecipients: many(campaignRecipients),
   conversations: many(conversations),
   notes: many(contactNotes),
   activities: many(activityLog),
@@ -583,33 +526,7 @@ export const documentsRelations = relations(documents, ({ one }) => ({
 export const tagsRelations = relations(tags, ({ many }) => ({
   contactTags: many(contactTags),
   propertyTags: many(propertyTags),
-  emailCampaigns: many(emailCampaigns),
 }));
-
-export const emailCampaignsRelations = relations(
-  emailCampaigns,
-  ({ one, many }) => ({
-    tag: one(tags, {
-      fields: [emailCampaigns.tagId],
-      references: [tags.id],
-    }),
-    recipients: many(campaignRecipients),
-  }),
-);
-
-export const campaignRecipientsRelations = relations(
-  campaignRecipients,
-  ({ one }) => ({
-    campaign: one(emailCampaigns, {
-      fields: [campaignRecipients.campaignId],
-      references: [emailCampaigns.id],
-    }),
-    contact: one(contacts, {
-      fields: [campaignRecipients.contactId],
-      references: [contacts.id],
-    }),
-  }),
-);
 
 export const conversationsRelations = relations(
   conversations,
@@ -751,71 +668,6 @@ export const tasksRelations = relations(tasks, ({ one }) => ({
   property: one(properties, {
     fields: [tasks.propertyId],
     references: [properties.id],
-  }),
-}));
-
-// ---------------------------------------------------------------------------
-// Drip Campaigns (automated email sequences)
-// ---------------------------------------------------------------------------
-
-export const dripSequences = pgTable(
-  "drip_sequences",
-  {
-    id: uuid("id").primaryKey().defaultRandom(),
-    userId: text("user_id").notNull(),
-    name: varchar("name", { length: 255 }).notNull(),
-    /** JSON array of steps: [{ delayDays: number, subject: string, body: string }] */
-    steps: jsonb("steps").notNull().default([]),
-    active: boolean("active").notNull().default(true),
-    createdAt: timestamp("created_at", { withTimezone: true })
-      .notNull()
-      .defaultNow(),
-  },
-  (table) => [
-    index("drip_sequences_user_idx").on(table.userId),
-  ],
-);
-
-export const dripEnrollments = pgTable(
-  "drip_enrollments",
-  {
-    id: uuid("id").primaryKey().defaultRandom(),
-    sequenceId: uuid("sequence_id")
-      .notNull()
-      .references(() => dripSequences.id, { onDelete: "cascade" }),
-    contactId: uuid("contact_id")
-      .notNull()
-      .references(() => contacts.id, { onDelete: "cascade" }),
-    userId: text("user_id").notNull(),
-    currentStep: integer("current_step").notNull().default(0),
-    /** When the next step should be sent */
-    nextRunAt: timestamp("next_run_at", { withTimezone: true }),
-    status: varchar("status", { length: 20 }).notNull().default("active"),
-    completedAt: timestamp("completed_at", { withTimezone: true }),
-    createdAt: timestamp("created_at", { withTimezone: true })
-      .notNull()
-      .defaultNow(),
-  },
-  (table) => [
-    index("drip_enrollments_sequence_idx").on(table.sequenceId),
-    index("drip_enrollments_contact_idx").on(table.contactId),
-    index("drip_enrollments_next_run_idx").on(table.nextRunAt),
-    index("drip_enrollments_user_idx").on(table.userId),
-  ],
-);
-
-export const dripSequencesRelations = relations(dripSequences, ({ many }) => ({
-  enrollments: many(dripEnrollments),
-}));
-
-export const dripEnrollmentsRelations = relations(dripEnrollments, ({ one }) => ({
-  sequence: one(dripSequences, {
-    fields: [dripEnrollments.sequenceId],
-    references: [dripSequences.id],
-  }),
-  contact: one(contacts, {
-    fields: [dripEnrollments.contactId],
-    references: [contacts.id],
   }),
 }));
 

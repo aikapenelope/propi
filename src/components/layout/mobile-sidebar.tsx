@@ -12,8 +12,6 @@ import {
   CheckSquare,
   Instagram,
   Facebook,
-  Mail,
-  Zap,
   Video,
   Settings,
   X,
@@ -43,8 +41,6 @@ const marketingItems = [
   { href: "/marketing/instagram", label: "Instagram", icon: Instagram },
   { href: "/marketing/facebook", label: "Facebook", icon: Facebook },
   { href: "/marketing/tiktok", label: "TikTok", icon: Video },
-  { href: "/marketing/email", label: "Email", icon: Mail },
-  { href: "/marketing/drip", label: "Secuencias", icon: Zap },
   { href: "/marketing/settings", label: "Configuracion", icon: Settings },
 ];
 
