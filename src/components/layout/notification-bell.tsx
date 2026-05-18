@@ -46,7 +46,17 @@ export function NotificationBell() {
     async function fetchCount() {
       try {
         const count = await getUnreadNotificationCount();
-        if (mounted) setUnreadCount(count);
+        if (mounted) {
+          setUnreadCount(count);
+          // Update PWA app badge (shows count on home screen icon)
+          if ("setAppBadge" in navigator) {
+            if (count > 0) {
+              navigator.setAppBadge(count).catch(() => {});
+            } else {
+              navigator.clearAppBadge().catch(() => {});
+            }
+          }
+        }
       } catch {
         // Silently fail if not authenticated
       }
