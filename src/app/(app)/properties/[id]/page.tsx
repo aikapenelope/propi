@@ -9,6 +9,7 @@ import {
   Maximize,
   Pencil,
   Calendar,
+  FileText,
 } from "lucide-react";
 import { getProperty, getImageUrl } from "@/server/actions/properties";
 import { formatCurrency, formatDate } from "@/lib/utils";
@@ -147,6 +148,14 @@ export default async function PropertyDetailPage({
               email: c.email,
             }))}
           />
+          <a
+            href={`/api/properties/${id}/pdf`}
+            download
+            className="inline-flex items-center gap-1 rounded-lg border border-border px-3 py-2 text-sm font-medium text-foreground hover:bg-muted transition-colors"
+          >
+            <FileText className="h-4 w-4" />
+            Ficha PDF
+          </a>
           <Link
             href={`/properties/${id}/edit`}
             className="inline-flex items-center gap-1 rounded-lg border border-border px-3 py-2 text-sm font-medium text-foreground hover:bg-muted transition-colors"
