@@ -16,6 +16,27 @@ import { z } from "zod";
 
 const uuidSchema = z.string().uuid();
 
+/**
+ * Validate that a string is a valid UUID v4.
+ *
+ * Use at the boundary of server actions that receive IDs from route params
+ * or client calls. Throws a descriptive error if the format is invalid,
+ * preventing malformed strings from reaching the database layer.
+ *
+ * @example
+ *   export async function getProperty(id: string) {
+ *     const propertyId = parseUuid(id);
+ *     // ...query with propertyId...
+ *   }
+ */
+export function parseUuid(value: string, label = "ID"): string {
+  const result = uuidSchema.safeParse(value);
+  if (!result.success) {
+    throw new Error(`${label} invalido.`);
+  }
+  return result.data;
+}
+
 const optionalString = z
   .string()
   .transform((v) => (v.trim() === "" ? undefined : v.trim()))

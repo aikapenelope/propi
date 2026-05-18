@@ -9,6 +9,7 @@ import { sendWhatsAppText } from "./whatsapp";
 import { graphApiFetch } from "@/lib/meta-api";
 import { getSocialAccount } from "./social-accounts";
 import { requireUserId } from "@/lib/auth-helper";
+import { parseUuid } from "@/lib/validators";
 
 // ---------------------------------------------------------------------------
 // Queries
@@ -72,8 +73,22 @@ export async function getMessages(conversationId: string, limit = 50) {
 // Send message (routes to correct platform API)
 // ---------------------------------------------------------------------------
 
+/** Maximum message length. WhatsApp allows 4096 chars, IG/FB allow ~1000.
+ *  We use 4096 as the upper bound and let the platform reject if too long. */
+const MAX_MESSAGE_LENGTH = 4096;
+
 export async function sendMessage(conversationId: string, body: string) {
+  parseUuid(conversationId, "Conversation ID");
   const userId = await requireUserId();
+
+  if (!body || body.trim().length === 0) {
+    throw new Error("El mensaje no puede estar vacio.");
+  }
+  if (body.length > MAX_MESSAGE_LENGTH) {
+    throw new Error(
+      `El mensaje excede el limite de ${MAX_MESSAGE_LENGTH} caracteres.`,
+    );
+  }
 
   const convo = await db.query.conversations.findFirst({
     where: and(

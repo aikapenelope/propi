@@ -6,7 +6,7 @@ import { eq, and, ilike, or, desc, sql } from "drizzle-orm";
 import { revalidatePath, revalidateTag } from "next/cache";
 import { requireUserId } from "@/lib/auth-helper";
 import { sanitizeLike } from "@/lib/sanitize";
-import { contactSchema } from "@/lib/validators";
+import { contactSchema, parseUuid } from "@/lib/validators";
 import { logActivity } from "./activity-log";
 
 // ---------------------------------------------------------------------------
@@ -59,6 +59,7 @@ export async function getContacts(search?: string) {
 }
 
 export async function getContact(id: string) {
+  parseUuid(id, "Contact ID");
   const userId = await requireUserId();
 
   return db.query.contacts.findFirst({
@@ -135,6 +136,7 @@ export async function createContact(data: ContactFormData) {
 }
 
 export async function updateContact(id: string, data: ContactFormData) {
+  parseUuid(id, "Contact ID");
   const userId = await requireUserId();
   const validated = contactSchema.parse(data);
 
@@ -182,6 +184,7 @@ export async function updateContact(id: string, data: ContactFormData) {
 }
 
 export async function deleteContact(id: string) {
+  parseUuid(id, "Contact ID");
   const userId = await requireUserId();
   await db
     .delete(contacts)
