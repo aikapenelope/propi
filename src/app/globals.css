@@ -8,7 +8,7 @@
   --foreground: #f1f5f9;
   --muted: #12131A;
   --muted-foreground: #8A8A8E;
-  --border: rgba(255, 255, 255, 0.04);
+  --border: rgba(255, 255, 255, 0.06);
   --primary: #00FF55;
   --primary-foreground: #000000;
   --accent: #12131A;
@@ -23,11 +23,11 @@
    Light Theme
    ============================================ */
 .light {
-  --background: #FAFAF8;
+  --background: #F5F5F0;
   --foreground: #111827;
-  --muted: #f1f5f9;
+  --muted: #EEEEE9;
   --muted-foreground: #6B7280;
-  --border: #e5e7eb;
+  --border: #E0E0DB;
   --primary: #0A2B1D;
   --primary-foreground: #ffffff;
   --accent: #f0f9ff;
@@ -80,15 +80,43 @@ body {
   background: rgba(255, 255, 255, 0.15);
 }
 .light ::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.1);
+  background: rgba(0, 0, 0, 0.15);
+}
+.light ::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.25);
 }
 
-/* Card shadow for dark theme */
+/* Card shadow for dark theme — layered for depth */
 .card-shadow {
-  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.03), 0 8px 30px rgba(0, 0, 0, 0.3);
+  box-shadow:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.04),
+    0 0 0 1px rgba(255, 255, 255, 0.03),
+    0 4px 12px rgba(0, 0, 0, 0.4),
+    0 16px 40px rgba(0, 0, 0, 0.2);
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+.card-shadow:hover {
+  box-shadow:
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.06),
+    0 0 0 1px rgba(255, 255, 255, 0.05),
+    0 8px 20px rgba(0, 0, 0, 0.5),
+    0 24px 50px rgba(0, 0, 0, 0.25);
+  transform: translateY(-1px);
 }
 .light .card-shadow {
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 4px 20px rgba(0, 0, 0, 0.04);
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.03),
+    0 2px 4px rgba(0, 0, 0, 0.04),
+    0 8px 24px rgba(0, 0, 0, 0.06),
+    0 24px 48px rgba(0, 0, 0, 0.03);
+}
+.light .card-shadow:hover {
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.05),
+    0 4px 8px rgba(0, 0, 0, 0.06),
+    0 12px 32px rgba(0, 0, 0, 0.08),
+    0 32px 56px rgba(0, 0, 0, 0.04);
+  transform: translateY(-1px);
 }
 
 /* Glow text */
