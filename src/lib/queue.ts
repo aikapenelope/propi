@@ -7,20 +7,38 @@ import IORedis from "ioredis";
  *
  * BullMQ requires maxmemory-policy=noeviction on Redis.
  * Redis is configured with --maxmemory 1gb --maxmemory-policy noeviction.
+ *
+ * Connection is created lazily so the module can be imported at build time
+ * (when REDIS_URL is absent) without throwing. The error surfaces at runtime
+ * when a queue operation is actually attempted.
  */
 
-const REDIS_URL = process.env.REDIS_URL;
-if (!REDIS_URL) {
-  throw new Error(
-    "REDIS_URL is not set. BullMQ queues require a Redis connection.",
-  );
+let _connection: IORedis | null = null;
+
+function getRedisConnection(): IORedis {
+  if (_connection) return _connection;
+
+  const url = process.env.REDIS_URL;
+  if (!url) {
+    throw new Error(
+      "REDIS_URL is not set. BullMQ queues require a Redis connection.",
+    );
+  }
+
+  _connection = new IORedis(url, {
+    maxRetriesPerRequest: null, // Required by BullMQ workers
+    enableReadyCheck: false,
+    lazyConnect: true,
+  });
+
+  return _connection;
 }
 
 /** Shared Redis connection for queue producers (adding jobs from Next.js) */
-export const redisConnection = new IORedis(REDIS_URL, {
-  maxRetriesPerRequest: null, // Required by BullMQ workers
-  enableReadyCheck: false,
-  lazyConnect: true,
+export const redisConnection = new Proxy({} as IORedis, {
+  get(_target, prop) {
+    return Reflect.get(getRedisConnection(), prop);
+  },
 });
 
 // ---------------------------------------------------------------------------
