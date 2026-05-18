@@ -475,32 +475,73 @@ export default function LandingPage() {
           </h2>
           <p className="text-gray-500 text-sm mb-12 px-6">Pago en bolivares a tasa BCV</p>
 
-          {/* Pricing card */}
-          <div className="w-full max-w-md mx-auto px-6 mb-12">
-            <div className="rounded-3xl p-8 text-left" style={{ background: "#121212", color: "#fff" }}>
-              <div className="text-xs uppercase tracking-widest opacity-50 mb-2">Plan Unico</div>
-              <div className="flex items-baseline gap-2 mb-6">
-                <span className="text-5xl font-bold" style={{ fontFamily: "'Syncopate', sans-serif" }}>$30</span>
-                <span className="text-sm opacity-50">/mes por usuario</span>
+          {/* Pricing cards */}
+          <div className="w-full max-w-4xl mx-auto px-6 mb-12 grid md:grid-cols-2 gap-6">
+            {/* Plan Agencia */}
+            <div className="rounded-3xl p-8 text-left relative overflow-hidden" style={{ background: "#121212", color: "#fff" }}>
+              <div className="absolute top-0 right-0 w-32 h-32 rounded-full opacity-10 blur-[60px]" style={{ background: "#6b8f71" }} />
+              <div className="relative z-10">
+                <div className="text-xs uppercase tracking-widest opacity-50 mb-2">Agencia / Broker</div>
+                <div className="flex items-baseline gap-2 mb-2">
+                  <span className="text-5xl font-bold" style={{ fontFamily: "'Syncopate', sans-serif" }}>$30</span>
+                  <span className="text-sm opacity-50">/mes</span>
+                </div>
+                <p className="text-xs opacity-40 mb-6">Cuenta principal con reportes y gestion completa</p>
+                <div className="h-px bg-white/10 mb-6" />
+                <ul className="space-y-2.5 text-sm">
+                  {[
+                    "Todo lo del plan Vendedor incluido",
+                    "Reportes PDF profesionales (5 paginas)",
+                    "Reportes de rendimiento por vendedor",
+                    "Comparables de mercado automaticos",
+                    "Marca de empresa personalizable (logo + nombre)",
+                    "Ficha de propiedad PDF con branding",
+                    "Compartir metricas con broker",
+                    "Gestion de equipo y visibilidad completa",
+                    "Soporte prioritario por WhatsApp",
+                  ].map((item) => (
+                    <li key={item} className="flex items-start gap-2">
+                      <span className="text-green-400 mt-0.5">&#10003;</span>
+                      <span className="opacity-80">{item}</span>
+                    </li>
+                  ))}
+                </ul>
+                <div className="h-px bg-white/10 my-6" />
+                <a
+                  href={`https://wa.me/?text=${encodeURIComponent("Hola, quiero contratar Propi CRM plan Agencia ($30/mes). Mi nombre es: ")}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block w-full text-center py-4 rounded-full text-xs font-semibold uppercase tracking-widest transition-all hover:opacity-90"
+                  style={{ background: "#25D366", color: "#fff" }}
+                >
+                  Contratar por WhatsApp
+                </a>
               </div>
+            </div>
+
+            {/* Plan Vendedor */}
+            <div className="rounded-3xl p-8 text-left border border-white/10" style={{ background: "#1a1a1a", color: "#fff" }}>
+              <div className="text-xs uppercase tracking-widest opacity-50 mb-2">Vendedor / Asesor</div>
+              <div className="flex items-baseline gap-2 mb-2">
+                <span className="text-5xl font-bold" style={{ fontFamily: "'Syncopate', sans-serif" }}>$15</span>
+                <span className="text-sm opacity-50">/mes por vendedor</span>
+              </div>
+              <p className="text-xs opacity-40 mb-6">Para cada asesor adicional del equipo</p>
               <div className="h-px bg-white/10 mb-6" />
-              <ul className="space-y-3 text-sm">
+              <ul className="space-y-2.5 text-sm">
                 {[
                   "Contactos y leads ilimitados",
                   "Pipeline Kanban con drag & drop",
                   "Propiedades ilimitadas (4 fotos c/u)",
                   "Propi Magic: inteligencia de mercado con IA",
-                  "Comparables de mercado automaticos",
                   "Publicacion rapida en portales (ML, Wasi, FB)",
-                  "Reportes PDF profesionales (5 paginas)",
-                  "Ficha de propiedad PDF con branding",
                   "Calendario y citas vinculadas",
                   "Tareas y recordatorios",
                   "Documentos y contratos en la nube",
-                  "Marca de empresa personalizable",
                   "Importacion de contactos (CSV, vCard)",
                   "Pagina publica para compartir propiedades",
                   "App movil PWA (funciona sin internet)",
+                  "Notificaciones de leads inactivos",
                   "Soporte por WhatsApp",
                 ].map((item) => (
                   <li key={item} className="flex items-start gap-2">
@@ -511,19 +552,20 @@ export default function LandingPage() {
               </ul>
               <div className="h-px bg-white/10 my-6" />
               <a
-                href={`https://wa.me/?text=${encodeURIComponent("Hola, quiero contratar Propi CRM ($30/mes). Mi nombre es: ")}`}
+                href={`https://wa.me/?text=${encodeURIComponent("Hola, quiero agregar un vendedor a Propi CRM ($15/mes). Mi nombre es: ")}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="block w-full text-center py-4 rounded-full text-xs font-semibold uppercase tracking-widest transition-all hover:opacity-90"
-                style={{ background: "#25D366", color: "#fff" }}
+                className="block w-full text-center py-4 rounded-full text-xs font-semibold uppercase tracking-widest transition-all hover:opacity-90 border border-white/20"
+                style={{ color: "#fff" }}
               >
-                Contratar por WhatsApp
+                Agregar Vendedor
               </a>
-              <p className="text-center text-[10px] opacity-30 mt-4">
-                Pago mensual en bolivares a tasa BCV del dia. Sin contratos. Cancela cuando quieras.
-              </p>
             </div>
           </div>
+
+          <p className="text-xs text-gray-500 mb-8 px-6 max-w-lg mx-auto text-center">
+            Pago mensual en bolivares a tasa BCV del dia. Sin contratos. Cancela cuando quieras.
+          </p>
 
           <Link href="/sign-up" className="px-10 py-5 rounded-full text-xs font-semibold uppercase tracking-widest hover:bg-black/80 hover:-translate-y-1 transition-all duration-300 shadow-2xl shadow-black/20" style={{ background: "#121212", color: "#fff" }}>
             Crear Cuenta Gratis
