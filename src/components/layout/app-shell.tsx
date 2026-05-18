@@ -41,8 +41,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         )}
       >
         {/* Ambient background effects (desktop only) */}
-        <div className="absolute top-0 right-[20%] w-[600px] h-[300px] bg-primary/5 blur-[120px] rounded-full pointer-events-none z-0 hidden md:block" />
-        <div className="absolute bottom-0 left-[10%] w-[400px] h-[400px] bg-purple-500/5 blur-[150px] rounded-full pointer-events-none z-0 hidden md:block" />
+        {/* Dark mode: green + purple glows */}
+        <div className="absolute top-0 right-[20%] w-[600px] h-[300px] bg-primary/5 blur-[120px] rounded-full pointer-events-none z-0 hidden md:block ambient-dark" />
+        <div className="absolute bottom-0 left-[10%] w-[400px] h-[400px] bg-purple-500/5 blur-[150px] rounded-full pointer-events-none z-0 hidden md:block ambient-dark" />
+        {/* Light mode: warm orange/amber glows covering more area */}
+        <div className="absolute top-[-5%] right-[5%] w-[800px] h-[500px] rounded-full pointer-events-none z-0 hidden md:block ambient-light" style={{ background: "radial-gradient(ellipse, rgba(251, 146, 60, 0.08) 0%, transparent 70%)" }} />
+        <div className="absolute bottom-[10%] left-[-5%] w-[700px] h-[600px] rounded-full pointer-events-none z-0 hidden md:block ambient-light" style={{ background: "radial-gradient(ellipse, rgba(245, 158, 11, 0.06) 0%, transparent 70%)" }} />
+        <div className="absolute top-[40%] right-[30%] w-[500px] h-[500px] rounded-full pointer-events-none z-0 hidden md:block ambient-light" style={{ background: "radial-gradient(ellipse, rgba(234, 88, 12, 0.04) 0%, transparent 70%)" }} />
         <div className="relative z-10 min-w-0">
           <PullToRefresh>{children}</PullToRefresh>
         </div>
