@@ -14,6 +14,14 @@ const uploadRateMap = new Map<string, { count: number; resetAt: number }>();
 const UPLOAD_RATE_LIMIT = 20;
 const UPLOAD_WINDOW_MS = 60_000;
 
+// Purge expired entries every 5 minutes to prevent unbounded Map growth.
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, entry] of uploadRateMap) {
+    if (now > entry.resetAt) uploadRateMap.delete(key);
+  }
+}, 5 * 60_000).unref();
+
 function checkUploadRateLimit(userId: string): boolean {
   const now = Date.now();
   const entry = uploadRateMap.get(userId);

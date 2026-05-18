@@ -1,11 +1,15 @@
 import { NextResponse } from "next/server";
 import { cleanupOldMessages } from "@/server/actions/messaging";
+import { db } from "@/lib/db";
+import { notifications } from "@/server/schema";
+import { and, eq, lt } from "drizzle-orm";
 
 export const dynamic = "force-dynamic";
 
 /**
- * Cron job to delete messages older than 90 days.
- * Prevents the messages table from growing indefinitely.
+ * Cron job to clean up stale data:
+ * - Messages older than 90 days
+ * - Read notifications older than 30 days
  *
  * Protected by CRON_SECRET header.
  * Call: curl -H "Authorization: Bearer $CRON_SECRET" /api/cron/cleanup-messages
@@ -27,10 +31,22 @@ export async function GET(request: Request) {
   }
 
   try {
-    const result = await cleanupOldMessages();
+    const messageResult = await cleanupOldMessages();
+
+    // Clean up read notifications older than 30 days
+    const notifCutoff = new Date();
+    notifCutoff.setDate(notifCutoff.getDate() - 30);
+    const deletedNotifs = await db
+      .delete(notifications)
+      .where(
+        and(eq(notifications.read, true), lt(notifications.createdAt, notifCutoff)),
+      )
+      .returning({ id: notifications.id });
+
     return NextResponse.json({
       success: true,
-      ...result,
+      ...messageResult,
+      notificationsDeleted: deletedNotifs.length,
       timestamp: new Date().toISOString(),
     });
   } catch (err) {
