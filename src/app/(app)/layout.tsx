@@ -1,8 +1,9 @@
 import { AppShell } from "@/components/layout/app-shell";
+import { ToastProvider } from "@/components/ui/toast";
 
 /**
  * App layout for all authenticated routes.
- * Provides sidebar, top bar, and mobile navigation.
+ * Provides sidebar, top bar, mobile navigation, and toast notifications.
  *
  * Individual pages set their own `dynamic` export as needed.
  * The layout itself does not force dynamic rendering — this allows
@@ -13,5 +14,9 @@ export default function AppLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  return <AppShell>{children}</AppShell>;
+  return (
+    <ToastProvider>
+      <AppShell>{children}</AppShell>
+    </ToastProvider>
+  );
 }

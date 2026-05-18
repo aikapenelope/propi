@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useToast } from "@/components/ui/toast";
 import {
   createContact,
   updateContact,
@@ -73,6 +74,7 @@ export function ContactForm({
   availableTags,
 }: ContactFormProps) {
   const router = useRouter();
+  const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [tagIds, setTagIds] = useState<string[]>(selectedTagIds);
 
@@ -101,9 +103,11 @@ export function ContactForm({
     try {
       if (isEditing) {
         await updateContact(contact.id, data);
+        toast("Contacto actualizado");
         router.push(`/contacts/${contact.id}`);
       } else {
         const newContact = await createContact(data);
+        toast("Contacto creado");
         router.push(`/contacts/${newContact.id}`);
       }
     } finally {
