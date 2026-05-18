@@ -8,9 +8,9 @@
 | 8 | Migrar email de Nodemailer a Resend | Completado |
 | 9 | Proxy de imagenes para publicacion | Completado |
 | 10 | Publicar en MercadoLibre | Descartado (ML solo como fuente de datos) |
-| 11 | Publicar en Wasi con 1 click | Completado |
+| 11 | Publicar en Wasi con 1 click | Eliminado (reemplazado por publicacion asistida) |
 | 12 | Dashboard de Meta completo | Descartado (no Meta API directa) |
-| 13 | Wasi auth en settings | Completado |
+| 13 | Wasi auth en settings | Eliminado (reemplazado por publicacion asistida) |
 | 14 | Production hardening | Completado |
 | 15 | Market actions hardening | Completado |
 | 16 | UX improvements | Completado |
@@ -23,7 +23,7 @@
 | 23 | Envio de ficha de propiedad por email | Completado |
 | 24 | Simulador de comisiones | Completado |
 | 25 | Calendario mobile UX (agenda, swipe, touch) | Completado |
-| 26 | Resend API key por usuario | Completado |
+| 26 | Resend API key por usuario | Eliminado (simplificado a key global) |
 | 27 | Historial de actividad automatico por contacto | Completado |
 | 28 | Matching propiedad-contacto por preferencias | Completado |
 | 29 | Preferencias de busqueda en formulario de contacto | Completado |
@@ -32,46 +32,37 @@
 | 32 | CSP fixes (Clerk CAPTCHA, Iconify) | Completado |
 | 33 | Landing actualizada ($30, features reales) | Completado |
 | 34 | Logos de Propi (PWA + sidebar) + dashboard moderno | Completado |
+| 35 | Reportes PDF profesionales (5 paginas, @react-pdf/renderer) | Completado |
+| 36 | Limpieza: eliminar Wasi API + publicacion asistida multi-portal | Completado |
+| 37 | Limpieza: eliminar email marketing (campanas + drip) | Completado |
+| 38 | Limpieza: eliminar reportes automaticos por email | Completado |
+| 39 | Hardening: Redis password, CRON_SECRET, entrypoint, queue lazy init | Completado |
+| 40 | Fixes: drip advance-on-failure, deletePropertyImage, createProperty tx | Completado |
+| 41 | Robustez: rate limit cleanup, lint CI, health check, notification cleanup | Completado |
 
 ---
 
 ## Pendiente: Configurar cron jobs en Coolify
 
-El codigo tiene 4 cron endpoints listos pero **no estan activados** en Coolify.
+El codigo tiene 3 cron endpoints listos pero **no estan activados** en Coolify.
 Requieren la env var `CRON_SECRET` y cron jobs en Coolify.
 
 | Cron | Endpoint | Frecuencia | Que hace |
 |------|----------|------------|----------|
 | Notificaciones | `/api/cron/generate-notifications` | Cada hora | Citas proximas, tareas vencidas, cumpleanos |
-| Drip campaigns | `/api/cron/process-drips` | Cada hora | Emails automaticos de secuencias drip |
 | Sync MercadoLibre | `/api/cron/sync-market` | Diario (4am) | Encola jobs en BullMQ para sincronizar listings de ML |
-| Cleanup mensajes | `/api/cron/cleanup-messages` | Semanal (dom 3am) | Elimina mensajes >90 dias (solo si se activa Meta inbox) |
+| Cleanup | `/api/cron/cleanup-messages` | Semanal (dom 3am) | Elimina mensajes >90 dias + notificaciones leidas >30 dias |
 
 ### Para activar:
 
 1. Agregar env var `CRON_SECRET` a Propi en Coolify
-2. Deployar `Dockerfile.worker` como segundo servicio (para sync-market y email campaigns)
+2. Deployar `Dockerfile.worker` como segundo servicio (para sync-market)
 3. Configurar cron jobs en Coolify:
    ```bash
    curl -s -H "Authorization: Bearer $CRON_SECRET" https://propi.aikalabs.cc/api/cron/generate-notifications
-   curl -s -H "Authorization: Bearer $CRON_SECRET" https://propi.aikalabs.cc/api/cron/process-drips
    curl -s -H "Authorization: Bearer $CRON_SECRET" https://propi.aikalabs.cc/api/cron/sync-market
    curl -s -H "Authorization: Bearer $CRON_SECRET" https://propi.aikalabs.cc/api/cron/cleanup-messages
    ```
-
-## Pendiente: Credenciales en ESC y Coolify
-
-El ESC environment `platform-infra/propi` tiene las credenciales del data plane (DB, Redis, MinIO)
-y Groq. **Faltan las siguientes credenciales por agregar:**
-
-| Variable | Donde | Descripcion |
-|----------|-------|-------------|
-| `CLERK_SECRET_KEY` | ESC + Coolify | Clerk auth backend |
-| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | ESC + Coolify | Clerk auth frontend |
-| `CRON_SECRET` | Coolify | Proteccion de cron endpoints |
-
-Nota: `RESEND_API_KEY` ya no es obligatorio a nivel global. Cada usuario configura su propia
-key en Configuracion > Email (Resend). La env var global sirve como fallback.
 
 ---
 
@@ -81,31 +72,80 @@ key en Configuracion > Email (Resend). La env var global sirve como fallback.
 
 | Feature | Descripcion | Esfuerzo |
 |---------|-------------|----------|
-| Reportes PDF exportables | KPIs del mes, propiedades vendidas, comisiones. Generar PDF descargable. | 4h |
 | Multi-moneda con tasa BCV | Mostrar precios en USD y VES con tasa del dia automatica. | 3h |
-| Recordatorio de seguimiento | Si un lead lleva X dias sin actividad, crear tarea automatica. | 2h |
 | Toast notifications | Feedback visual despues de cada accion (guardar, enviar, eliminar). | 2h |
+| Recordatorio de seguimiento | Si un lead lleva X dias sin actividad, crear tarea automatica. | 2h |
 
 ### P2 — Siguiente ciclo
 
 | Feature | Descripcion | Esfuerzo |
 |---------|-------------|----------|
+| Ficha de propiedad PDF | Generar ficha descargable con @react-pdf/renderer (como el reporte). | 3h |
 | Comparables para tasacion | Reporte de 3-5 propiedades similares para justificar precio. | 3h |
 | Install prompt personalizado | Banner dentro de la app invitando a instalar la PWA. | 1h |
 | Shortcuts en manifest.json | Long-press en icono muestra "Nueva propiedad", "Contactos", "Calendario". | 30min |
 | App Badging API | Mostrar numero de notificaciones no leidas en el icono de la app instalada. | 1h |
-| Usuarios PostgreSQL por proyecto | Aislamiento de DB entre proyectos (R5 en INFRASTRUCTURE_RISKS.md). | 2h |
-| Service accounts MinIO por proyecto | Aislamiento de storage entre proyectos (R4). | 2h |
 
 ### P3 — Cuando haya demanda
 
 | Feature | Descripcion | Esfuerzo |
 |---------|-------------|----------|
+| Push notifications | Web Push para alertas cuando la app esta cerrada (VAPID + web-push). | 4h |
 | Bottom sheets para mobile | Paneles que suben desde abajo para acciones (compartir, filtrar, opciones). | 3h |
 | Firma electronica en documentos | Firmar contratos desde la app sin imprimir. | 8h |
 | Multi-idioma | Soporte para ingles (agentes con clientes extranjeros). | 6h |
 | Modo offline real | Crear/editar contactos y propiedades sin conexion, sync al reconectar. | 12h |
-| CSP unsafe-eval | Evaluar si se puede remover (puede ser requerido por Clerk). | 1h |
+
+---
+
+## Producto actual (Mayo 2026)
+
+### CRM Core
+- Contactos con tags, segmentacion, fuente, preferencias de busqueda
+- Propiedades con galeria (4 fotos, HEIC->WebP), multi-moneda, GPS
+- Pipeline Kanban (7 etapas, drag & drop)
+- Calendario con agenda, citas vinculadas a contacto/propiedad
+- Tareas con fecha, notas, vinculacion a contacto/propiedad
+- Documentos (upload a MinIO, descarga via proxy)
+- Busqueda global
+
+### Marketing & Publicacion
+- Publicacion asistida en portales: MercadoLibre, Wasi, Facebook Marketplace
+- Texto pre-generado + copy-to-clipboard + link directo al portal
+- Instagram: acceso directo (publicar, DMs, metricas)
+- Facebook: acceso directo (publicar, inbox, insights)
+- TikTok: acceso directo (subir video, analiticas)
+- Compartir propiedad por WhatsApp/Instagram/Facebook/Link
+
+### Inteligencia de Mercado (Propi Magic)
+- Datos de MercadoLibre Venezuela (sync diario, 6 categorias)
+- KPIs por zona: precio promedio, mediana, min, max, precio/m2
+- Chat con IA (Groq) que resume datos de mercado
+- Busqueda por zona con resultados deduplicados
+
+### Reportes
+- PDF profesional de 5 paginas (portada, resumen ejecutivo, transacciones, pipeline, inventario)
+- Comparativa vs periodo anterior
+- Descarga directa desde /reports
+- Compartir metricas con broker (acceso por email)
+
+### Notificaciones
+- In-app: citas proximas, tareas vencidas, cumpleanos
+- Campana con badge + dropdown
+- Cron cada hora (cuando se active en Coolify)
+
+### Paginas Publicas
+- /p/[id]: pagina publica de propiedad (compartible por redes)
+- /agente/[id]: portal del agente con propiedades activas
+
+### Infraestructura
+- Next.js 16 + Drizzle ORM + PostgreSQL + PgBouncer
+- MinIO (S3-compatible) para archivos
+- Redis + BullMQ para jobs (market sync)
+- Clerk para autenticacion
+- Coolify para deploy (Hetzner Cloud)
+- PWA con Service Worker (cache offline de paginas visitadas)
+- CI: ESLint + TypeScript + Vitest
 
 ---
 
@@ -117,15 +157,5 @@ key en Configuracion > Email (Resend). La env var global sirve como fallback.
 | Imagenes | 80GB disco compartido, 500MB quota/usuario | ~160 usuarios |
 | PostgreSQL | 200 max_connections, PgBouncer 500 client | ~1600 usuarios |
 | Redis | 1GB noeviction | Miles de jobs |
-| Email | Resend per-user (3,000/mes/usuario free tier) | Sin limite compartido |
+| Email | Resend global (3,000/mes free tier) | Fichas de propiedad + alertas |
 | market_listings | ~2KB/listing | Sin limite practico |
-
-## Documentacion
-
-| Documento | Contenido |
-|-----------|-----------|
-| `docs/ROADMAP.md` | Este archivo — sprints 7-34 + backlog |
-| `docs/TOOLTIPS_MAP.md` | Mapa de 55 tooltips con texto exacto |
-| `docs/SCALING_PLAN.md` | Fases A/B/C para escalar a 1000 usuarios |
-| `docs/INFRASTRUCTURE_RISKS.md` | Riesgos R1-R12 del data plane |
-| `docs/ARCHITECTURE.md` | Stack tecnico y distribucion web/PWA |
