@@ -21,6 +21,9 @@ COPY src/server/schema.ts ./src/server/schema.ts
 COPY src/lib/queue.ts ./src/lib/queue.ts
 COPY tsconfig.json ./
 
+# Worker timezone: matches the app container.
+ENV TZ=America/Caracas
+
 USER node
 
 CMD ["npx", "tsx", "src/workers/market-sync-worker.ts"]
