@@ -39,6 +39,10 @@
 | 39 | Hardening: Redis password, CRON_SECRET, entrypoint, queue lazy init | Completado |
 | 40 | Fixes: drip advance-on-failure, deletePropertyImage, createProperty tx | Completado |
 | 41 | Robustez: rate limit cleanup, lint CI, health check, notification cleanup | Completado |
+| 42 | Recordatorio de leads inactivos (7+ dias sin actividad) | Completado |
+| 43 | Ficha de propiedad PDF descargable | Completado |
+| 44 | Toast notifications (feedback visual) | Completado |
+| 45 | PWA: install prompt + shortcuts + badge count | Completado |
 
 ---
 
@@ -49,7 +53,7 @@ Requieren la env var `CRON_SECRET` y cron jobs en Coolify.
 
 | Cron | Endpoint | Frecuencia | Que hace |
 |------|----------|------------|----------|
-| Notificaciones | `/api/cron/generate-notifications` | Cada hora | Citas proximas, tareas vencidas, cumpleanos |
+| Notificaciones | `/api/cron/generate-notifications` | Cada hora | Citas proximas, tareas vencidas, cumpleanos, leads inactivos |
 | Sync MercadoLibre | `/api/cron/sync-market` | Diario (4am) | Encola jobs en BullMQ para sincronizar listings de ML |
 | Cleanup | `/api/cron/cleanup-messages` | Semanal (dom 3am) | Elimina mensajes >90 dias + notificaciones leidas >30 dias |
 
@@ -68,25 +72,13 @@ Requieren la env var `CRON_SECRET` y cron jobs en Coolify.
 
 ## Backlog: Features pendientes
 
-### P1 — Proximo sprint
+### P1 — Proximo (cuando haya demanda)
 
 | Feature | Descripcion | Esfuerzo |
 |---------|-------------|----------|
-| Multi-moneda con tasa BCV | Mostrar precios en USD y VES con tasa del dia automatica. | 3h |
-| Toast notifications | Feedback visual despues de cada accion (guardar, enviar, eliminar). | 2h |
-| Recordatorio de seguimiento | Si un lead lleva X dias sin actividad, crear tarea automatica. | 2h |
+| Comparables para tasacion | Reporte de 3-5 propiedades similares (de market_listings) para justificar precio. | 3h |
 
-### P2 — Siguiente ciclo
-
-| Feature | Descripcion | Esfuerzo |
-|---------|-------------|----------|
-| Ficha de propiedad PDF | Generar ficha descargable con @react-pdf/renderer (como el reporte). | 3h |
-| Comparables para tasacion | Reporte de 3-5 propiedades similares para justificar precio. | 3h |
-| Install prompt personalizado | Banner dentro de la app invitando a instalar la PWA. | 1h |
-| Shortcuts en manifest.json | Long-press en icono muestra "Nueva propiedad", "Contactos", "Calendario". | 30min |
-| App Badging API | Mostrar numero de notificaciones no leidas en el icono de la app instalada. | 1h |
-
-### P3 — Cuando haya demanda
+### P2 — Futuro
 
 | Feature | Descripcion | Esfuerzo |
 |---------|-------------|----------|
@@ -98,7 +90,7 @@ Requieren la env var `CRON_SECRET` y cron jobs en Coolify.
 
 ---
 
-## Producto actual (Mayo 2026)
+## Producto final (Mayo 2026)
 
 ### CRM Core
 - Contactos con tags, segmentacion, fuente, preferencias de busqueda
@@ -108,6 +100,7 @@ Requieren la env var `CRON_SECRET` y cron jobs en Coolify.
 - Tareas con fecha, notas, vinculacion a contacto/propiedad
 - Documentos (upload a MinIO, descarga via proxy)
 - Busqueda global
+- Matching propiedad-contacto por preferencias
 
 ### Marketing & Publicacion
 - Publicacion asistida en portales: MercadoLibre, Wasi, Facebook Marketplace
@@ -116,6 +109,7 @@ Requieren la env var `CRON_SECRET` y cron jobs en Coolify.
 - Facebook: acceso directo (publicar, inbox, insights)
 - TikTok: acceso directo (subir video, analiticas)
 - Compartir propiedad por WhatsApp/Instagram/Facebook/Link
+- Envio de ficha de propiedad por email
 
 ### Inteligencia de Mercado (Propi Magic)
 - Datos de MercadoLibre Venezuela (sync diario, 6 categorias)
@@ -123,16 +117,23 @@ Requieren la env var `CRON_SECRET` y cron jobs en Coolify.
 - Chat con IA (Groq) que resume datos de mercado
 - Busqueda por zona con resultados deduplicados
 
-### Reportes
-- PDF profesional de 5 paginas (portada, resumen ejecutivo, transacciones, pipeline, inventario)
+### Reportes & PDFs
+- Reporte PDF profesional de 5 paginas (portada, resumen ejecutivo, transacciones, pipeline, inventario)
+- Ficha de propiedad PDF (1 pagina con foto, specs, agente)
 - Comparativa vs periodo anterior
-- Descarga directa desde /reports
 - Compartir metricas con broker (acceso por email)
 
 ### Notificaciones
-- In-app: citas proximas, tareas vencidas, cumpleanos
+- In-app: citas proximas, tareas vencidas, cumpleanos, leads inactivos (7+ dias)
 - Campana con badge + dropdown
-- Cron cada hora (cuando se active en Coolify)
+- App Badging (conteo en icono PWA)
+- Toast notifications (feedback visual al guardar)
+
+### PWA
+- Service Worker con cache offline de paginas visitadas + fotos
+- Install prompt personalizado
+- Shortcuts en long-press (Nueva Propiedad, Contactos, Calendario)
+- View transitions, pull-to-refresh, haptics
 
 ### Paginas Publicas
 - /p/[id]: pagina publica de propiedad (compartible por redes)
@@ -144,7 +145,6 @@ Requieren la env var `CRON_SECRET` y cron jobs en Coolify.
 - Redis + BullMQ para jobs (market sync)
 - Clerk para autenticacion
 - Coolify para deploy (Hetzner Cloud)
-- PWA con Service Worker (cache offline de paginas visitadas)
 - CI: ESLint + TypeScript + Vitest
 
 ---
