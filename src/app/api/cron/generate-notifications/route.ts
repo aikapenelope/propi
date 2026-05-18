@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { appointments, tasks, contacts, notifications } from "@/server/schema";
+import { appointments, tasks, contacts, notifications, activityLog } from "@/server/schema";
 import { eq, and, gte, lte, sql } from "drizzle-orm";
 
 export const dynamic = "force-dynamic";
@@ -41,6 +41,7 @@ export async function GET(request: Request) {
   let appointmentNotifs = 0;
   let taskNotifs = 0;
   let birthdayNotifs = 0;
+  let inactiveLeadNotifs = 0;
 
   try {
     // --- Appointment reminders (next 24 hours) ---
@@ -143,12 +144,64 @@ export async function GET(request: Request) {
       birthdayNotifs++;
     }
 
+    // --- Inactive leads (no activity in 7+ days) ---
+    const inactivityCutoff = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+    // Get all active leads (not closed/lost) with their last activity date
+    const activeLeads = await db
+      .select({
+        id: contacts.id,
+        name: contacts.name,
+        userId: contacts.userId,
+        lastActivity: sql<Date | null>`(
+          SELECT MAX(${activityLog.createdAt})
+          FROM ${activityLog}
+          WHERE ${activityLog.contactId} = ${contacts.id}
+        )`,
+      })
+      .from(contacts)
+      .where(
+        and(
+          sql`${contacts.leadStatus} NOT IN ('closed', 'lost')`,
+          // Only check contacts created more than 7 days ago
+          lte(contacts.createdAt, inactivityCutoff),
+        ),
+      );
+
+    for (const lead of activeLeads) {
+      // Skip if there's recent activity
+      if (lead.lastActivity && new Date(lead.lastActivity) > inactivityCutoff) {
+        continue;
+      }
+
+      const exists = await isDuplicateToday(
+        lead.userId,
+        `Seguimiento: ${lead.name}`,
+        todayStart,
+      );
+      if (exists) continue;
+
+      const daysSince = lead.lastActivity
+        ? Math.floor((now.getTime() - new Date(lead.lastActivity).getTime()) / (1000 * 60 * 60 * 24))
+        : Math.floor((now.getTime() - inactivityCutoff.getTime()) / (1000 * 60 * 60 * 24)) + 7;
+
+      await db.insert(notifications).values({
+        userId: lead.userId,
+        type: "system",
+        title: `Seguimiento: ${lead.name}`,
+        message: `Sin actividad hace ${daysSince} dias. Considera hacer seguimiento.`,
+        link: `/contacts/${lead.id}`,
+      });
+      inactiveLeadNotifs++;
+    }
+
     return NextResponse.json({
       success: true,
       generated: {
         appointments: appointmentNotifs,
         tasks: taskNotifs,
         birthdays: birthdayNotifs,
+        inactiveLeads: inactiveLeadNotifs,
       },
       timestamp: now.toISOString(),
     });
