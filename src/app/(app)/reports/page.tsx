@@ -194,10 +194,14 @@ export default function ReportsPage() {
                 <Download className="h-4 w-4" />
                 CSV
               </button>
-              <button onClick={() => window.print()} className="h-9 px-4 rounded-lg border border-border text-sm font-medium text-foreground hover:bg-muted transition-colors flex items-center gap-2">
+              <a
+                href={`/api/reports/pdf?start=${report.period.startDate}&end=${report.period.endDate}`}
+                download
+                className="h-9 px-4 rounded-lg border border-border text-sm font-medium text-foreground hover:bg-muted transition-colors flex items-center gap-2"
+              >
                 <FileText className="h-4 w-4" />
                 PDF
-              </button>
+              </a>
             </>
           )}
         </div>
