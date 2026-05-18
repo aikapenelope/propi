@@ -25,8 +25,8 @@ const featureCards = [
   {
     num: "03",
     title: "PUBLICA EN PORTALES",
-    tag: "Wasi con 1 click",
-    desc: "Subiste las fotos, llenaste los datos de la propiedad, y ahora quieres publicarla en Wasi. En vez de abrir Wasi, copiar todo manualmente y subir las fotos de nuevo, tocas un boton en Propi. Los datos se envian automaticamente, las fotos se suben solas, y en segundos tu propiedad esta en linea. Si prefieres hacerlo manual, Propi te genera el texto listo para copiar y pegar.",
+    tag: "Publicacion rapida",
+    desc: "Propi te genera el texto completo de tu propiedad listo para copiar. Con un toque, copia el texto y abre MercadoLibre, Wasi, TuInmueble, Corotos o Facebook Marketplace directamente. Pega, publica, y guarda el link en Propi para que aparezca en tu pagina publica.",
     img: "https://hoirqrkdgbmvpwutwuwj.supabase.co/storage/v1/object/public/assets/assets/aa5ed4de-1a7e-4bb7-b0ea-1a4c511663df_1600w.webp",
   },
 ];
@@ -51,14 +51,14 @@ const integrations = [
   { icon: "skill-icons:instagram", title: "Instagram", desc: "Publica fotos de propiedades, responde DMs y ve metricas. Acceso directo desde Propi." },
   { icon: "logos:facebook", title: "Facebook", desc: "Publica en tu pagina, responde comentarios y ve insights. Acceso directo a Business Suite." },
   { icon: "logos:whatsapp-icon", title: "WhatsApp", desc: "Comparte propiedades con un tap. Link directo con mensaje y fotos listas para enviar." },
-  { icon: "wasi", title: "Wasi", desc: "Publica propiedades con 1 click. Las galerias de fotos se suben y redimensionan automaticamente." },
+  { icon: "wasi", title: "Portales", desc: "Publica en MercadoLibre, Wasi, TuInmueble, Corotos y Facebook Marketplace con texto pre-generado y un click." },
   { icon: "simple-icons:mercadolibre", title: "MercadoLibre", desc: "Datos de mercado en tiempo real. Precios, tendencias y comparables para Propi Magic. No necesitas cuenta." },
   { icon: "simple-icons:resend", title: "Resend", desc: "Email marketing a segmentos personalizados. Disfruta de 3,000 emails gratis al mes." },
 ];
 
 const testimonials = [
   { name: "Carlos M.", role: "Broker Asociado", img: "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=150&q=80", text: "Publicar mis captaciones en todos los portales me tomaba horas. Con Propi, en segundos estoy en multiples plataformas. Ahorro tiempo valioso que dedico a cerrar tratos." },
-  { name: "Andrea V.", role: "Top Producer", img: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=150&q=80", text: "Publicar en Wasi con un click y tener los KPIs de mercado al instante cambio mi forma de trabajar. Ya no pierdo tiempo copiando datos manualmente entre plataformas." },
+  { name: "Andrea V.", role: "Top Producer", img: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=150&q=80", text: "Publicar en portales con un click y tener los KPIs de mercado al instante cambio mi forma de trabajar. Ya no pierdo tiempo copiando datos manualmente entre plataformas." },
   { name: "Roberto S.", role: "Director Comercial", img: "https://images.unsplash.com/photo-1556157382-97eda2d62296?auto=format&fit=crop&w=150&q=80", text: "La busqueda global en MercadoLibre y los KPIs con data propietaria me dan una ventaja injusta al tasar. Ahora defiendo mis exclusivas con datos reales del mercado." },
 ];
 
@@ -67,7 +67,7 @@ const faqItems = [
   { q: "Funciona en mi telefono?", a: "Si, Propi esta optimizado para funcionar sin problemas tanto en dispositivos Android como en iPhone, incluso en modelos de gama media o baja." },
   { q: "Como se conecta con WhatsApp e Instagram?", a: "Desde Propi tienes acceso directo a Instagram, Facebook y TikTok para publicar y responder mensajes. Tambien puedes compartir propiedades por WhatsApp con un tap desde cualquier listado." },
   { q: "Mis datos estan seguros?", a: "Completamente. Tus datos estan encriptados bajo HTTPS, con bases de datos privadas y sistemas de autenticacion de nivel bancario." },
-  { q: "Puedo publicar en Wasi y MercadoLibre?", a: "La integracion con Wasi permite publicar propiedades con 1 solo click. MercadoLibre se utiliza actualmente a traves de nuestra IA para inteligencia de precios y mercado." },
+  { q: "Puedo publicar en portales inmobiliarios?", a: "Si. Desde el detalle de cada propiedad, Propi genera el texto y te lleva directo a MercadoLibre, Wasi, TuInmueble, Corotos y Facebook Marketplace para publicar rapidamente." },
   { q: "Que es Propi Magic?", a: "Es nuestra inteligencia artificial integrada. Le puedes pedir que analice precios en una zona especifica, te redacte la descripcion de una propiedad o responda preguntas basicas." },
 ];
 
@@ -490,7 +490,7 @@ export default function LandingPage() {
                   "Propiedades ilimitadas (4 fotos c/u)",
                   "Propi Magic: inteligencia de mercado con IA",
                   "KPIs de mercado por ciudad y zona",
-                  "Publicacion en Wasi con 1 click",
+                  "Publicacion rapida en 5+ portales",
                   "Calendario y citas vinculadas",
                   "Tareas y recordatorios",
                   "Documentos y contratos en la nube",

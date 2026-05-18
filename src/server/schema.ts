@@ -190,9 +190,9 @@ export const properties = pgTable(
     /** GPS coordinates */
     latitude: numeric("latitude", { precision: 10, scale: 7 }),
     longitude: numeric("longitude", { precision: 10, scale: 7 }),
-    /** External publication IDs: { ml: "MLV123", wasi: "456" } */
+    /** External publication IDs: { ml: "MLV123" } */
     externalIds: jsonb("external_ids"),
-    /** External listing links (up to 3): ["https://wasi.co/...", "https://mercadolibre.com.ve/..."] */
+    /** External listing links (up to 3): ["https://inmuebles.mercadolibre.com.ve/...", "https://tuinmueble.com/..."] */
     externalLinks: jsonb("external_links"),
     /** When the transaction was closed (sold/rented). Null = not closed yet. */
     closedAt: timestamp("closed_at", { withTimezone: true }),
