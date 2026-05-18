@@ -86,21 +86,22 @@ export async function createDocument(data: {
   return doc;
 }
 
-export async function deleteDocument(id: string, key: string) {
+export async function deleteDocument(id: string) {
   const userId = await requireUserId();
 
-  // Verify ownership BEFORE deleting from S3
+  // Verify ownership and retrieve the authoritative S3 key from the DB.
+  // Never trust a client-supplied key for deletion — use the DB record.
   const doc = await db.query.documents.findFirst({
     where: and(eq(documents.id, id), eq(documents.userId, userId)),
   });
   if (!doc) throw new Error("Document not found");
 
-  // Delete from MinIO (don't fail if the file doesn't exist)
+  // Delete from MinIO using the key stored in the DB (don't fail if missing)
   try {
     await s3.send(
       new DeleteObjectCommand({
         Bucket: DOCS_BUCKET,
-        Key: key,
+        Key: doc.key,
       }),
     );
   } catch (err) {
