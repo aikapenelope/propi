@@ -7,13 +7,16 @@ import {
   TrendingUp,
   Calendar,
   ArrowUpRight,
-  Calculator,
   CheckSquare,
+  Plus,
+  Users,
+  AlertTriangle,
 } from "lucide-react";
 import { getDashboardStats } from "@/server/actions/dashboard";
 import { getUpcomingAppointments } from "@/server/actions/appointments";
+import { getTodayTasksCount } from "@/server/actions/tasks";
+import { getRecentActivities } from "@/server/actions/activity-log";
 import { formatDate } from "@/lib/utils";
-import { CommissionCalculator } from "@/components/dashboard/commission-calculator";
 import { TasksWidget } from "@/components/tasks/tasks-widget";
 import { InfoTooltip } from "@/components/ui/info-tooltip";
 
@@ -33,10 +36,24 @@ const typeLabels: Record<string, string> = {
 /** Day of week labels (0=Sun) */
 const dayLabels = ["Dom", "Lun", "Mar", "Mie", "Jue", "Vie", "Sab"];
 
+/** Relative time label */
+function timeAgo(date: Date): string {
+  const seconds = Math.floor((Date.now() - new Date(date).getTime()) / 1000);
+  if (seconds < 60) return "ahora";
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `hace ${minutes}m`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `hace ${hours}h`;
+  const days = Math.floor(hours / 24);
+  return `hace ${days}d`;
+}
+
 export default async function DashboardPage() {
-  const [stats, upcoming] = await Promise.all([
+  const [stats, upcoming, todayTasks, recentActivities] = await Promise.all([
     getDashboardStats(),
     getUpcomingAppointments(4),
+    getTodayTasksCount(),
+    getRecentActivities(6),
   ]);
 
   const activeProperties =
@@ -92,21 +109,55 @@ export default async function DashboardPage() {
       {/* Title */}
       <div className="flex flex-col md:flex-row md:items-end justify-between mb-6 md:mb-8 gap-4">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-1 md:mb-2 flex items-center gap-2">
+          <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-1 md:mb-2">
             {greeting}
-            <InfoTooltip text="Resumen en tiempo real de tu negocio. Los datos se actualizan cada 60 segundos." />
           </h1>
-          <p className="text-muted-foreground text-xs md:text-sm">
-            Resumen de tu negocio inmobiliario
+          <p className="text-muted-foreground text-xs md:text-sm flex flex-wrap items-center gap-x-3 gap-y-1">
+            {upcoming.length > 0 && (
+              <span className="flex items-center gap-1">
+                <Calendar className="h-3 w-3" />
+                {upcoming.length} cita{upcoming.length !== 1 ? "s" : ""} hoy
+              </span>
+            )}
+            {todayTasks.overdue > 0 && (
+              <span className="flex items-center gap-1 text-amber-500">
+                <AlertTriangle className="h-3 w-3" />
+                {todayTasks.overdue} tarea{todayTasks.overdue !== 1 ? "s" : ""} vencida{todayTasks.overdue !== 1 ? "s" : ""}
+              </span>
+            )}
+            {todayTasks.total > 0 && todayTasks.overdue === 0 && (
+              <span className="flex items-center gap-1">
+                <CheckSquare className="h-3 w-3" />
+                {todayTasks.total} tarea{todayTasks.total !== 1 ? "s" : ""} pendiente{todayTasks.total !== 1 ? "s" : ""}
+              </span>
+            )}
+            {upcoming.length === 0 && todayTasks.total === 0 && (
+              <span>Todo al dia</span>
+            )}
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        {/* Quick actions */}
+        <div className="flex items-center gap-2">
           <Link
             href="/properties/new"
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-bold hover:opacity-90 transition-all"
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary text-primary-foreground text-xs font-bold hover:opacity-90 transition-all"
           >
-            <Building2 className="h-4 w-4" />
-            Nueva Propiedad
+            <Plus className="h-3.5 w-3.5" />
+            Propiedad
+          </Link>
+          <Link
+            href="/contacts/new"
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-border text-xs font-bold text-foreground hover:bg-muted transition-all"
+          >
+            <Users className="h-3.5 w-3.5" />
+            Contacto
+          </Link>
+          <Link
+            href="/calendar/new"
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-border text-xs font-bold text-foreground hover:bg-muted transition-all"
+          >
+            <Calendar className="h-3.5 w-3.5" />
+            Cita
           </Link>
         </div>
       </div>
@@ -114,7 +165,7 @@ export default async function DashboardPage() {
       {/* 4 Metric Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5 mb-6">
         {/* Card 1: Properties by type (real bar chart) */}
-        <div className="bg-[var(--card-bg)] border border-border rounded-2xl p-4 md:p-5 card-shadow relative overflow-hidden group hover:border-white/[0.08] transition-all duration-300 min-w-0 min-h-[220px]">
+        <div className="bg-[var(--card-bg)] border border-border rounded-2xl p-4 md:p-5 card-shadow relative overflow-hidden group hover:border-white/[0.08] transition-all duration-300 min-w-0 min-h-[180px]">
 
           <div className="flex items-center gap-3 mb-4 relative z-10">
             <div className="w-8 h-8 rounded-full border border-primary/30 flex items-center justify-center bg-primary/10">
@@ -178,7 +229,7 @@ export default async function DashboardPage() {
         </div>
 
         {/* Card 2: Contacts (real SVG area chart from contactsByMonth) */}
-        <div className="bg-[var(--card-bg)] border border-border rounded-2xl p-4 md:p-5 card-shadow relative overflow-hidden group hover:border-white/[0.08] transition-all duration-300 min-w-0 min-h-[220px]">
+        <div className="bg-[var(--card-bg)] border border-border rounded-2xl p-4 md:p-5 card-shadow relative overflow-hidden group hover:border-white/[0.08] transition-all duration-300 min-w-0 min-h-[180px]">
 
           <div className="flex items-center gap-3 mb-4 relative z-10">
             <div className="w-8 h-8 rounded-full border border-blue-500/30 flex items-center justify-center bg-blue-500/10">
@@ -241,7 +292,7 @@ export default async function DashboardPage() {
         </div>
 
         {/* Card 3: Closed Sales */}
-        <div className="bg-[var(--card-bg)] border border-border rounded-2xl p-4 md:p-5 card-shadow relative overflow-hidden group hover:border-white/[0.08] transition-all duration-300 flex flex-col min-w-0 min-h-[220px]">
+        <div className="bg-[var(--card-bg)] border border-border rounded-2xl p-4 md:p-5 card-shadow relative overflow-hidden group hover:border-white/[0.08] transition-all duration-300 flex flex-col min-w-0 min-h-[180px]">
 
           <div className="flex items-center gap-3 mb-6 relative z-10">
             <div className="w-8 h-8 rounded-full border border-purple-500/30 flex items-center justify-center bg-purple-500/10">
@@ -276,7 +327,7 @@ export default async function DashboardPage() {
         </div>
 
         {/* Card 4: Appointments by day (real column chart) */}
-        <div className="bg-[var(--card-bg)] border border-border rounded-2xl p-4 md:p-5 card-shadow relative overflow-hidden group hover:border-white/[0.08] transition-all duration-300 flex flex-col min-w-0 min-h-[220px]">
+        <div className="bg-[var(--card-bg)] border border-border rounded-2xl p-4 md:p-5 card-shadow relative overflow-hidden group hover:border-white/[0.08] transition-all duration-300 flex flex-col min-w-0 min-h-[180px]">
 
           <div className="flex items-center gap-3 mb-6 relative z-10">
             <div className="w-8 h-8 rounded-full border border-amber-500/30 flex items-center justify-center bg-amber-500/10">
@@ -393,7 +444,7 @@ export default async function DashboardPage() {
           )}
         </div>
 
-        {/* Recent Activity */}
+        {/* Activity Timeline */}
         <div className="bg-[var(--card-bg)] border border-border rounded-2xl p-7 card-shadow">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-2">
@@ -403,73 +454,34 @@ export default async function DashboardPage() {
               <h2 className="text-base font-semibold text-foreground">
                 Actividad Reciente
               </h2>
-              <InfoTooltip text="Ultimas propiedades y contactos creados o modificados." />
             </div>
           </div>
 
-          <div className="mb-6">
-            <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3">
-              Propiedades
-            </h3>
-            <div className="space-y-2">
-              {stats.recentProperties.slice(0, 3).map((p) => (
+          {recentActivities.length === 0 ? (
+            <p className="text-sm text-muted-foreground py-8 text-center">
+              Sin actividad reciente
+            </p>
+          ) : (
+            <div className="space-y-3">
+              {recentActivities.map((activity) => (
                 <Link
-                  key={p.id}
-                  href={`/properties/${p.id}`}
-                  className="flex items-center justify-between p-3 rounded-xl hover:bg-white/[0.05] transition-colors group"
+                  key={activity.id}
+                  href={`/contacts/${activity.contactId}`}
+                  className="flex items-start gap-3 p-2 rounded-xl hover:bg-white/[0.05] transition-colors group"
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                      <Building2 className="h-4 w-4 text-primary" />
-                    </div>
-                    <div>
-                      <span className="font-semibold text-sm text-foreground group-hover:text-primary transition-colors truncate block max-w-[180px]">
-                        {p.title}
-                      </span>
-                      {p.price && (
-                        <span className="text-xs text-primary font-bold">
-                          ${parseFloat(p.price).toLocaleString()} {p.currency}
-                        </span>
-                      )}
-                    </div>
+                  <div className="w-1.5 h-1.5 rounded-full bg-primary mt-2 shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-foreground truncate group-hover:text-primary transition-colors">
+                      {activity.title}
+                    </p>
+                    <p className="text-[10px] text-muted-foreground">
+                      {activity.contact?.name} · {timeAgo(activity.createdAt)}
+                    </p>
                   </div>
-                  <ArrowUpRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
                 </Link>
               ))}
             </div>
-          </div>
-
-          <div>
-            <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3">
-              Contactos
-            </h3>
-            <div className="space-y-2">
-              {stats.recentContacts.slice(0, 3).map((c) => (
-                <Link
-                  key={c.id}
-                  href={`/contacts/${c.id}`}
-                  className="flex items-center justify-between p-3 rounded-xl hover:bg-white/[0.05] transition-colors group"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-foreground flex items-center justify-center text-xs font-bold text-background">
-                      {c.name
-                        .split(" ")
-                        .map((n) => n[0])
-                        .join("")
-                        .slice(0, 2)
-                        .toUpperCase()}
-                    </div>
-                    <span className="font-semibold text-sm text-foreground group-hover:text-primary transition-colors">
-                      {c.name}
-                    </span>
-                  </div>
-                  <span className="text-xs text-muted-foreground">
-                    {c.source || ""}
-                  </span>
-                </Link>
-              ))}
-            </div>
-          </div>
+          )}
         </div>
 
         {/* Tasks Widget */}
@@ -494,18 +506,34 @@ export default async function DashboardPage() {
           <TasksWidget />
         </div>
 
-        {/* Commission Calculator */}
+        {/* Quick Stats */}
         <div className="bg-[var(--card-bg)] border border-border rounded-2xl p-7 card-shadow">
           <div className="flex items-center gap-2 mb-6">
-            <div className="w-7 h-7 rounded border border-amber-500/30 flex items-center justify-center bg-amber-500/10">
-              <Calculator className="h-4 w-4 text-amber-400" />
+            <div className="w-7 h-7 rounded border border-primary/30 flex items-center justify-center bg-primary/10">
+              <Key className="h-4 w-4 text-primary" />
             </div>
             <h2 className="text-base font-semibold text-foreground">
-              Calculadora de Comisiones
+              Resumen Rapido
             </h2>
-            <InfoTooltip text="Calcula tu comision rapida. Para el simulador completo ve a Comisiones en el menu." />
           </div>
-          <CommissionCalculator />
+          <div className="space-y-4">
+            <Link href="/properties" className="flex items-center justify-between p-3 rounded-xl hover:bg-white/[0.05] transition-colors">
+              <span className="text-sm text-muted-foreground">Propiedades activas</span>
+              <span className="text-lg font-bold text-foreground">{activeProperties}</span>
+            </Link>
+            <Link href="/pipeline" className="flex items-center justify-between p-3 rounded-xl hover:bg-white/[0.05] transition-colors">
+              <span className="text-sm text-muted-foreground">Leads en pipeline</span>
+              <span className="text-lg font-bold text-foreground">{stats.totalContacts}</span>
+            </Link>
+            <Link href="/reports" className="flex items-center justify-between p-3 rounded-xl hover:bg-white/[0.05] transition-colors">
+              <span className="text-sm text-muted-foreground">Ventas cerradas</span>
+              <span className="text-lg font-bold text-emerald-500">{soldProperties}</span>
+            </Link>
+            <Link href="/calendar" className="flex items-center justify-between p-3 rounded-xl hover:bg-white/[0.05] transition-colors">
+              <span className="text-sm text-muted-foreground">Citas esta semana</span>
+              <span className="text-lg font-bold text-foreground">{stats.appointmentsThisWeek}</span>
+            </Link>
+          </div>
         </div>
       </div>
     </div>

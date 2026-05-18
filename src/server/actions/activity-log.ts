@@ -3,6 +3,7 @@
 import { db } from "@/lib/db";
 import { activityLog } from "@/server/schema";
 import { eq, desc } from "drizzle-orm";
+import { requireUserId } from "@/lib/auth-helper";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -52,5 +53,16 @@ export async function getContactActivities(contactId: string) {
     where: eq(activityLog.contactId, contactId),
     orderBy: [desc(activityLog.createdAt)],
     limit: 50,
+  });
+}
+
+/** Get recent activities across all contacts for the dashboard timeline. */
+export async function getRecentActivities(limit = 8) {
+  const userId = await requireUserId();
+  return db.query.activityLog.findMany({
+    where: eq(activityLog.userId, userId),
+    with: { contact: { columns: { id: true, name: true } } },
+    orderBy: [desc(activityLog.createdAt)],
+    limit,
   });
 }
