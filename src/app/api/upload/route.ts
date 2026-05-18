@@ -3,36 +3,19 @@ import { PutObjectCommand } from "@aws-sdk/client-s3";
 import sharp from "sharp";
 import { s3, MEDIA_BUCKET, DOCS_BUCKET } from "@/lib/s3";
 import { auth } from "@clerk/nextjs/server";
+import { createRateLimiter } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 
 // ---------------------------------------------------------------------------
-// Rate limiting: max 20 uploads per user per minute
+// Rate limiting: max 20 uploads per user per minute (distributed via Redis)
 // ---------------------------------------------------------------------------
 
-const uploadRateMap = new Map<string, { count: number; resetAt: number }>();
-const UPLOAD_RATE_LIMIT = 20;
-const UPLOAD_WINDOW_MS = 60_000;
-
-// Purge expired entries every 5 minutes to prevent unbounded Map growth.
-setInterval(() => {
-  const now = Date.now();
-  for (const [key, entry] of uploadRateMap) {
-    if (now > entry.resetAt) uploadRateMap.delete(key);
-  }
-}, 5 * 60_000).unref();
-
-function checkUploadRateLimit(userId: string): boolean {
-  const now = Date.now();
-  const entry = uploadRateMap.get(userId);
-  if (!entry || now > entry.resetAt) {
-    uploadRateMap.set(userId, { count: 1, resetAt: now + UPLOAD_WINDOW_MS });
-    return true;
-  }
-  if (entry.count >= UPLOAD_RATE_LIMIT) return false;
-  entry.count++;
-  return true;
-}
+const uploadLimiter = createRateLimiter({
+  prefix: "rl:upload",
+  limit: 20,
+  windowMs: 60_000,
+});
 
 // ---------------------------------------------------------------------------
 // Allowed MIME types
@@ -162,8 +145,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
 
-  // Rate limit
-  if (!checkUploadRateLimit(userId)) {
+  // Rate limit (distributed via Redis, fails open if Redis is down)
+  if (!(await uploadLimiter.check(userId))) {
     return NextResponse.json(
       { error: "Demasiados uploads. Espera un momento." },
       { status: 429 },

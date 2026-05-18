@@ -8,14 +8,17 @@ import {
 } from "@/server/actions/market-listings";
 import { createMagicSearch } from "@/server/actions/magic-searches";
 import { auth } from "@clerk/nextjs/server";
+import { createRateLimiter } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
 
-// Per-user rate limit: 20 requests per hour
-const userChatLimits = new Map<string, { count: number; resetAt: number }>();
-const CHAT_LIMIT = 20;
-const CHAT_WINDOW_MS = 60 * 60 * 1000; // 1 hour
+// Per-user rate limit: 20 requests per hour (distributed via Redis)
+const chatLimiter = createRateLimiter({
+  prefix: "rl:chat",
+  limit: 20,
+  windowMs: 60 * 60 * 1000, // 1 hour
+});
 
 export async function POST(req: Request) {
   // Auth check
@@ -24,19 +27,12 @@ export async function POST(req: Request) {
     return Response.json({ error: "Not authenticated" }, { status: 401 });
   }
 
-  // Rate limit per user
-  const now = Date.now();
-  const entry = userChatLimits.get(userId);
-  if (entry && now < entry.resetAt && entry.count >= CHAT_LIMIT) {
+  // Rate limit per user (distributed via Redis, fails open if Redis is down)
+  if (!(await chatLimiter.check(userId))) {
     return Response.json(
       { error: "Limite de consultas alcanzado (20/hora). Intenta mas tarde." },
       { status: 429 },
     );
-  }
-  if (!entry || now >= (entry?.resetAt ?? 0)) {
-    userChatLimits.set(userId, { count: 1, resetAt: now + CHAT_WINDOW_MS });
-  } else {
-    entry.count++;
   }
 
   const { messages } = await req.json();
