@@ -72,7 +72,7 @@ const allSections: Section[] = [
       },
       {
         q: "Como publicar en portales?",
-        a: "En el detalle de la propiedad, baja a 'Publicar en Portales'. Copia el texto pre-generado y usa los botones para abrir MercadoLibre, Wasi, TuInmueble, Corotos o Facebook Marketplace directamente.",
+        a: "En el detalle de la propiedad, baja a 'Publicar en Portales'. Copia el texto pre-generado y usa los botones para abrir MercadoLibre, Wasi o Facebook Marketplace directamente.",
       },
       {
         q: "Que monedas soporta?",

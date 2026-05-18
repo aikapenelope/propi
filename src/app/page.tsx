@@ -26,7 +26,7 @@ const featureCards = [
     num: "03",
     title: "PUBLICA EN PORTALES",
     tag: "Publicacion rapida",
-    desc: "Propi te genera el texto completo de tu propiedad listo para copiar. Con un toque, copia el texto y abre MercadoLibre, Wasi, TuInmueble, Corotos o Facebook Marketplace directamente. Pega, publica, y guarda el link en Propi para que aparezca en tu pagina publica.",
+    desc: "Propi te genera el texto completo de tu propiedad listo para copiar. Con un toque, copia el texto y abre MercadoLibre, Wasi o Facebook Marketplace directamente. Pega, publica, y guarda el link en Propi para que aparezca en tu pagina publica.",
     img: "https://hoirqrkdgbmvpwutwuwj.supabase.co/storage/v1/object/public/assets/assets/aa5ed4de-1a7e-4bb7-b0ea-1a4c511663df_1600w.webp",
   },
 ];
@@ -51,7 +51,7 @@ const integrations = [
   { icon: "skill-icons:instagram", title: "Instagram", desc: "Publica fotos de propiedades, responde DMs y ve metricas. Acceso directo desde Propi." },
   { icon: "logos:facebook", title: "Facebook", desc: "Publica en tu pagina, responde comentarios y ve insights. Acceso directo a Business Suite." },
   { icon: "logos:whatsapp-icon", title: "WhatsApp", desc: "Comparte propiedades con un tap. Link directo con mensaje y fotos listas para enviar." },
-  { icon: "wasi", title: "Portales", desc: "Publica en MercadoLibre, Wasi, TuInmueble, Corotos y Facebook Marketplace con texto pre-generado y un click." },
+  { icon: "wasi", title: "Portales", desc: "Publica en MercadoLibre, Wasi y Facebook Marketplace con texto pre-generado y un click." },
   { icon: "simple-icons:mercadolibre", title: "MercadoLibre", desc: "Datos de mercado en tiempo real. Precios, tendencias y comparables para Propi Magic. No necesitas cuenta." },
   { icon: "simple-icons:resend", title: "Resend", desc: "Email marketing a segmentos personalizados. Disfruta de 3,000 emails gratis al mes." },
 ];
@@ -67,7 +67,7 @@ const faqItems = [
   { q: "Funciona en mi telefono?", a: "Si, Propi esta optimizado para funcionar sin problemas tanto en dispositivos Android como en iPhone, incluso en modelos de gama media o baja." },
   { q: "Como se conecta con WhatsApp e Instagram?", a: "Desde Propi tienes acceso directo a Instagram, Facebook y TikTok para publicar y responder mensajes. Tambien puedes compartir propiedades por WhatsApp con un tap desde cualquier listado." },
   { q: "Mis datos estan seguros?", a: "Completamente. Tus datos estan encriptados bajo HTTPS, con bases de datos privadas y sistemas de autenticacion de nivel bancario." },
-  { q: "Puedo publicar en portales inmobiliarios?", a: "Si. Desde el detalle de cada propiedad, Propi genera el texto y te lleva directo a MercadoLibre, Wasi, TuInmueble, Corotos y Facebook Marketplace para publicar rapidamente." },
+  { q: "Puedo publicar en portales inmobiliarios?", a: "Si. Desde el detalle de cada propiedad, Propi genera el texto y te lleva directo a MercadoLibre, Wasi y Facebook Marketplace para publicar rapidamente." },
   { q: "Que es Propi Magic?", a: "Es nuestra inteligencia artificial integrada. Le puedes pedir que analice precios en una zona especifica, te redacte la descripcion de una propiedad o responda preguntas basicas." },
 ];
 
