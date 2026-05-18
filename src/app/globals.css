@@ -143,6 +143,33 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
+/* Prevent scroll chaining on mobile — stops the "bounce" effect when
+   reaching the end of a scrollable area from propagating to the body.
+   Also prevents accidental pull-to-refresh triggers in nested scrolls. */
+html, body {
+  overscroll-behavior: none;
+}
+
+/* Scrollable containers within the app should contain their overscroll */
+.overscroll-contain {
+  overscroll-behavior: contain;
+}
+
+/* Touch-optimized scrolling for lists and content areas */
+@media (pointer: coarse) {
+  /* Ensure vertical-only scroll in main content (prevents accidental
+     horizontal swipes from interfering with page scroll) */
+  main {
+    touch-action: pan-y;
+  }
+
+  /* Disable hover lift effects on touch devices — they cause visual
+     "sticking" when tapping cards because :hover persists after touch */
+  .card-shadow:hover {
+    transform: none;
+  }
+}
+
 /* Safe area insets for mobile PWA */
 @supports (padding-bottom: env(safe-area-inset-bottom)) {
   .pb-safe {

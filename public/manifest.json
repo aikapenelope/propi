@@ -24,6 +24,12 @@
   "categories": ["business", "productivity"],
   "shortcuts": [
     {
+      "name": "Tasacion de Mercado",
+      "short_name": "Tasacion",
+      "url": "/valuation",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
       "name": "Nueva Propiedad",
       "short_name": "Propiedad",
       "url": "/properties/new",

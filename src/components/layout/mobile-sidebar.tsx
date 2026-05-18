@@ -17,6 +17,9 @@ import {
   X,
   HelpCircle,
   Handshake,
+  Scale,
+  BarChart3,
+  Calculator,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SharePortalButton } from "./share-portal-button";
@@ -31,10 +34,17 @@ const quickItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/pipeline", label: "Pipeline", icon: Kanban },
   { href: "/tasks", label: "Tareas", icon: CheckSquare },
-  { href: "/market-analysis", label: "Propi Magic", icon: Sparkles },
   { href: "/documents", label: "Documentos", icon: FileText },
   { href: "/matches", label: "Matches", icon: Handshake },
   { href: "/search", label: "Busqueda", icon: Search },
+];
+
+const intelligenceItems = [
+  { href: "/valuation", label: "Tasacion", icon: Scale },
+  { href: "/market-analysis", label: "Propi Magic", icon: Sparkles },
+  { href: "/market-analysis/kpis", label: "KPIs Mercado", icon: BarChart3 },
+  { href: "/reports", label: "Reportes", icon: BarChart3 },
+  { href: "/commissions", label: "Comisiones", icon: Calculator },
 ];
 
 const marketingItems = [
@@ -110,9 +120,37 @@ export function MobileSidebar({ open, onClose }: MobileSidebarProps) {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 overflow-y-auto px-3 py-3">
+        <nav className="flex-1 overflow-y-auto px-3 py-3 overscroll-contain">
           <div className="space-y-0.5">
             {quickItems.map((item) => {
+              const isActive =
+                pathname === item.href || pathname.startsWith(item.href + "/");
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={onClose}
+                  className={cn(
+                    "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors",
+                    isActive
+                      ? "bg-primary/10 text-primary font-semibold"
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                  )}
+                >
+                  <item.icon className="h-[18px] w-[18px] shrink-0" />
+                  <span>{item.label}</span>
+                </Link>
+              );
+            })}
+          </div>
+
+          <div className="mt-5 mb-2 px-3">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/50">
+              Inteligencia
+            </p>
+          </div>
+          <div className="space-y-0.5">
+            {intelligenceItems.map((item) => {
               const isActive =
                 pathname === item.href || pathname.startsWith(item.href + "/");
               return (
