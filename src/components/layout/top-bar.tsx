@@ -65,7 +65,7 @@ export function TopBar({ sidebarCollapsed, onMenuToggle }: TopBarProps) {
         {/* Theme toggle */}
         <button
           onClick={toggleTheme}
-          className="w-10 h-10 rounded-full border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-white/10 transition-all bg-background"
+          className="w-10 h-10 rounded-full border border-border flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-white/10 transition-colors bg-background"
         >
           <Sun className="h-[18px] w-[18px]" />
         </button>

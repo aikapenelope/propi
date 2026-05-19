@@ -38,8 +38,10 @@ export function MobileNav({ onMorePress }: MobileNavProps) {
       className="fixed bottom-0 left-0 right-0 z-30 md:hidden"
       style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
     >
-      {/* Glass background */}
-      <div className="absolute inset-0 bg-background/80 backdrop-blur-xl border-t border-border/50" />
+      {/* Glass background — use backdrop-blur-md (12px) instead of xl (24px)
+          to reduce per-frame compositing cost during scroll. The visual
+          difference is negligible but the GPU savings are significant. */}
+      <div className="absolute inset-0 bg-background/90 backdrop-blur-md border-t border-border/50" />
 
       <div className="relative flex items-center justify-around px-2 py-1.5">
         {/* Left items */}
@@ -50,7 +52,7 @@ export function MobileNav({ onMorePress }: MobileNavProps) {
             <Link
               key={item.href}
               href={item.href}
-              className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition-all relative"
+              className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition-colors relative"
             >
               {/* Active pill indicator */}
               {isActive && (
@@ -65,7 +67,7 @@ export function MobileNav({ onMorePress }: MobileNavProps) {
               />
               <span
                 className={cn(
-                  "text-[10px] relative z-10 transition-all",
+                  "text-[10px] relative z-10 transition-colors",
                   isActive
                     ? "text-primary font-semibold"
                     : "text-muted-foreground/70",
@@ -93,7 +95,7 @@ export function MobileNav({ onMorePress }: MobileNavProps) {
             <Link
               key={item.href}
               href={item.href}
-              className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition-all relative"
+              className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition-colors relative"
             >
               {isActive && (
                 <div className="absolute inset-0 bg-primary/10 rounded-xl" />
@@ -107,7 +109,7 @@ export function MobileNav({ onMorePress }: MobileNavProps) {
               />
               <span
                 className={cn(
-                  "text-[10px] relative z-10 transition-all",
+                  "text-[10px] relative z-10 transition-colors",
                   isActive
                     ? "text-primary font-semibold"
                     : "text-muted-foreground/70",

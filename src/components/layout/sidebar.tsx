@@ -73,7 +73,7 @@ function NavLink({ href, label, icon: Icon, collapsed, pathname }: { href: strin
     <Link
       href={href}
       className={cn(
-        "flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-all",
+        "flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-colors",
         isActive
           ? "bg-primary text-primary-foreground font-bold"
           : "text-muted-foreground hover:text-foreground hover:bg-white/5",
@@ -93,7 +93,7 @@ function SmallNavLink({ href, label, icon: Icon, collapsed, pathname, badge, exa
     <Link
       href={href}
       className={cn(
-        "flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium transition-all",
+        "flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-medium transition-colors",
         isActive
           ? "bg-primary text-primary-foreground font-bold"
           : "text-muted-foreground hover:text-foreground hover:bg-white/5",
