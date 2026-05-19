@@ -86,8 +86,11 @@ body {
   background: rgba(0, 0, 0, 0.25);
 }
 
-/* Card shadow for dark theme — glass morphism with layered depth */
+/* Card shadow for dark theme — glass morphism with layered depth.
+   Performance: hover uses transform (GPU) + opacity on ::after pseudo (GPU).
+   We do NOT animate box-shadow (causes repaint on every frame). */
 .card-shadow {
+  position: relative;
   background: linear-gradient(
     145deg,
     rgba(255, 255, 255, 0.03) 0%,
@@ -96,21 +99,37 @@ body {
   ), var(--card-bg);
   box-shadow:
     inset 0 1px 0 0 rgba(255, 255, 255, 0.07),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.05),
     0 0 0 1px rgba(0, 0, 0, 0.3),
-    0 2px 4px rgba(0, 0, 0, 0.2),
-    0 8px 16px rgba(0, 0, 0, 0.2),
-    0 24px 48px rgba(0, 0, 0, 0.12);
-  transition: box-shadow 0.25s ease, transform 0.25s ease, border-color 0.25s ease;
+    0 2px 8px rgba(0, 0, 0, 0.2),
+    0 12px 32px rgba(0, 0, 0, 0.12);
+  /* Only animate transform and opacity — both are GPU-composited */
+  transition: transform 0.2s ease;
+  will-change: transform;
+  /* CSS containment: tells the browser that card internals don't affect
+     external layout. Enables paint/layout isolation for better perf. */
+  contain: layout style paint;
 }
-.card-shadow:hover {
+/* Hover shadow lives in a pseudo-element so we animate opacity (cheap)
+   instead of box-shadow (expensive repaint). */
+.card-shadow::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
   box-shadow:
     inset 0 1px 0 0 rgba(255, 255, 255, 0.1),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.07),
     0 0 0 1px rgba(255, 255, 255, 0.06),
-    0 4px 8px rgba(0, 0, 0, 0.3),
-    0 16px 32px rgba(0, 0, 0, 0.25),
-    0 32px 56px rgba(0, 0, 0, 0.15);
+    0 8px 16px rgba(0, 0, 0, 0.3),
+    0 24px 48px rgba(0, 0, 0, 0.18);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+  z-index: 0;
+}
+.card-shadow:hover::after {
+  opacity: 1;
+}
+.card-shadow:hover {
   transform: translateY(-2px);
 }
 
@@ -124,18 +143,15 @@ body {
   box-shadow:
     inset 0 1px 0 0 rgba(255, 255, 255, 0.9),
     0 0 0 1px rgba(0, 0, 0, 0.07),
-    0 1px 2px rgba(0, 0, 0, 0.05),
-    0 4px 12px rgba(0, 0, 0, 0.05),
-    0 16px 40px rgba(0, 0, 0, 0.04);
+    0 2px 8px rgba(0, 0, 0, 0.05),
+    0 12px 32px rgba(0, 0, 0, 0.04);
 }
-.light .card-shadow:hover {
+.light .card-shadow::after {
   box-shadow:
     inset 0 1px 0 0 rgba(255, 255, 255, 1),
     0 0 0 1px rgba(0, 0, 0, 0.09),
-    0 2px 4px rgba(0, 0, 0, 0.06),
-    0 8px 20px rgba(0, 0, 0, 0.07),
-    0 24px 48px rgba(0, 0, 0, 0.05);
-  transform: translateY(-2px);
+    0 4px 12px rgba(0, 0, 0, 0.07),
+    0 20px 40px rgba(0, 0, 0, 0.05);
 }
 
 /* Aurora glow — iridescent color accent inside cards (Apple-style).

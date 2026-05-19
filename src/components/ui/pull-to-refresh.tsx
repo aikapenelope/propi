@@ -6,81 +6,120 @@ import { cn } from "@/lib/utils";
 
 /**
  * Pull-to-refresh for mobile PWA pages.
- * Wraps page content and adds a pull gesture that triggers router.refresh().
- * Only activates on touch devices when scrolled to the top.
+ *
+ * Performance optimization: uses refs + direct DOM manipulation during the
+ * touch gesture instead of React state. This avoids re-rendering the entire
+ * page content on every pixel of finger movement.
+ *
+ * Only React state is used for the "refreshing" spinner (which is a single
+ * boolean toggle, not a continuous value).
  */
 
-const THRESHOLD = 80; // px to pull before triggering refresh
-const MAX_PULL = 120; // max visual pull distance
-const RESISTANCE = 2.5; // pull resistance factor
+const THRESHOLD = 80;
+const MAX_PULL = 120;
+const RESISTANCE = 2.5;
 
 export function PullToRefresh({ children }: { children: React.ReactNode }) {
-  const [pulling, setPulling] = useState(false);
-  const [pullDistance, setPullDistance] = useState(0);
   const [refreshing, setRefreshing] = useState(false);
-  const startY = useRef(0);
   const containerRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const indicatorRef = useRef<HTMLDivElement>(null);
+  const spinnerRef = useRef<SVGSVGElement>(null);
+
+  // Gesture state in refs (no re-renders during drag)
+  const pulling = useRef(false);
+  const startY = useRef(0);
+  const currentPull = useRef(0);
+
   const router = useRouter();
 
-  const handleTouchStart = useCallback((e: TouchEvent) => {
-    // Only activate when scrolled to top
-    if (window.scrollY > 0) return;
-    startY.current = e.touches[0].clientY;
-    setPulling(true);
+  const updateDOM = useCallback((distance: number) => {
+    if (contentRef.current) {
+      contentRef.current.style.transform =
+        distance > 0 ? `translateY(${distance}px)` : "";
+    }
+    if (indicatorRef.current) {
+      indicatorRef.current.style.height = `${distance}px`;
+      indicatorRef.current.style.opacity = distance > 10 ? "1" : "0";
+    }
+    if (spinnerRef.current) {
+      const progress = Math.min(distance / THRESHOLD, 1);
+      spinnerRef.current.style.transform = `rotate(${progress * 360}deg)`;
+    }
   }, []);
 
-  const handleTouchMove = useCallback(
-    (e: TouchEvent) => {
-      if (!pulling || refreshing) return;
-      const currentY = e.touches[0].clientY;
-      const diff = (currentY - startY.current) / RESISTANCE;
-
-      if (diff > 0) {
-        // Prevent native scroll while pulling
-        e.preventDefault();
-        setPullDistance(Math.min(diff, MAX_PULL));
-      }
-    },
-    [pulling, refreshing],
-  );
-
-  const handleTouchEnd = useCallback(() => {
-    if (!pulling) return;
-
-    if (pullDistance >= THRESHOLD && !refreshing) {
-      setRefreshing(true);
-      setPullDistance(THRESHOLD / 2); // Snap to spinner position
-
-      // Haptic feedback if available
-      if (navigator.vibrate) {
-        navigator.vibrate(10);
-      }
-
-      router.refresh();
-
-      // Reset after a short delay (data refetch is async)
+  const resetDOM = useCallback(() => {
+    if (contentRef.current) {
+      contentRef.current.style.transition = "transform 0.3s ease-out";
+      contentRef.current.style.transform = "";
+      // Remove transition after animation completes
       setTimeout(() => {
-        setRefreshing(false);
-        setPullDistance(0);
-        setPulling(false);
-      }, 1000);
-    } else {
-      setPullDistance(0);
-      setPulling(false);
+        if (contentRef.current) {
+          contentRef.current.style.transition = "";
+        }
+      }, 300);
     }
-  }, [pulling, pullDistance, refreshing, router]);
+    if (indicatorRef.current) {
+      indicatorRef.current.style.opacity = "0";
+      indicatorRef.current.style.height = "0px";
+    }
+  }, []);
 
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
 
-    // Use passive: false on touchmove to allow preventDefault
-    container.addEventListener("touchstart", handleTouchStart, {
-      passive: true,
-    });
-    container.addEventListener("touchmove", handleTouchMove, {
-      passive: false,
-    });
+    const handleTouchStart = (e: TouchEvent) => {
+      if (window.scrollY > 0 || refreshing) return;
+      startY.current = e.touches[0].clientY;
+      pulling.current = true;
+      // Remove any lingering transition for immediate response
+      if (contentRef.current) {
+        contentRef.current.style.transition = "";
+      }
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (!pulling.current || refreshing) return;
+      const diff = (e.touches[0].clientY - startY.current) / RESISTANCE;
+
+      if (diff > 0) {
+        e.preventDefault();
+        currentPull.current = Math.min(diff, MAX_PULL);
+        updateDOM(currentPull.current);
+      }
+    };
+
+    const handleTouchEnd = () => {
+      if (!pulling.current) return;
+
+      if (currentPull.current >= THRESHOLD && !refreshing) {
+        setRefreshing(true);
+
+        // Haptic feedback
+        if (navigator.vibrate) {
+          navigator.vibrate(10);
+        }
+
+        // Snap to spinner position
+        updateDOM(THRESHOLD / 2);
+        router.refresh();
+
+        setTimeout(() => {
+          setRefreshing(false);
+          currentPull.current = 0;
+          pulling.current = false;
+          resetDOM();
+        }, 1000);
+      } else {
+        currentPull.current = 0;
+        pulling.current = false;
+        resetDOM();
+      }
+    };
+
+    container.addEventListener("touchstart", handleTouchStart, { passive: true });
+    container.addEventListener("touchmove", handleTouchMove, { passive: false });
     container.addEventListener("touchend", handleTouchEnd, { passive: true });
 
     return () => {
@@ -88,19 +127,15 @@ export function PullToRefresh({ children }: { children: React.ReactNode }) {
       container.removeEventListener("touchmove", handleTouchMove);
       container.removeEventListener("touchend", handleTouchEnd);
     };
-  }, [handleTouchStart, handleTouchMove, handleTouchEnd]);
-
-  const progress = Math.min(pullDistance / THRESHOLD, 1);
+  }, [refreshing, router, updateDOM, resetDOM]);
 
   return (
     <div ref={containerRef} className="relative">
-      {/* Pull indicator */}
+      {/* Pull indicator — positioned via ref, no re-renders */}
       <div
-        className={cn(
-          "absolute left-0 right-0 flex items-center justify-center transition-opacity duration-200 pointer-events-none z-20",
-          pullDistance > 10 ? "opacity-100" : "opacity-0",
-        )}
-        style={{ top: -8, height: pullDistance }}
+        ref={indicatorRef}
+        className="absolute left-0 right-0 flex items-center justify-center pointer-events-none z-20 opacity-0"
+        style={{ top: -8, height: 0 }}
       >
         <div
           className={cn(
@@ -109,6 +144,7 @@ export function PullToRefresh({ children }: { children: React.ReactNode }) {
           )}
         >
           <svg
+            ref={spinnerRef}
             className="h-4 w-4 text-primary"
             viewBox="0 0 24 24"
             fill="none"
@@ -116,26 +152,14 @@ export function PullToRefresh({ children }: { children: React.ReactNode }) {
             strokeWidth={2.5}
             strokeLinecap="round"
             strokeLinejoin="round"
-            style={{
-              transform: refreshing
-                ? undefined
-                : `rotate(${progress * 360}deg)`,
-              transition: refreshing ? undefined : "transform 0.1s",
-            }}
           >
             <path d="M21 12a9 9 0 1 1-6.219-8.56" />
           </svg>
         </div>
       </div>
 
-      {/* Content with pull offset */}
-      <div
-        style={{
-          transform:
-            pullDistance > 0 ? `translateY(${pullDistance}px)` : undefined,
-          transition: pulling && pullDistance > 0 ? "none" : "transform 0.3s ease-out",
-        }}
-      >
+      {/* Content — transform applied via ref, not state */}
+      <div ref={contentRef} style={{ willChange: "transform" }}>
         {children}
       </div>
     </div>
