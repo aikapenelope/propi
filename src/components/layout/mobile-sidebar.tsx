@@ -8,7 +8,6 @@ import {
   FileText,
   Search,
   Sparkles,
-  Kanban,
   CheckSquare,
   Instagram,
   Facebook,
@@ -32,7 +31,6 @@ import { SharePortalButton } from "./share-portal-button";
 
 const quickItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/pipeline", label: "Pipeline", icon: Kanban },
   { href: "/tasks", label: "Tareas", icon: CheckSquare },
   { href: "/documents", label: "Documentos", icon: FileText },
   { href: "/matches", label: "Matches", icon: Handshake },
