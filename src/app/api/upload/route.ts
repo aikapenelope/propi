@@ -4,6 +4,7 @@ import sharp from "sharp";
 import { s3, MEDIA_BUCKET, DOCS_BUCKET } from "@/lib/s3";
 import { auth } from "@clerk/nextjs/server";
 import { createRateLimiter } from "@/lib/rate-limit";
+import { startTracking } from "@/lib/track-request";
 
 export const dynamic = "force-dynamic";
 
@@ -140,16 +141,22 @@ async function processImage(
  * Body: FormData with fields: file, key, bucket (optional, defaults to media)
  */
 export async function POST(request: Request) {
+  const tracker = startTracking(request);
+
   const { userId } = await auth();
   if (!userId) {
-    return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+    return tracker.end(
+      NextResponse.json({ error: "Not authenticated" }, { status: 401 }),
+    );
   }
 
   // Rate limit (distributed via Redis, fails open if Redis is down)
   if (!(await uploadLimiter.check(userId))) {
-    return NextResponse.json(
-      { error: "Demasiados uploads. Espera un momento." },
-      { status: 429 },
+    return tracker.end(
+      NextResponse.json(
+        { error: "Demasiados uploads. Espera un momento." },
+        { status: 429 },
+      ),
     );
   }
 
@@ -237,9 +244,9 @@ export async function POST(request: Request) {
       }),
     );
 
-    return NextResponse.json({ success: true, key });
+    return tracker.end(NextResponse.json({ success: true, key }));
   } catch (err) {
-    console.error("Upload error:", err);
+    tracker.error(err);
     return NextResponse.json(
       { error: "Upload failed" },
       { status: 500 },
