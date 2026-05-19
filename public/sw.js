@@ -6,7 +6,7 @@
 //   - /api/images: cache-first (property photos)
 //   - Offline: dedicated offline.html page with retry button
 
-const CACHE_VERSION = "propi-v4";
+const CACHE_VERSION = "propi-v5";
 
 // Precache: offline page + app shell entry point + icons
 const PRECACHE_URLS = [
