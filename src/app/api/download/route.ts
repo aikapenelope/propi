@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { GetObjectCommand } from "@aws-sdk/client-s3";
 import { s3, DOCS_BUCKET } from "@/lib/s3";
 import { auth } from "@clerk/nextjs/server";
+import { startTracking } from "@/lib/track-request";
 
 export const dynamic = "force-dynamic";
 
@@ -12,9 +13,13 @@ export const dynamic = "force-dynamic";
  * GET /api/download?key=userId/documents/filename.pdf
  */
 export async function GET(request: Request) {
+  const tracker = startTracking(request);
+
   const { userId } = await auth();
   if (!userId) {
-    return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+    return tracker.end(
+      NextResponse.json({ error: "Not authenticated" }, { status: 401 }),
+    );
   }
 
   const url = new URL(request.url);
@@ -53,18 +58,21 @@ export async function GET(request: Request) {
     const safeFilename = rawFilename.replace(/["\\\x00-\x1f\x7f]/g, "_");
     const encodedFilename = encodeURIComponent(safeFilename);
 
-    return new Response(stream, {
-      status: 200,
-      headers: {
-        "Content-Type": response.ContentType || "application/octet-stream",
-        "Content-Length": response.ContentLength
-          ? String(response.ContentLength)
-          : "",
-        "Content-Disposition": `inline; filename="${safeFilename}"; filename*=UTF-8''${encodedFilename}`,
-        "Cache-Control": "private, max-age=3600",
-      },
-    });
-  } catch {
+    return tracker.end(
+      new Response(stream, {
+        status: 200,
+        headers: {
+          "Content-Type": response.ContentType || "application/octet-stream",
+          "Content-Length": response.ContentLength
+            ? String(response.ContentLength)
+            : "",
+          "Content-Disposition": `inline; filename="${safeFilename}"; filename*=UTF-8''${encodedFilename}`,
+          "Cache-Control": "private, max-age=3600",
+        },
+      }),
+    );
+  } catch (err) {
+    tracker.error(err);
     return NextResponse.json({ error: "Download failed" }, { status: 500 });
   }
 }

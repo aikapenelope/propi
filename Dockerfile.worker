@@ -4,6 +4,7 @@
 #
 # Required env vars: REDIS_URL, DATABASE_URL
 # For email campaigns: RESEND_API_KEY, MAIL_FROM
+# For observability: BUGSINK_DSN, LOG_LEVEL (optional)
 
 ARG NODE_VERSION=22-slim
 

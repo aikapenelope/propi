@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { startTracking } from "@/lib/track-request";
 
 export const dynamic = "force-dynamic";
 
@@ -11,18 +12,23 @@ export const dynamic = "force-dynamic";
  * Call: curl -H "Authorization: Bearer $CRON_SECRET" /api/cron/sync-market
  */
 export async function GET(request: Request) {
+  const tracker = startTracking(request);
   const authHeader = request.headers.get("authorization");
   const cronSecret = process.env.CRON_SECRET;
 
   if (!cronSecret) {
-    return NextResponse.json(
-      { error: "CRON_SECRET not configured" },
-      { status: 500 },
+    return tracker.end(
+      NextResponse.json(
+        { error: "CRON_SECRET not configured" },
+        { status: 500 },
+      ),
     );
   }
 
   if (authHeader !== `Bearer ${cronSecret}`) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return tracker.end(
+      NextResponse.json({ error: "Unauthorized" }, { status: 401 }),
+    );
   }
 
   try {
@@ -34,13 +40,16 @@ export async function GET(request: Request) {
       { jobId: `sync-global-${Date.now()}` },
     );
 
-    return NextResponse.json({
-      success: true,
-      jobId: job.id,
-      message: "Market sync job enqueued",
-      timestamp: new Date().toISOString(),
-    });
+    return tracker.end(
+      NextResponse.json({
+        success: true,
+        jobId: job.id,
+        message: "Market sync job enqueued",
+        timestamp: new Date().toISOString(),
+      }),
+    );
   } catch (err) {
+    tracker.error(err);
     return NextResponse.json(
       {
         success: false,

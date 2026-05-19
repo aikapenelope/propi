@@ -9,6 +9,7 @@ import {
 import { createMagicSearch } from "@/server/actions/magic-searches";
 import { auth } from "@clerk/nextjs/server";
 import { createRateLimiter } from "@/lib/rate-limit";
+import { startTracking } from "@/lib/track-request";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
@@ -21,17 +22,23 @@ const chatLimiter = createRateLimiter({
 });
 
 export async function POST(req: Request) {
+  const tracker = startTracking(req);
+
   // Auth check
   const { userId } = await auth();
   if (!userId) {
-    return Response.json({ error: "Not authenticated" }, { status: 401 });
+    return tracker.end(
+      Response.json({ error: "Not authenticated" }, { status: 401 }),
+    );
   }
 
   // Rate limit per user (distributed via Redis, fails open if Redis is down)
   if (!(await chatLimiter.check(userId))) {
-    return Response.json(
-      { error: "Limite de consultas alcanzado (20/hora). Intenta mas tarde." },
-      { status: 429 },
+    return tracker.end(
+      Response.json(
+        { error: "Limite de consultas alcanzado (20/hora). Intenta mas tarde." },
+        { status: 429 },
+      ),
     );
   }
 
@@ -116,13 +123,15 @@ export async function POST(req: Request) {
     })),
   );
 
-  return result.toTextStreamResponse({
-    headers: {
-      "X-Listings": Buffer.from(listingsJson).toString("base64"),
-      "X-KPIs": Buffer.from(JSON.stringify(kpis)).toString("base64"),
-      "X-Total": String(kpis.total),
-      "X-Query": Buffer.from(JSON.stringify(parsed)).toString("base64"),
-      "X-Search-Id": savedSearch.id,
-    },
-  });
+  return tracker.end(
+    result.toTextStreamResponse({
+      headers: {
+        "X-Listings": Buffer.from(listingsJson).toString("base64"),
+        "X-KPIs": Buffer.from(JSON.stringify(kpis)).toString("base64"),
+        "X-Total": String(kpis.total),
+        "X-Query": Buffer.from(JSON.stringify(parsed)).toString("base64"),
+        "X-Search-Id": savedSearch.id,
+      },
+    }),
+  );
 }

@@ -5,6 +5,11 @@
  * Jobs:
  * - market-sync: Sync MercadoLibre listings for a specific user
  *
+ * Observability:
+ * - Structured JSON logging via pino (stdout → Alloy → Loki)
+ * - Sentry/Bugsink error tracking for unhandled failures
+ * - Job lifecycle events logged with duration and result
+ *
  * Usage:
  *   npx tsx src/workers/market-sync-worker.ts
  *
@@ -16,7 +21,30 @@ import IORedis from "ioredis";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import { eq, sql } from "drizzle-orm";
+import * as Sentry from "@sentry/node";
+import pino from "pino";
 import * as schema from "../server/schema";
+
+// ---------------------------------------------------------------------------
+// Observability: Logger + Sentry
+// ---------------------------------------------------------------------------
+
+const logger = pino({
+  level: process.env.LOG_LEVEL || "info",
+  formatters: { level: (label) => ({ level: label }) },
+  timestamp: () => `,"ts":"${new Date().toISOString()}"`,
+}).child({ component: "worker", queue: "market-sync" });
+
+if (process.env.BUGSINK_DSN) {
+  Sentry.init({
+    dsn: process.env.BUGSINK_DSN,
+    environment: process.env.NODE_ENV || "production",
+    tracesSampleRate: 0.1,
+    enabled: process.env.NODE_ENV === "production",
+    ignoreErrors: ["ECONNRESET", "EPIPE"],
+  });
+  logger.info("Sentry/Bugsink initialized for worker error tracking");
+}
 
 // ---------------------------------------------------------------------------
 // Direct DB connection (not through Next.js, this is a standalone process)
@@ -91,7 +119,7 @@ async function syncCategory(
 
       if (res.status === 429) {
         const retryAfter = parseInt(res.headers.get("retry-after") || "5", 10);
-        console.log(`[market-sync] Rate limited, waiting ${retryAfter}s...`);
+        logger.warn({ retry_after_s: retryAfter, category: category.id }, "rate limited by MercadoLibre API");
         await new Promise((r) => setTimeout(r, retryAfter * 1000));
         page--;
         continue;
@@ -99,7 +127,7 @@ async function syncCategory(
 
       if (!res.ok) {
         const errBody = await res.text().catch(() => "");
-        console.error(`[market-sync] API error ${res.status} for ${category.id} page ${page}: ${errBody}`);
+        logger.error({ status: res.status, category: category.id, page, body: errBody }, "MercadoLibre API error");
         break;
       }
       const data = await res.json();
@@ -108,10 +136,10 @@ async function syncCategory(
 
       // Log progress on first page of each category
       if (page === 0) {
-        console.log(`[market-sync] ${category.id} (${category.type}/${category.operation}): ${data.paging?.total ?? "?"} total listings`);
+        logger.info({ category: category.id, type: category.type, operation: category.operation, total: data.paging?.total }, "syncing category");
       }
     } catch (err) {
-      console.error(`[market-sync] Fetch error for ${category.id} page ${page}:`, err instanceof Error ? err.message : err);
+      logger.error({ category: category.id, page, error: err instanceof Error ? err.message : String(err) }, "fetch error during sync");
       break;
     }
 
@@ -256,7 +284,8 @@ const connection = new IORedis(REDIS_URL, {
 const worker = new Worker(
   "market-sync",
   async (job) => {
-    console.log(`[market-sync] Processing job ${job.id}`);
+    const jobStart = performance.now();
+    logger.info({ job_id: job.id }, "processing job");
 
     // Use platform-level service token (not tied to any user)
     const credential = await db.query.serviceCredentials.findFirst({
@@ -274,15 +303,14 @@ const worker = new Worker(
     const expiresAt = credential.tokenExpiresAt ?? new Date(0);
     const now = new Date();
 
-    console.log(`[market-sync] Token expires: ${expiresAt.toISOString()}, now: ${now.toISOString()}, expired: ${expiresAt < now}`);
-    console.log(`[market-sync] Has refresh token: ${!!credential.refreshToken}`);
+    logger.debug({ token_expires: expiresAt.toISOString(), expired: expiresAt < now, has_refresh: !!credential.refreshToken }, "token status");
 
     if (expiresAt < now) {
       if (!credential.refreshToken) {
         // No refresh token — try using the token anyway (ML sometimes accepts slightly expired tokens)
-        console.warn("[market-sync] WARNING: Token appears expired and no refresh token available. Attempting anyway...");
+        logger.warn("token expired but no refresh token available, attempting anyway");
       } else {
-        console.log("[market-sync] Token expired, refreshing...");
+        logger.info("token expired, refreshing...");
         try {
           const refreshed = await refreshServiceToken(credential.refreshToken);
           token = refreshed.accessToken;
@@ -298,16 +326,16 @@ const worker = new Worker(
             })
             .where(eq(schema.serviceCredentials.service, "mercadolibre"));
 
-          console.log(`[market-sync] Token refreshed, new expiry: ${refreshed.expiresAt.toISOString()}`);
+          logger.info({ new_expiry: refreshed.expiresAt.toISOString() }, "token refreshed successfully");
         } catch (err) {
-          console.error("[market-sync] Token refresh FAILED:", err instanceof Error ? err.message : err);
+          logger.error({ error: err instanceof Error ? err.message : String(err) }, "token refresh failed");
           throw new Error(`Token refresh failed: ${err instanceof Error ? err.message : "unknown"}`);
         }
       }
     }
 
     // Test token with a single request before full sync
-    console.log("[market-sync] Testing token validity...");
+    logger.debug("testing token validity");
     const testRes = await fetch(`${MELI_API}/sites/MLV/search?category=MLV1472&limit=1`, {
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -316,7 +344,7 @@ const worker = new Worker(
       throw new Error(`Token validation failed: ${testRes.status} ${errBody}`);
     }
     const testData = await testRes.json();
-    console.log(`[market-sync] Token valid. MLV1472 has ${testData.paging?.total ?? 0} listings.`);
+    logger.info({ test_total: testData.paging?.total ?? 0 }, "token validated successfully");
 
     const cutoff = new Date(Date.now() - TWELVE_MONTHS_MS);
     let totalInserted = 0;
@@ -334,8 +362,10 @@ const worker = new Worker(
       );
     }
 
-    console.log(
-      `[market-sync] Done: +${totalInserted} ~${totalUpdated} -${totalSkipped}`,
+    const jobDurationMs = Math.round(performance.now() - jobStart);
+    logger.info(
+      { inserted: totalInserted, updated: totalUpdated, skipped: totalSkipped, duration_ms: jobDurationMs, job_id: job.id },
+      "sync completed",
     );
 
     return { inserted: totalInserted, updated: totalUpdated, skipped: totalSkipped };
@@ -351,11 +381,16 @@ const worker = new Worker(
 );
 
 worker.on("completed", (job) => {
-  console.log(`[market-sync] Job ${job.id} completed`);
+  logger.info({ job_id: job.id }, "job completed");
 });
 
 worker.on("failed", (job, err) => {
-  console.error(`[market-sync] Job ${job?.id} failed:`, err.message);
+  logger.error({ job_id: job?.id, error: err.message }, "job failed");
+
+  // Report to Bugsink
+  Sentry.captureException(err, {
+    tags: { queue: "market-sync", job_id: job?.id ?? "unknown" },
+  });
 
   const isTokenDead =
     err.message.includes("403") ||
@@ -365,10 +400,9 @@ worker.on("failed", (job, err) => {
     err.message.includes("No MercadoLibre service credential");
 
   if (isTokenDead) {
-    console.error(
-      "[market-sync] TOKEN DEAD — Re-authorize at: https://auth.mercadolibre.cl/authorization?" +
-      `response_type=code&client_id=${process.env.ML_APP_ID}` +
-      "&redirect_uri=https://propi.aikalabs.cc/api/auth/mercadolibre/callback",
+    logger.fatal(
+      { reauthorize_url: `https://auth.mercadolibre.cl/authorization?response_type=code&client_id=${process.env.ML_APP_ID}&redirect_uri=https://propi.aikalabs.cc/api/auth/mercadolibre/callback` },
+      "ML token dead — re-authorization required",
     );
     sendTokenDeathAlert(err.message).catch(() => {});
   }
@@ -379,7 +413,7 @@ worker.on("failed", (job, err) => {
 // ---------------------------------------------------------------------------
 
 async function shutdown() {
-  console.log("[workers] Shutting down...");
+  logger.info("shutting down gracefully");
   await worker.close();
   await connection.quit();
   process.exit(0);
@@ -388,4 +422,4 @@ async function shutdown() {
 process.on("SIGINT", shutdown);
 process.on("SIGTERM", shutdown);
 
-console.log("[workers] Started: market-sync");
+logger.info({ pid: process.pid }, "worker started");
