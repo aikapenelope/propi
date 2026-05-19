@@ -165,7 +165,7 @@ export default async function DashboardPage() {
       {/* 4 Metric Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5 mb-6">
         {/* Card 1: Properties by type (real bar chart) */}
-        <div className="bg-[var(--card-bg)] border border-border rounded-2xl p-4 md:p-5 card-shadow relative overflow-hidden group hover:border-white/[0.08] transition-all duration-300 min-w-0 min-h-[180px]">
+        <div className="bg-[var(--card-bg)] border border-border rounded-2xl p-4 md:p-5 card-shadow card-glow-green relative overflow-hidden group hover:border-white/[0.08] transition-all duration-300 min-w-0 min-h-[180px]">
 
           <div className="flex items-center gap-3 mb-4 relative z-10">
             <div className="w-8 h-8 rounded-full border border-primary/30 flex items-center justify-center bg-primary/10">
@@ -229,7 +229,7 @@ export default async function DashboardPage() {
         </div>
 
         {/* Card 2: Contacts (real SVG area chart from contactsByMonth) */}
-        <div className="bg-[var(--card-bg)] border border-border rounded-2xl p-4 md:p-5 card-shadow relative overflow-hidden group hover:border-white/[0.08] transition-all duration-300 min-w-0 min-h-[180px]">
+        <div className="bg-[var(--card-bg)] border border-border rounded-2xl p-4 md:p-5 card-shadow card-glow-blue relative overflow-hidden group hover:border-white/[0.08] transition-all duration-300 min-w-0 min-h-[180px]">
 
           <div className="flex items-center gap-3 mb-4 relative z-10">
             <div className="w-8 h-8 rounded-full border border-blue-500/30 flex items-center justify-center bg-blue-500/10">
@@ -292,7 +292,7 @@ export default async function DashboardPage() {
         </div>
 
         {/* Card 3: Closed Sales */}
-        <div className="bg-[var(--card-bg)] border border-border rounded-2xl p-4 md:p-5 card-shadow relative overflow-hidden group hover:border-white/[0.08] transition-all duration-300 flex flex-col min-w-0 min-h-[180px]">
+        <div className="bg-[var(--card-bg)] border border-border rounded-2xl p-4 md:p-5 card-shadow card-glow-purple relative overflow-hidden group hover:border-white/[0.08] transition-all duration-300 flex flex-col min-w-0 min-h-[180px]">
 
           <div className="flex items-center gap-3 mb-6 relative z-10">
             <div className="w-8 h-8 rounded-full border border-purple-500/30 flex items-center justify-center bg-purple-500/10">
@@ -327,7 +327,7 @@ export default async function DashboardPage() {
         </div>
 
         {/* Card 4: Appointments by day (real column chart) */}
-        <div className="bg-[var(--card-bg)] border border-border rounded-2xl p-4 md:p-5 card-shadow relative overflow-hidden group hover:border-white/[0.08] transition-all duration-300 flex flex-col min-w-0 min-h-[180px]">
+        <div className="bg-[var(--card-bg)] border border-border rounded-2xl p-4 md:p-5 card-shadow card-glow-amber relative overflow-hidden group hover:border-white/[0.08] transition-all duration-300 flex flex-col min-w-0 min-h-[180px]">
 
           <div className="flex items-center gap-3 mb-6 relative z-10">
             <div className="w-8 h-8 rounded-full border border-amber-500/30 flex items-center justify-center bg-amber-500/10">

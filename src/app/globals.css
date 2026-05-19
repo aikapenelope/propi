@@ -138,6 +138,62 @@ body {
   transform: translateY(-2px);
 }
 
+/* Aurora glow — iridescent color accent inside cards (Apple-style).
+   Each variant uses a different hue. Apply with: card-shadow card-glow-green
+   Creates a subtle radial gradient that gives the card a "lit from within" feel,
+   similar to Apple's glass material or the aurora effect on macOS widgets. */
+.card-glow-green {
+  --glow-color-1: rgba(0, 255, 85, 0.08);
+  --glow-color-2: rgba(16, 185, 129, 0.05);
+}
+.card-glow-blue {
+  --glow-color-1: rgba(59, 130, 246, 0.08);
+  --glow-color-2: rgba(99, 102, 241, 0.05);
+}
+.card-glow-purple {
+  --glow-color-1: rgba(168, 85, 247, 0.08);
+  --glow-color-2: rgba(236, 72, 153, 0.05);
+}
+.card-glow-amber {
+  --glow-color-1: rgba(245, 158, 11, 0.08);
+  --glow-color-2: rgba(234, 88, 12, 0.05);
+}
+
+[class*="card-glow-"]::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background:
+    radial-gradient(ellipse 80% 60% at 70% 10%, var(--glow-color-1) 0%, transparent 70%),
+    radial-gradient(ellipse 60% 80% at 20% 90%, var(--glow-color-2) 0%, transparent 60%);
+  opacity: 1;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+  z-index: 1;
+}
+[class*="card-glow-"]:hover::before {
+  opacity: 1.5;
+}
+
+/* Light mode: slightly stronger glow for visibility on white */
+.light .card-glow-green {
+  --glow-color-1: rgba(0, 180, 60, 0.06);
+  --glow-color-2: rgba(16, 185, 129, 0.04);
+}
+.light .card-glow-blue {
+  --glow-color-1: rgba(59, 130, 246, 0.06);
+  --glow-color-2: rgba(99, 102, 241, 0.04);
+}
+.light .card-glow-purple {
+  --glow-color-1: rgba(168, 85, 247, 0.06);
+  --glow-color-2: rgba(236, 72, 153, 0.04);
+}
+.light .card-glow-amber {
+  --glow-color-1: rgba(245, 158, 11, 0.06);
+  --glow-color-2: rgba(234, 88, 12, 0.04);
+}
+
 /* Glow text */
 .glow-text {
   text-shadow: 0 0 30px rgba(255, 255, 255, 0.2);
