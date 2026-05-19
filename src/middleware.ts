@@ -1,11 +1,6 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import {
-  httpRequestsTotal,
-  httpRequestDuration,
-  normalizeRoutePath,
-} from "@/lib/metrics";
 
 const isPublicRoute = createRouteMatcher([
   "/",
@@ -77,7 +72,7 @@ function isBlocked(
 }
 
 // ---------------------------------------------------------------------------
-// Middleware
+// Middleware (runs in Edge Runtime — NO prom-client here)
 // ---------------------------------------------------------------------------
 
 const clerkHandler = clerkConfigured
@@ -100,60 +95,23 @@ const clerkHandler = clerkConfigured
   : undefined;
 
 export default function middleware(request: NextRequest) {
-  const start = Date.now();
-  const method = request.method;
-  const routePath = normalizeRoutePath(request.nextUrl.pathname);
-
-  // Skip metrics collection for the /api/metrics endpoint itself
-  const isMetricsRoute = request.nextUrl.pathname === "/api/metrics";
+  // Inject x-request-start header so downstream Node.js route handlers
+  // can calculate request duration for Prometheus metrics.
+  // This is Edge-safe (Date.now() works in Edge Runtime).
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-request-start", String(Date.now()));
 
   // If Clerk is not configured, allow public routes and block app routes
   if (!clerkHandler) {
     if (isPublicRoute(request)) {
-      if (!isMetricsRoute) {
-        recordMetrics(method, routePath, 200, start);
-      }
-      return NextResponse.next();
+      return NextResponse.next({
+        request: { headers: requestHeaders },
+      });
     }
-    recordMetrics(method, routePath, 302, start);
     return NextResponse.redirect(new URL("/", request.url));
   }
 
-  // Run Clerk handler and record metrics after
-  const response = clerkHandler(request, {} as never);
-
-  // Record metrics for the request (we can't get the actual status from
-  // clerkMiddleware's return, so we record 200 for allowed requests.
-  // Actual error statuses are tracked at the API route level.)
-  if (!isMetricsRoute) {
-    recordMetrics(method, routePath, 200, start);
-  }
-
-  return response;
-}
-
-/**
- * Record HTTP metrics for a request.
- * Uses route patterns (not real URLs) to prevent cardinality explosion.
- */
-function recordMetrics(
-  method: string,
-  routePath: string,
-  status: number,
-  startMs: number,
-): void {
-  const durationSeconds = (Date.now() - startMs) / 1000;
-
-  httpRequestsTotal.inc({
-    method,
-    path: routePath,
-    status: String(status),
-  });
-
-  httpRequestDuration.observe(
-    { method, path: routePath },
-    durationSeconds,
-  );
+  return clerkHandler(request, {} as never);
 }
 
 export const config = {
