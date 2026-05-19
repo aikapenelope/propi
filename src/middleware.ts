@@ -1,6 +1,11 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import {
+  httpRequestsTotal,
+  httpRequestDuration,
+  normalizeRoutePath,
+} from "@/lib/metrics";
 
 const isPublicRoute = createRouteMatcher([
   "/",
@@ -12,6 +17,7 @@ const isPublicRoute = createRouteMatcher([
   "/subscribe",
   "/api/webhooks(.*)",
   "/api/health",
+  "/api/metrics",
   "/api/cron(.*)",
   "/api/auth(.*)",
 ]);
@@ -94,16 +100,60 @@ const clerkHandler = clerkConfigured
   : undefined;
 
 export default function middleware(request: NextRequest) {
+  const start = Date.now();
+  const method = request.method;
+  const routePath = normalizeRoutePath(request.nextUrl.pathname);
+
+  // Skip metrics collection for the /api/metrics endpoint itself
+  const isMetricsRoute = request.nextUrl.pathname === "/api/metrics";
+
   // If Clerk is not configured, allow public routes and block app routes
   if (!clerkHandler) {
     if (isPublicRoute(request)) {
+      if (!isMetricsRoute) {
+        recordMetrics(method, routePath, 200, start);
+      }
       return NextResponse.next();
     }
-    // Redirect to landing if trying to access protected route without auth
+    recordMetrics(method, routePath, 302, start);
     return NextResponse.redirect(new URL("/", request.url));
   }
 
-  return clerkHandler(request, {} as never);
+  // Run Clerk handler and record metrics after
+  const response = clerkHandler(request, {} as never);
+
+  // Record metrics for the request (we can't get the actual status from
+  // clerkMiddleware's return, so we record 200 for allowed requests.
+  // Actual error statuses are tracked at the API route level.)
+  if (!isMetricsRoute) {
+    recordMetrics(method, routePath, 200, start);
+  }
+
+  return response;
+}
+
+/**
+ * Record HTTP metrics for a request.
+ * Uses route patterns (not real URLs) to prevent cardinality explosion.
+ */
+function recordMetrics(
+  method: string,
+  routePath: string,
+  status: number,
+  startMs: number,
+): void {
+  const durationSeconds = (Date.now() - startMs) / 1000;
+
+  httpRequestsTotal.inc({
+    method,
+    path: routePath,
+    status: String(status),
+  });
+
+  httpRequestDuration.observe(
+    { method, path: routePath },
+    durationSeconds,
+  );
 }
 
 export const config = {
