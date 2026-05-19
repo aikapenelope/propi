@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { registry } from "@/lib/metrics";
 
+export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 /**
