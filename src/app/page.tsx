@@ -90,6 +90,7 @@ function Icon({ icon, className, style }: { icon: string; className?: string; st
 export default function LandingPage() {
   const [loaded, setLoaded] = useState(false);
   const [loaderDone, setLoaderDone] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const heroRef = useRef<HTMLDivElement>(null);
 
   // PWA install prompt
@@ -219,8 +220,36 @@ export default function LandingPage() {
           <Link href="/sign-in" className="hover:text-gray-300 transition-colors">Ingresar</Link>
           <Link href="/sign-up" className="bg-white text-black px-5 py-2.5 rounded-full hover:bg-gray-200 transition-transform hover:scale-105 active:scale-95 duration-300">Empezar Gratis</Link>
         </div>
-        <div className="lg:hidden text-xs uppercase tracking-widest">MENU</div>
+        <button
+          onClick={() => setMobileMenuOpen((prev) => !prev)}
+          className="lg:hidden text-xs uppercase tracking-widest"
+          aria-label="Menu"
+        >
+          {mobileMenuOpen ? "CERRAR" : "MENU"}
+        </button>
       </nav>
+
+      {/* Mobile menu overlay */}
+      {mobileMenuOpen && (
+        <div className="fixed inset-0 z-[60] lg:hidden" onClick={() => setMobileMenuOpen(false)}>
+          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
+          <div
+            className="absolute top-20 left-6 right-6 rounded-2xl border border-white/10 bg-[#0A2B1D] p-6 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex flex-col gap-4 text-sm text-white/90">
+              <a href="#funciones" onClick={() => setMobileMenuOpen(false)} className="py-2 border-b border-white/10">Funciones</a>
+              <a href="#app" onClick={() => setMobileMenuOpen(false)} className="py-2 border-b border-white/10">App Movil</a>
+              <a href="#integraciones" onClick={() => setMobileMenuOpen(false)} className="py-2 border-b border-white/10">Integraciones</a>
+              <a href="#faq" onClick={() => setMobileMenuOpen(false)} className="py-2 border-b border-white/10">FAQ</a>
+              <div className="pt-4 flex flex-col gap-3">
+                <Link href="/sign-in" className="text-center py-3 rounded-xl border border-white/20 text-white font-medium">Ingresar</Link>
+                <Link href="/sign-up" className="text-center py-3 rounded-xl bg-white text-[#0A2B1D] font-semibold">Empezar Gratis</Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Wrapper */}
       <div className="relative z-10 shadow-[0_50px_100px_rgba(0,0,0,0.5)]" style={{ background: "#E3E1DC", marginBottom: "100vh" }}>
