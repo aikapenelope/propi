@@ -55,9 +55,10 @@ export default function RootLayout({
           className={`${geistSans.variable} ${geistMono.variable} ${jakarta.variable} antialiased`}
         >
           {/* Inline splash screen — visible instantly before React hydrates.
-              Pure CSS animation, no JS dependency. Hidden once React mounts
-              via the #__next sibling rendering (splash uses :has() to auto-hide).
-              Fallback: hidden after 4s via animation in case :has() isn't supported. */}
+              Hidden via a tiny inline script that runs as soon as the DOM has
+              any rendered content (works on ALL pages, not just authenticated ones).
+              The script removes the splash after a short delay to allow the first
+              paint to complete. */}
           <div
             id="splash"
             aria-hidden="true"
@@ -90,23 +91,29 @@ export default function RootLayout({
                     0%, 100% { opacity: 1; transform: scale(1); }
                     50% { opacity: 0.7; transform: scale(0.95); }
                   }
-                  /* Auto-hide splash when React content renders */
-                  body:has(#app-mounted) #splash {
-                    opacity: 0;
-                    pointer-events: none;
-                  }
-                  /* Fallback: force-hide after 4s for browsers without :has() */
-                  @keyframes splash-timeout {
-                    0%, 99% { opacity: 1; }
-                    100% { opacity: 0; pointer-events: none; }
-                  }
-                  @supports not selector(:has(*)) {
-                    #splash { animation: splash-timeout 4s forwards; }
-                  }
                 `,
               }}
             />
           </div>
+          {/* Inline script: hides splash once React hydrates (any page).
+              Runs synchronously after the body renders — no external deps. */}
+          <script
+            dangerouslySetInnerHTML={{
+              __html: `
+                (function(){
+                  function hideSplash(){
+                    var s=document.getElementById('splash');
+                    if(s){s.style.opacity='0';s.style.pointerEvents='none';}
+                  }
+                  if(document.readyState==='loading'){
+                    document.addEventListener('DOMContentLoaded',hideSplash);
+                  }else{
+                    hideSplash();
+                  }
+                })();
+              `,
+            }}
+          />
           <ServiceWorkerRegister />
           {children}
         </body>
