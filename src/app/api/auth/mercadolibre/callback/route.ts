@@ -4,6 +4,7 @@ import { upsertSocialAccount } from "@/server/actions/social-accounts";
 import { auth } from "@clerk/nextjs/server";
 import { db } from "@/lib/db";
 import { serviceCredentials } from "@/server/schema";
+import { log } from "@/lib/logger";
 
 export const dynamic = "force-dynamic";
 
@@ -72,7 +73,7 @@ export async function GET(request: Request) {
       new URL("/marketing/settings?ml_success=true", request.url),
     );
   } catch (err) {
-    console.error("MeLi OAuth callback error:", err);
+    log.external.error({ error: err instanceof Error ? err.message : String(err) }, "MercadoLibre OAuth callback failed");
     return NextResponse.redirect(
       new URL("/marketing/settings?ml_error=token_exchange", request.url),
     );

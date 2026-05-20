@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import React from "react";
+import { log } from "@/lib/logger";
 
 export const dynamic = "force-dynamic";
 
@@ -66,7 +67,7 @@ export async function GET(request: Request) {
       },
     });
   } catch (err) {
-    console.error("PDF generation error:", err);
+    log.http.error({ error: err instanceof Error ? err.message : String(err) }, "PDF report generation failed");
     return NextResponse.json(
       { error: "Error generando el PDF. Intenta de nuevo." },
       { status: 500 },

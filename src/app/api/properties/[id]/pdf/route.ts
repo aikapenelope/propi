@@ -3,6 +3,7 @@ import { auth } from "@clerk/nextjs/server";
 import { db } from "@/lib/db";
 import { properties, propertyImages } from "@/server/schema";
 import { eq, and } from "drizzle-orm";
+import { log } from "@/lib/logger";
 import React from "react";
 
 export const dynamic = "force-dynamic";
@@ -129,7 +130,7 @@ export async function GET(
       },
     });
   } catch (err) {
-    console.error("Property sheet PDF error:", err);
+    log.http.error({ error: err instanceof Error ? err.message : String(err) }, "property sheet PDF generation failed");
     return NextResponse.json(
       { error: "Error generando la ficha PDF" },
       { status: 500 },

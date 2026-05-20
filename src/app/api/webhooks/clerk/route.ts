@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { Webhook } from "svix";
 import { clerkClient } from "@clerk/nextjs/server";
+import { log } from "@/lib/logger";
 
 export const dynamic = "force-dynamic";
 
@@ -65,7 +66,7 @@ export async function POST(request: Request) {
       "svix-signature": svixSignature,
     }) as typeof event;
   } catch (err) {
-    console.error("Clerk webhook signature verification failed:", err);
+    log.auth.error({ error: err instanceof Error ? err.message : String(err) }, "clerk webhook signature verification failed");
     return NextResponse.json(
       { error: "Invalid signature" },
       { status: 401 },
@@ -91,11 +92,12 @@ export async function POST(request: Request) {
         },
       });
 
-      console.log(
-        `[clerk-webhook] User ${userId} provisioned with ${TRIAL_DAYS}-day trial (expires ${trialEndsAt.toISOString()})`,
+      log.auth.info(
+        { user_id: userId, trial_days: TRIAL_DAYS, expires: trialEndsAt.toISOString() },
+        "user provisioned with trial",
       );
     } catch (err) {
-      console.error(`[clerk-webhook] Failed to set trial for user ${userId}:`, err);
+      log.auth.error({ user_id: userId, error: err instanceof Error ? err.message : String(err) }, "failed to set trial for user");
       // Return 200 anyway so Clerk doesn't retry indefinitely.
       // The user will be allowed in (no metadata = allow by default).
     }

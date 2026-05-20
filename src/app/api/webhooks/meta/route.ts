@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
+import { log } from "@/lib/logger";
 
 // Force dynamic - never pre-render this route at build time
 export const dynamic = "force-dynamic";
@@ -51,12 +52,12 @@ export async function POST(request: NextRequest) {
     // Reject all webhooks when META_APP_SECRET is not configured.
     // This prevents a misconfigured deployment from silently accepting
     // unsigned payloads that could inject fake messages.
-    console.error("Webhook rejected: META_APP_SECRET is not configured");
+    log.external.error("META_APP_SECRET not configured — rejecting webhook");
     return NextResponse.json({ error: "Webhook not configured" }, { status: 500 });
   }
 
   if (!signature) {
-    console.error("Webhook missing X-Hub-Signature-256 header");
+    log.external.error("webhook missing X-Hub-Signature-256 header");
     return NextResponse.json({ error: "Missing signature" }, { status: 403 });
   }
 
@@ -66,7 +67,7 @@ export async function POST(request: NextRequest) {
   const sigBuf = Buffer.from(signature, "utf8");
   const expectedBuf = Buffer.from(expectedSig, "utf8");
   if (sigBuf.length !== expectedBuf.length || !crypto.timingSafeEqual(sigBuf, expectedBuf)) {
-    console.error("Webhook signature mismatch");
+    log.external.error("webhook signature mismatch");
     return NextResponse.json({ error: "Invalid signature" }, { status: 403 });
   }
 
@@ -92,7 +93,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ status: "ok" });
   } catch (error) {
-    console.error("Webhook error:", error);
+    log.external.error({ error: error instanceof Error ? error.message : String(error) }, "webhook processing error");
     // Always return 200 to Meta so they don't retry
     return NextResponse.json({ status: "error" }, { status: 200 });
   }
@@ -174,7 +175,7 @@ async function handleWhatsAppWebhook(
 
       const userId = await resolveUser("whatsapp", phoneNumberId);
       if (!userId) {
-        console.warn(`WA webhook: no user found for phone_number_id ${phoneNumberId}`);
+        log.external.warn({ phone_number_id: phoneNumberId }, "WA webhook: no user found for phone_number_id");
         continue;
       }
 
@@ -232,7 +233,7 @@ async function handleInstagramWebhook(
       // recipient.id is the IG Business Account ID (our user's account)
       const userId = await resolveUser("instagram", event.recipient.id);
       if (!userId) {
-        console.warn(`IG webhook: no user found for recipient ${event.recipient.id}`);
+        log.external.warn({ recipient_id: event.recipient.id }, "IG webhook: no user found for recipient");
         continue;
       }
 
@@ -279,7 +280,7 @@ async function handleFacebookWebhook(
       // recipient.id is the Facebook Page ID (our user's page)
       const userId = await resolveUser("facebook", event.recipient.id);
       if (!userId) {
-        console.warn(`FB webhook: no user found for recipient ${event.recipient.id}`);
+        log.external.warn({ recipient_id: event.recipient.id }, "FB webhook: no user found for recipient");
         continue;
       }
 
