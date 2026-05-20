@@ -1,6 +1,6 @@
 import { AppointmentForm } from "@/components/calendar/appointment-form";
-import { getContacts } from "@/server/actions/contacts";
-import { getProperties } from "@/server/actions/properties";
+import { getContactOptions } from "@/server/actions/contacts";
+import { getPropertyOptions } from "@/server/actions/properties";
 
 interface NewAppointmentPageProps {
   searchParams: Promise<{ date?: string }>;
@@ -11,8 +11,8 @@ export default async function NewAppointmentPage({
 }: NewAppointmentPageProps) {
   const params = await searchParams;
   const [contacts, properties] = await Promise.all([
-    getContacts(),
-    getProperties(),
+    getContactOptions(),
+    getPropertyOptions(),
   ]);
 
   // Pre-fill date from calendar click (format: yyyy-MM-ddTHH:mm)

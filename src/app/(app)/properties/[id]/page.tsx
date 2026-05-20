@@ -22,7 +22,7 @@ import { PropertyMatches } from "@/components/properties/property-matches";
 import { PropertyComparables } from "@/components/properties/property-comparables";
 import { SendPropertyEmailButton } from "@/components/properties/send-property-email-button";
 import { InfoTooltip } from "@/components/ui/info-tooltip";
-import { getContacts } from "@/server/actions/contacts";
+import { getContactOptions } from "@/server/actions/contacts";
 
 const typeLabels: Record<string, string> = {
   apartment: "Apartamento",
@@ -84,7 +84,7 @@ export default async function PropertyDetailPage({
         }
       }),
     ),
-    getContacts(),
+    getContactOptions(),
   ]);
 
   return (

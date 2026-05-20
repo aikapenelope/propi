@@ -2,8 +2,8 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { getAppointment } from "@/server/actions/appointments";
-import { getContacts } from "@/server/actions/contacts";
-import { getProperties } from "@/server/actions/properties";
+import { getContactOptions } from "@/server/actions/contacts";
+import { getPropertyOptions } from "@/server/actions/properties";
 import { AppointmentForm } from "@/components/calendar/appointment-form";
 
 interface EditAppointmentPageProps {
@@ -16,8 +16,8 @@ export default async function EditAppointmentPage({
   const { id } = await params;
   const [appointment, contacts, properties] = await Promise.all([
     getAppointment(id),
-    getContacts(),
-    getProperties(),
+    getContactOptions(),
+    getPropertyOptions(),
   ]);
 
   if (!appointment) {

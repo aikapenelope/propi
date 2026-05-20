@@ -26,6 +26,7 @@ export async function getDocuments() {
       property: true,
     },
     orderBy: [desc(documents.createdAt)],
+    limit: 200,
   });
 }
 
