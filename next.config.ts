@@ -63,7 +63,7 @@ const nextConfig: NextConfig = {
               // unsafe-eval: only needed in development for React error stack reconstruction.
               // In production, neither React nor Next.js use eval().
               // Reference: https://nextjs.org/docs/app/guides/content-security-policy
-              `script-src 'self' 'unsafe-inline'${process.env.NODE_ENV === "development" ? " 'unsafe-eval'" : ""} https://clerk.propi.aikalabs.cc https://*.clerk.accounts.dev https://challenges.cloudflare.com https://code.iconify.design`,
+              `script-src 'self' 'unsafe-inline'${process.env.NODE_ENV === "development" ? " 'unsafe-eval'" : ""} https://clerk.propi.aikalabs.cc https://*.clerk.accounts.dev https://challenges.cloudflare.com https://code.iconify.design https://static.cloudflareinsights.com`,
               // unsafe-inline: required by Clerk for runtime CSS-in-JS styling.
               // Reference: https://clerk.com/docs/guides/secure/best-practices/csp-headers
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
@@ -71,7 +71,7 @@ const nextConfig: NextConfig = {
               // Restrict img-src to known domains instead of blanket https:/http:.
               // Covers: MinIO proxy (self), inline SVGs (data:), uploads (blob:),
               // landing page assets (supabase), ML thumbnails (mlstatic), Clerk avatars.
-              "img-src 'self' data: blob: https://*.supabase.co https://*.mlstatic.com https://img.clerk.com",
+              "img-src 'self' data: blob: https://*.supabase.co https://*.mlstatic.com https://img.clerk.com https://images.unsplash.com",
               "connect-src 'self' https://clerk.propi.aikalabs.cc https://*.clerk.accounts.dev https://*.clerk.com https://api.groq.com https://api.iconify.design https://api.simplesvg.com https://api.unisvg.com",
               "frame-src 'self' https://clerk.propi.aikalabs.cc https://*.clerk.accounts.dev https://*.clerk.com https://challenges.cloudflare.com",
               "worker-src 'self' blob:",
