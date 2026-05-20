@@ -54,6 +54,59 @@ export default function RootLayout({
         <body
           className={`${geistSans.variable} ${geistMono.variable} ${jakarta.variable} antialiased`}
         >
+          {/* Inline splash screen — visible instantly before React hydrates.
+              Pure CSS animation, no JS dependency. Hidden once React mounts
+              via the #__next sibling rendering (splash uses :has() to auto-hide).
+              Fallback: hidden after 4s via animation in case :has() isn't supported. */}
+          <div
+            id="splash"
+            aria-hidden="true"
+            style={{
+              position: "fixed",
+              inset: 0,
+              zIndex: 99999,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              background: "#090A0F",
+              transition: "opacity 0.3s ease",
+            }}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/icons/icon-192.png"
+              alt=""
+              width={64}
+              height={64}
+              style={{
+                borderRadius: "16px",
+                animation: "splash-pulse 1.5s ease-in-out infinite",
+              }}
+            />
+            <style
+              dangerouslySetInnerHTML={{
+                __html: `
+                  @keyframes splash-pulse {
+                    0%, 100% { opacity: 1; transform: scale(1); }
+                    50% { opacity: 0.7; transform: scale(0.95); }
+                  }
+                  /* Auto-hide splash when React content renders */
+                  body:has(#app-mounted) #splash {
+                    opacity: 0;
+                    pointer-events: none;
+                  }
+                  /* Fallback: force-hide after 4s for browsers without :has() */
+                  @keyframes splash-timeout {
+                    0%, 99% { opacity: 1; }
+                    100% { opacity: 0; pointer-events: none; }
+                  }
+                  @supports not selector(:has(*)) {
+                    #splash { animation: splash-timeout 4s forwards; }
+                  }
+                `,
+              }}
+            />
+          </div>
           <ServiceWorkerRegister />
           {children}
         </body>
