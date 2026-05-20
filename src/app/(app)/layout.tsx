@@ -18,6 +18,8 @@ export default function AppLayout({
 }>) {
   return (
     <ToastProvider>
+      {/* Marker element: signals to the splash screen that React has mounted */}
+      <div id="app-mounted" />
       <AppShell>{children}</AppShell>
       <PwaInstallPrompt />
     </ToastProvider>
