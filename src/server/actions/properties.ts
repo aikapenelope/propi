@@ -2,8 +2,9 @@
 
 import { db } from "@/lib/db";
 import { properties, propertyTags, propertyImages } from "@/server/schema";
-import { eq, ilike, or, desc, and, gte, lte, type SQL } from "drizzle-orm";
+import { eq, ilike, or, desc, and, gte, lte, lt, type SQL } from "drizzle-orm";
 import { revalidatePath, revalidateTag } from "next/cache";
+import { unstable_cache } from "next/cache";
 import { DeleteObjectCommand } from "@aws-sdk/client-s3";
 import { sanitizeLike } from "@/lib/sanitize";
 import { s3, MEDIA_BUCKET } from "@/lib/s3";
@@ -49,14 +50,52 @@ export type PropertyFilters = {
   status?: string;
   minPrice?: string;
   maxPrice?: string;
+  /** Cursor for pagination: ISO timestamp of the last item's updatedAt */
+  cursor?: string;
+  /** Page size (default 30) */
+  pageSize?: number;
+};
+
+/** Paginated response with items and next cursor */
+export type PaginatedProperties = {
+  items: Awaited<ReturnType<typeof fetchProperties>>;
+  nextCursor: string | null;
+  hasMore: boolean;
 };
 
 // ---------------------------------------------------------------------------
 // Queries
 // ---------------------------------------------------------------------------
 
-export async function getProperties(filters: PropertyFilters = {}) {
+const DEFAULT_PAGE_SIZE = 30;
+
+export async function getProperties(
+  filters: PropertyFilters = {},
+): Promise<PaginatedProperties> {
   const userId = await requireUserId();
+  const pageSize = filters.pageSize || DEFAULT_PAGE_SIZE;
+
+  const getCached = unstable_cache(
+    () => fetchProperties(userId, filters, pageSize),
+    [`properties-${userId}-${JSON.stringify(filters)}`],
+    { revalidate: 30, tags: [`properties-${userId}`] },
+  );
+
+  const items = await getCached();
+  const hasMore = items.length > pageSize;
+  const trimmed = hasMore ? items.slice(0, pageSize) : items;
+  const nextCursor = hasMore
+    ? trimmed[trimmed.length - 1].updatedAt.toISOString()
+    : null;
+
+  return { items: trimmed, nextCursor, hasMore };
+}
+
+async function fetchProperties(
+  userId: string,
+  filters: PropertyFilters,
+  pageSize: number,
+) {
   const conditions: SQL[] = [eq(properties.userId, userId)];
 
   if (filters.search) {
@@ -103,6 +142,11 @@ export async function getProperties(filters: PropertyFilters = {}) {
     conditions.push(lte(properties.price, filters.maxPrice));
   }
 
+  // Cursor-based pagination: fetch items older than the cursor
+  if (filters.cursor) {
+    conditions.push(lt(properties.updatedAt, new Date(filters.cursor)));
+  }
+
   return db.query.properties.findMany({
     where: and(...conditions),
     with: {
@@ -115,8 +159,32 @@ export async function getProperties(filters: PropertyFilters = {}) {
       },
     },
     orderBy: [desc(properties.updatedAt)],
-    limit: 200,
+    // Fetch one extra to detect if there are more pages
+    limit: pageSize + 1,
   });
+}
+
+/**
+ * Lightweight list of all properties for dropdowns/selects.
+ * Returns only id + title (no images, no tags, no pagination).
+ * Cached for 60s since it's used in forms that don't need real-time data.
+ */
+export async function getPropertyOptions() {
+  const userId = await requireUserId();
+
+  const getCached = unstable_cache(
+    () =>
+      db.query.properties.findMany({
+        where: eq(properties.userId, userId),
+        columns: { id: true, title: true },
+        orderBy: [desc(properties.updatedAt)],
+        limit: 500,
+      }),
+    [`property-options-${userId}`],
+    { revalidate: 60, tags: [`properties-${userId}`] },
+  );
+
+  return getCached();
 }
 
 export async function getProperty(id: string) {
@@ -192,6 +260,7 @@ export async function createProperty(data: PropertyFormData) {
   });
 
   revalidatePath("/properties");
+  revalidateTag(`properties-${userId}`, "max");
   revalidateTag(`dashboard-${userId}`, "max");
   return property;
 }
@@ -219,6 +288,7 @@ export async function updatePropertyStatus(
     .where(and(eq(properties.id, id), eq(properties.userId, userId)));
   revalidatePath(`/properties/${id}`);
   revalidatePath("/properties");
+  revalidateTag(`properties-${userId}`, "max");
   revalidateTag(`dashboard-${userId}`, "max");
 }
 
@@ -276,6 +346,7 @@ export async function updateProperty(id: string, data: PropertyFormData) {
   });
 
   revalidatePath("/properties");
+  revalidateTag(`properties-${userId}`, "max");
   revalidateTag(`dashboard-${userId}`, "max");
   revalidatePath(`/properties/${id}`);
   return property;
@@ -308,6 +379,7 @@ export async function deleteProperty(id: string) {
   }
 
   revalidatePath("/properties");
+  revalidateTag(`properties-${userId}`, "max");
   revalidateTag(`dashboard-${userId}`, "max");
 }
 

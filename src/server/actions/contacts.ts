@@ -2,8 +2,9 @@
 
 import { db } from "@/lib/db";
 import { contacts, contactTags, tags } from "@/server/schema";
-import { eq, and, ilike, or, desc, sql } from "drizzle-orm";
+import { eq, and, ilike, or, desc, lt, sql } from "drizzle-orm";
 import { revalidatePath, revalidateTag } from "next/cache";
+import { unstable_cache } from "next/cache";
 import { requireUserId } from "@/lib/auth-helper";
 import { sanitizeLike } from "@/lib/sanitize";
 import { contactSchema, parseUuid } from "@/lib/validators";
@@ -33,29 +34,91 @@ export type ContactFormData = {
 // Queries
 // ---------------------------------------------------------------------------
 
-export async function getContacts(search?: string) {
+const CONTACTS_PAGE_SIZE = 30;
+
+/** Paginated response */
+export type PaginatedContacts = {
+  items: Awaited<ReturnType<typeof fetchContacts>>;
+  nextCursor: string | null;
+  hasMore: boolean;
+};
+
+export async function getContacts(
+  search?: string,
+  cursor?: string,
+): Promise<PaginatedContacts> {
   const userId = await requireUserId();
 
+  const getCached = unstable_cache(
+    () => fetchContacts(userId, search, cursor),
+    [`contacts-${userId}-${search || "all"}-${cursor || "first"}`],
+    { revalidate: 30, tags: [`contacts-${userId}`] },
+  );
+
+  const items = await getCached();
+  const hasMore = items.length > CONTACTS_PAGE_SIZE;
+  const trimmed = hasMore ? items.slice(0, CONTACTS_PAGE_SIZE) : items;
+  const nextCursor = hasMore
+    ? trimmed[trimmed.length - 1].updatedAt.toISOString()
+    : null;
+
+  return { items: trimmed, nextCursor, hasMore };
+}
+
+async function fetchContacts(
+  userId: string,
+  search?: string,
+  cursor?: string,
+) {
+  const conditions = search
+    ? [
+        eq(contacts.userId, userId),
+        or(
+          ilike(contacts.name, `%${sanitizeLike(search)}%`),
+          ilike(contacts.email, `%${sanitizeLike(search)}%`),
+          ilike(contacts.phone, `%${sanitizeLike(search)}%`),
+          ilike(contacts.company, `%${sanitizeLike(search)}%`),
+        ),
+      ]
+    : [eq(contacts.userId, userId)];
+
+  if (cursor) {
+    conditions.push(lt(contacts.updatedAt, new Date(cursor)));
+  }
+
   return db.query.contacts.findMany({
-    where: search
-      ? and(
-          eq(contacts.userId, userId),
-          or(
-            ilike(contacts.name, `%${sanitizeLike(search)}%`),
-            ilike(contacts.email, `%${sanitizeLike(search)}%`),
-            ilike(contacts.phone, `%${sanitizeLike(search)}%`),
-            ilike(contacts.company, `%${sanitizeLike(search)}%`),
-          ),
-        )
-      : eq(contacts.userId, userId),
+    where: and(...conditions),
     with: {
       contactTags: {
         with: { tag: true },
       },
     },
     orderBy: [desc(contacts.updatedAt)],
-    limit: 200,
+    limit: CONTACTS_PAGE_SIZE + 1,
   });
+}
+
+/**
+ * Lightweight list of all contacts for dropdowns/selects.
+ * Returns only id + name + email + phone (no tags, no pagination).
+ * Cached for 60s.
+ */
+export async function getContactOptions() {
+  const userId = await requireUserId();
+
+  const getCached = unstable_cache(
+    () =>
+      db.query.contacts.findMany({
+        where: eq(contacts.userId, userId),
+        columns: { id: true, name: true, email: true, phone: true },
+        orderBy: [desc(contacts.updatedAt)],
+        limit: 500,
+      }),
+    [`contact-options-${userId}`],
+    { revalidate: 60, tags: [`contacts-${userId}`] },
+  );
+
+  return getCached();
 }
 
 export async function getContact(id: string) {
@@ -123,6 +186,7 @@ export async function createContact(data: ContactFormData) {
   }
 
   revalidatePath("/contacts");
+  revalidateTag(`contacts-${userId}`, "max");
   revalidateTag(`dashboard-${userId}`, "max");
 
   await logActivity({
@@ -179,6 +243,7 @@ export async function updateContact(id: string, data: ContactFormData) {
 
   revalidatePath("/contacts");
   revalidatePath(`/contacts/${id}`);
+  revalidateTag(`contacts-${userId}`, "max");
   revalidateTag(`dashboard-${userId}`, "max");
   return contact;
 }
@@ -190,6 +255,7 @@ export async function deleteContact(id: string) {
     .delete(contacts)
     .where(and(eq(contacts.id, id), eq(contacts.userId, userId)));
   revalidatePath("/contacts");
+  revalidateTag(`contacts-${userId}`, "max");
 }
 
 export async function createTag(name: string, color?: string) {

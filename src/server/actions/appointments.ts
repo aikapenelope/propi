@@ -45,6 +45,7 @@ export async function getAppointments(from?: Date, to?: Date) {
       property: true,
     },
     orderBy: [appointments.startsAt],
+    limit: 200,
   });
 }
 

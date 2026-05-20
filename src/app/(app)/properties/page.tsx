@@ -55,7 +55,7 @@ export default async function PropertiesPage({
   searchParams,
 }: PropertiesPageProps) {
   const params = await searchParams;
-  const propertyList = await getProperties({
+  const { items: propertyList } = await getProperties({
     search: params.q,
     type: params.type,
     operation: params.operation,

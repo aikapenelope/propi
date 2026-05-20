@@ -6,8 +6,8 @@ import {
   getDocumentUploadKey,
   createDocument,
 } from "@/server/actions/documents";
-import { getContacts } from "@/server/actions/contacts";
-import { getProperties } from "@/server/actions/properties";
+import { getContactOptions } from "@/server/actions/contacts";
+import { getPropertyOptions } from "@/server/actions/properties";
 import { ContactPicker, type ContactPickerItem } from "@/components/ui/contact-picker";
 
 type Property = { id: string; title: string };
@@ -35,8 +35,8 @@ export function UploadDocumentButton() {
 
   useEffect(() => {
     if (showForm) {
-      getContacts().then((c) => setContacts(c.map((x) => ({ id: x.id, name: x.name, email: x.email, phone: x.phone }))));
-      getProperties().then((p) => setProperties(p.map((x) => ({ id: x.id, title: x.title }))));
+      getContactOptions().then((c) => setContacts(c.map((x) => ({ id: x.id, name: x.name, email: x.email, phone: x.phone }))));
+      getPropertyOptions().then((p) => setProperties(p.map((x) => ({ id: x.id, title: x.title }))));
     }
   }, [showForm]);
 

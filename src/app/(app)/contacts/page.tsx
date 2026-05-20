@@ -15,7 +15,7 @@ export default async function ContactsPage({
   searchParams,
 }: ContactsPageProps) {
   const { q } = await searchParams;
-  const contactList = await getContacts(q);
+  const { items: contactList } = await getContacts(q);
 
   return (
     <div className="p-4 md:p-6">
