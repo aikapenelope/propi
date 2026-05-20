@@ -11,6 +11,7 @@ import { s3, MEDIA_BUCKET } from "@/lib/s3";
 import { requireUserId } from "@/lib/auth-helper";
 import { propertySchema, parseUuid } from "@/lib/validators";
 import { checkStorageQuota } from "@/lib/storage-quota";
+import { log } from "@/lib/logger";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -459,7 +460,7 @@ export async function deletePropertyImage(imageId: string, _key?: string) {
       }),
     );
   } catch (err) {
-    console.error("MinIO delete error (continuing):", err);
+    log.db.error({ error: err instanceof Error ? err.message : String(err), key: image.key }, "MinIO delete error (continuing)");
   }
 
   // Always delete from DB

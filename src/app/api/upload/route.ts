@@ -5,6 +5,7 @@ import { s3, MEDIA_BUCKET, DOCS_BUCKET } from "@/lib/s3";
 import { auth } from "@clerk/nextjs/server";
 import { createRateLimiter } from "@/lib/rate-limit";
 import { startTracking } from "@/lib/track-request";
+import { log } from "@/lib/logger";
 
 export const dynamic = "force-dynamic";
 
@@ -227,7 +228,7 @@ export async function POST(request: Request) {
           key = key.replace(/\.[^.]+$/u, result.key);
         }
       } catch (imgErr) {
-        console.error("Image processing error:", imgErr);
+        log.http.error({ error: imgErr instanceof Error ? imgErr.message : String(imgErr) }, "image processing failed");
         return NextResponse.json(
           { error: "No se pudo procesar la imagen. Intenta con otro formato (JPEG, PNG, WebP)." },
           { status: 422 },

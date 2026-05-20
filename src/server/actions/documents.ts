@@ -11,6 +11,7 @@ import { s3, DOCS_BUCKET } from "@/lib/s3";
 import { requireUserId } from "@/lib/auth-helper";
 import { documentSchema } from "@/lib/validators";
 import { checkStorageQuota } from "@/lib/storage-quota";
+import { log } from "@/lib/logger";
 
 // ---------------------------------------------------------------------------
 // Queries
@@ -106,7 +107,7 @@ export async function deleteDocument(id: string) {
       }),
     );
   } catch (err) {
-    console.error("MinIO delete error (continuing):", err);
+    log.db.error({ error: err instanceof Error ? err.message : String(err), key: doc.key }, "MinIO delete error (continuing)");
   }
 
   // Always delete from DB even if MinIO fails

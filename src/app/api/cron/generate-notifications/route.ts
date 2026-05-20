@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { appointments, tasks, contacts, notifications, activityLog } from "@/server/schema";
 import { eq, and, gte, lte, sql } from "drizzle-orm";
+import { log } from "@/lib/logger";
 
 export const dynamic = "force-dynamic";
 
@@ -206,7 +207,7 @@ export async function GET(request: Request) {
       timestamp: now.toISOString(),
     });
   } catch (err) {
-    console.error("Notification generation error:", err);
+    log.cron.error({ error: err instanceof Error ? err.message : String(err) }, "notification generation failed");
     return NextResponse.json({ error: "Generation failed" }, { status: 500 });
   }
 }

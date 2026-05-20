@@ -3,6 +3,7 @@ import { cleanupOldMessages } from "@/server/actions/messaging";
 import { db } from "@/lib/db";
 import { notifications } from "@/server/schema";
 import { and, eq, lt } from "drizzle-orm";
+import { log } from "@/lib/logger";
 
 export const dynamic = "force-dynamic";
 
@@ -50,7 +51,7 @@ export async function GET(request: Request) {
       timestamp: new Date().toISOString(),
     });
   } catch (err) {
-    console.error("Cleanup error:", err);
+    log.cron.error({ error: err instanceof Error ? err.message : String(err) }, "cleanup job failed");
     return NextResponse.json(
       { error: "Cleanup failed" },
       { status: 500 },
