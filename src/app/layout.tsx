@@ -54,11 +54,9 @@ export default function RootLayout({
         <body
           className={`${geistSans.variable} ${geistMono.variable} ${jakarta.variable} antialiased`}
         >
-          {/* Inline splash screen — visible instantly before React hydrates.
-              Hidden via a tiny inline script that runs as soon as the DOM has
-              any rendered content (works on ALL pages, not just authenticated ones).
-              The script removes the splash after a short delay to allow the first
-              paint to complete. */}
+          {/* Inline splash screen — only visible in PWA standalone mode.
+              In a normal browser tab (landing page, public links), the splash
+              is hidden via CSS media query. Only shows when opened from home screen. */}
           <div
             id="splash"
             aria-hidden="true"
@@ -66,7 +64,7 @@ export default function RootLayout({
               position: "fixed",
               inset: 0,
               zIndex: 99999,
-              display: "flex",
+              display: "none",
               alignItems: "center",
               justifyContent: "center",
               background: "#090A0F",
@@ -91,12 +89,15 @@ export default function RootLayout({
                     0%, 100% { opacity: 1; transform: scale(1); }
                     50% { opacity: 0.7; transform: scale(0.95); }
                   }
+                  /* Only show splash in PWA standalone mode (opened from home screen) */
+                  @media (display-mode: standalone) {
+                    #splash { display: flex !important; }
+                  }
                 `,
               }}
             />
           </div>
-          {/* Inline script: hides splash once React hydrates (any page).
-              Runs synchronously after the body renders — no external deps. */}
+          {/* Inline script: hides splash once React hydrates (PWA only). */}
           <script
             dangerouslySetInnerHTML={{
               __html: `
