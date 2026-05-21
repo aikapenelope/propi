@@ -17,6 +17,12 @@
   --card-bg: #12131A;
   --sidebar-width: 260px;
   --sidebar-collapsed-width: 64px;
+
+  /* Tells the browser which color scheme this document uses.
+     Without this, native form controls (<select>, <input type="date">,
+     number spinners, scrollbars) render in the OS default scheme, which
+     can be white on our dark background on Android Chrome. */
+  color-scheme: dark;
 }
 
 /* ============================================
@@ -34,6 +40,9 @@
   --destructive: #ef4444;
   --sidebar-bg: #ffffff;
   --card-bg: #ffffff;
+
+  /* Switch native controls to light scheme when user activates light mode. */
+  color-scheme: light;
 }
 
 @theme inline {
@@ -104,10 +113,21 @@ body {
     0 12px 32px rgba(0, 0, 0, 0.12);
   /* Only animate transform and opacity — both are GPU-composited */
   transition: transform 0.2s ease;
-  will-change: transform;
-  /* CSS containment: tells the browser that card internals don't affect
-     external layout. Enables paint/layout isolation for better perf. */
+  /* `will-change` is intentionally NOT set here. Setting it permanently
+     promotes every card to its own GPU compositor layer, exhausting VRAM
+     on Android mid-range devices (Snapdragon 665, Samsung A-series) when
+     pages have many cards.  Instead, we set it only at hover-start on
+     devices that actually animate (cursor-capable hardware). */
   contain: layout style paint;
+}
+
+/* Promote to GPU layer only when a cursor hover is about to animate the
+   card.  @media (hover: hover) targets devices with a true pointing device
+   (mouse, trackpad) and excludes touch-only phones and tablets. */
+@media (hover: hover) {
+  .card-shadow:hover {
+    will-change: transform;
+  }
 }
 /* Hover shadow lives in a pseudo-element so we animate opacity (cheap)
    instead of box-shadow (expensive repaint). */
