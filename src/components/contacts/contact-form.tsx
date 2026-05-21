@@ -139,7 +139,8 @@ export function ContactForm({
           type="text"
           required
           defaultValue={contact?.name}
-          className="mt-1 h-10 w-full rounded-lg border border-border bg-background px-3 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+          autoComplete="name"
+          className="mt-1 h-10 w-full rounded-lg border border-border bg-background px-3 input-base text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
         />
       </div>
 
@@ -157,7 +158,8 @@ export function ContactForm({
             name="email"
             type="email"
             defaultValue={contact?.email ?? ""}
-            className="mt-1 h-10 w-full rounded-lg border border-border bg-background px-3 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+            autoComplete="email"
+            className="mt-1 h-10 w-full rounded-lg border border-border bg-background px-3 input-base text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
           />
         </div>
         <div>
@@ -172,7 +174,8 @@ export function ContactForm({
             name="phone"
             type="tel"
             defaultValue={contact?.phone ?? ""}
-            className="mt-1 h-10 w-full rounded-lg border border-border bg-background px-3 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+            autoComplete="tel"
+            className="mt-1 h-10 w-full rounded-lg border border-border bg-background px-3 input-base text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
           />
         </div>
       </div>
@@ -190,7 +193,8 @@ export function ContactForm({
           name="company"
           type="text"
           defaultValue={contact?.company ?? ""}
-          className="mt-1 h-10 w-full rounded-lg border border-border bg-background px-3 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+          autoComplete="organization"
+          className="mt-1 h-10 w-full rounded-lg border border-border bg-background px-3 input-base text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
         />
       </div>
 
@@ -207,7 +211,7 @@ export function ContactForm({
           id="source"
           name="source"
           defaultValue={contact?.source ?? "other"}
-          className="mt-1 h-10 w-full rounded-lg border border-border bg-background px-3 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+          className="mt-1 h-10 w-full rounded-lg border border-border bg-background px-3 input-base text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
         >
           {sourceOptions.map((opt) => (
             <option key={opt.value} value={opt.value}>
@@ -235,7 +239,10 @@ export function ContactForm({
               ? new Date(contact.birthDate).toISOString().slice(0, 10)
               : ""
           }
-          className="mt-1 h-10 w-full max-w-xs rounded-lg border border-border bg-background px-3 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+          // autocomplete="bday" lets browsers/password managers pre-fill
+          // the birthday if available, matching the field's purpose.
+          autoComplete="bday"
+          className="mt-1 h-10 w-full max-w-xs rounded-lg border border-border bg-background px-3 input-base text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
         />
       </div>
 
@@ -267,7 +274,7 @@ export function ContactForm({
               id="prefPropertyType"
               name="prefPropertyType"
               defaultValue={contact?.prefPropertyType ?? ""}
-              className="h-10 w-full rounded-lg border border-border bg-background px-3 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+              className="h-10 w-full rounded-lg border border-border bg-background px-3 input-base text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
             >
               {propertyTypeOptions.map((opt) => (
                 <option key={opt.value} value={opt.value}>
@@ -287,7 +294,7 @@ export function ContactForm({
               id="prefOperation"
               name="prefOperation"
               defaultValue={contact?.prefOperation ?? ""}
-              className="h-10 w-full rounded-lg border border-border bg-background px-3 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+              className="h-10 w-full rounded-lg border border-border bg-background px-3 input-base text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
             >
               {operationOptions.map((opt) => (
                 <option key={opt.value} value={opt.value}>
@@ -309,7 +316,8 @@ export function ContactForm({
               type="text"
               defaultValue={contact?.prefCity ?? ""}
               placeholder="Caracas, Valencia..."
-              className="h-10 w-full rounded-lg border border-border bg-background px-3 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+              autoComplete="off"
+              className="h-10 w-full rounded-lg border border-border bg-background px-3 input-base text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
             />
           </div>
           <div>
@@ -328,7 +336,8 @@ export function ContactForm({
               step="1000"
               defaultValue={contact?.prefBudgetMax ?? ""}
               placeholder="150000"
-              className="h-10 w-full rounded-lg border border-border bg-background px-3 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+              autoComplete="off"
+              className="h-10 w-full rounded-lg border border-border bg-background px-3 input-base text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
             />
           </div>
         </div>
@@ -347,7 +356,8 @@ export function ContactForm({
           name="notes"
           rows={4}
           defaultValue={contact?.notes ?? ""}
-          className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+          autoComplete="off"
+          className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 input-base text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
         />
       </div>
 
