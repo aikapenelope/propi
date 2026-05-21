@@ -288,6 +288,30 @@ html, body {
   }
 }
 
+/* ============================================
+   Input font-size utility
+   ============================================ */
+
+/* iOS Safari auto-zooms any <input>, <select>, or <textarea> with
+   font-size < 16px when the element receives focus.  The zoom is abrupt
+   and jarring in a PWA — the viewport pops in then pops back on blur.
+
+   Apply .input-base to every interactive input element to get:
+     - 16px on mobile  → no auto-zoom
+     - 14px on desktop → denser layout unchanged
+
+   This is a single source of truth: instead of adding
+   "text-base md:text-sm" to every individual input, a single class
+   handles the breakpoint logic in CSS. */
+.input-base {
+  font-size: 1rem; /* 16px — prevents iOS Safari auto-zoom */
+}
+@media (min-width: 768px) {
+  .input-base {
+    font-size: 0.875rem; /* 14px — preserves desktop density */
+  }
+}
+
 /* Hide scrollbar for gallery sliders */
 .hide-scrollbar::-webkit-scrollbar {
   display: none;

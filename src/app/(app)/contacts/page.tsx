@@ -23,13 +23,18 @@ export default async function ContactsPage({
       <ContactsHeader count={contactList.length} />
 
       {/* Search */}
-      <form className="mb-4">
+      <form method="get" className="mb-4">
         <input
           type="search"
           name="q"
           defaultValue={q}
           placeholder="Buscar por nombre, email, telefono..."
-          className="h-10 w-full max-w-md rounded-lg border border-border bg-muted px-4 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+          // autocomplete="off" prevents the browser from filling the search
+          // field with saved personal data (names, emails) from autofill.
+          autoComplete="off"
+          // input-base: 16px on mobile to prevent iOS Safari auto-zoom,
+          // 14px on desktop to preserve layout density.
+          className="h-10 w-full max-w-md rounded-lg border border-border bg-muted px-4 input-base text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
         />
       </form>
 
