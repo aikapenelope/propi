@@ -35,7 +35,13 @@ export async function getDocuments() {
 // Upload (presigned URL for client-side upload)
 // ---------------------------------------------------------------------------
 
-/** Generate a MinIO key for a document upload. */
+/**
+ * Generate a MinIO key for a document upload.
+ *
+ * The key follows the pattern `{userId}/documents/{timestamp}-{filename}`,
+ * which scopes every object to the owning user and ensures uniqueness via
+ * the millisecond timestamp prefix.
+ */
 export async function getDocumentUploadKey(
   filename: string,
 ) {
@@ -43,13 +49,6 @@ export async function getDocumentUploadKey(
   await checkStorageQuota(userId);
   const key = `${userId}/documents/${Date.now()}-${filename}`;
   return { key };
-}
-
-/** Get a download URL for a document via the server-side proxy. */
-export async function getDocumentDownloadUrl(key: string) {
-  await requireUserId();
-  // Use the download proxy instead of presigned URLs (MinIO is on private network)
-  return `/api/download?key=${encodeURIComponent(key)}`;
 }
 
 // ---------------------------------------------------------------------------
