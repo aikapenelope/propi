@@ -7,42 +7,50 @@ import { deleteDocument } from "@/server/actions/documents";
 /**
  * Per-document action buttons: download and delete.
  *
- * Download implementation notes
- * ─────────────────────────────
- * The download URL is constructed synchronously on the client.  The
- * server-side `/api/download` route enforces authentication via the user's
- * session cookie, so no extra server round-trip is needed to produce the URL.
+ * Download implementation — iOS PWA considerations
+ * ─────────────────────────────────────────────────
+ * The download URL is constructed synchronously (no await) so we stay
+ * inside the browser's user-gesture context and avoid popup blockers.
  *
- * Critically: `window.open()` and programmatic anchor clicks are only
- * allowed by browsers within the synchronous execution of a user-gesture
- * callback (the click handler).  Any `await` between the click and the
- * navigation breaks this guarantee, causing the browser's popup blocker
- * to silently suppress the new tab/download — which manifests as a blank
- * page or no response at all.
+ * We use `window.open(url, "_blank")` rather than a programmatic <a> click
+ * for one critical reason: iOS PWA standalone mode.
  *
- * The pattern used here (create a temporary <a>, click it, remove it) is
- * the standard cross-browser way to trigger a file download programmatically
- * without opening a new tab and without any async/await.
+ * When the app is installed to the Home Screen (standalone display mode),
+ * the entire app runs inside a WKWebView.  Navigating that WebView to a
+ * binary-stream URL (even with `Content-Disposition: attachment`) does NOT
+ * trigger the iOS download manager.  Instead:
+ *   - For PDFs:  Safari renders the PDF inline inside the WebView.  There
+ *     is no back-navigation available because the WebView's history entry
+ *     for a binary stream cannot be revisited with the back gesture —
+ *     the user is "stuck" on a blank or PDF page with no way to return.
+ *   - For other file types: the WebView shows a blank page for the same
+ *     reason.
+ *
+ * `window.open(url, "_blank")` breaks out of this trap:
+ *   - iOS opens the URL in a **new Safari browser window** (outside the PWA
+ *     shell).  Safari handles the download or preview natively, and the user
+ *     can close the Safari window or tap "Back to [App Name]" to return to
+ *     the PWA.
+ *   - On desktop and Android PWA, `_blank` opens a new tab, which is the
+ *     standard and expected behavior for downloads.
+ *   - Because the call is synchronous (no await between the click event and
+ *     `window.open`), it is inside the user-gesture context and is never
+ *     blocked by popup blockers.
  */
 export function DocumentActions({ id, docKey }: { id: string; docKey: string }) {
   const [deleting, setDeleting] = useState(false);
   const [confirming, setConfirming] = useState(false);
 
   function handleDownload() {
-    // Build the URL synchronously so this function stays inside the
-    // user-gesture context (no await).  Auth is enforced server-side via
-    // the session cookie that the browser sends automatically.
+    // Synchronous URL construction — stays in user-gesture context.
+    // Auth is enforced server-side via the session cookie.
     const url = `/api/download?key=${encodeURIComponent(docKey)}`;
 
-    // A temporary <a> element is used instead of window.open() to trigger
-    // a download rather than navigating the current tab or opening a new one.
-    // The filename comes from the server's Content-Disposition header.
-    const anchor = document.createElement("a");
-    anchor.href = url;
-    anchor.rel = "noopener noreferrer";
-    document.body.appendChild(anchor);
-    anchor.click();
-    document.body.removeChild(anchor);
+    // Open in a new browser context.  On iOS PWA this exits the WKWebView
+    // and opens Safari, preventing the blank-page / stuck-navigation issue.
+    // The `noopener` and `noreferrer` features harden against clickjacking
+    // and prevent the opened window from accessing `window.opener`.
+    window.open(url, "_blank", "noopener,noreferrer");
   }
 
   async function handleDelete() {
