@@ -38,6 +38,10 @@ const gridFeatures = [
   { icon: "solar:document-text-linear", title: "Documentos", desc: "Contratos, escrituras, avaluos, planos. Todo vinculado al contacto y la propiedad. Descarga totalmente segura." },
   { icon: "solar:letter-opened-linear", title: "Reportes & PDFs", desc: "Reporte profesional de 5 paginas descargable. Ficha de propiedad con foto y branding. Comparables de mercado automaticos." },
   { icon: "solar:chart-square-linear", title: "Metricas", desc: "Propiedades por tipo, contactos por fuente, citas de la semana. Dashboard con graficos y KPIs de tu negocio." },
+  { icon: "solar:target-linear", title: "Matching Inteligente", desc: "Propi cruza tu inventario con los perfiles de tus clientes y te dice quien encaja con que propiedad. Cero busqueda manual." },
+  { icon: "solar:calculator-linear", title: "Valuacion Automatica", desc: "Ingresa zona, metros y tipo de inmueble. Propi te da precio promedio, mediana y rango con datos reales de MercadoLibre. Defiende tu tasacion con numeros." },
+  { icon: "solar:wallet-money-linear", title: "Comisiones & Cierres", desc: "Registra cada venta o alquiler cerrado, define tu porcentaje y calcula tu comision al instante. Incluido en el reporte mensual." },
+  { icon: "solar:bell-bing-linear", title: "Alertas Automaticas", desc: "Propi te avisa cuando un lead lleva mas de 7 dias sin actividad, cuando vence una tarea o cuando es el cumpleanos de un cliente." },
 ];
 
 const pwaFeatures = [
@@ -48,12 +52,12 @@ const pwaFeatures = [
 ];
 
 const integrations = [
-  { icon: "skill-icons:instagram", title: "Instagram", desc: "Publica fotos de propiedades, responde DMs y ve metricas. Acceso directo desde Propi." },
+  { icon: "skill-icons:instagram", title: "Instagram", desc: "Publica fotos de propiedades, responde DMs y ve metricas de alcance e interaccion. Acceso directo desde Propi." },
   { icon: "logos:facebook", title: "Facebook", desc: "Publica en tu pagina, responde comentarios y ve insights. Acceso directo a Business Suite." },
-  { icon: "logos:whatsapp-icon", title: "WhatsApp", desc: "Comparte propiedades con un tap. Link directo con mensaje y fotos listas para enviar." },
-  { icon: "wasi", title: "Portales", desc: "Publica en MercadoLibre, Wasi y Facebook Marketplace con texto pre-generado y un click." },
+  { icon: "logos:whatsapp-icon", title: "WhatsApp", desc: "Comparte la ficha de cualquier propiedad con un tap. Mensaje pre-redactado con fotos listo para enviar." },
+  { icon: "logos:tiktok-icon", title: "TikTok", desc: "Sube videos de tus propiedades, revisa analiticas y responde inbox. Acceso directo al panel de TikTok desde Propi." },
+  { icon: "wasi", title: "Portales", desc: "Publica en MercadoLibre, Wasi y Facebook Marketplace con texto pre-generado y un click. Sin copiar y pegar." },
   { icon: "simple-icons:mercadolibre", title: "MercadoLibre", desc: "Datos de mercado en tiempo real. Precios, tendencias y comparables para Propi Magic. No necesitas cuenta." },
-  { icon: "simple-icons:resend", title: "Comparables", desc: "Tasacion automatica con datos de MercadoLibre. Precio promedio, rango y propiedades similares para justificar tu precio." },
 ];
 
 const testimonials = [
@@ -506,28 +510,32 @@ export default function LandingPage() {
 
           {/* Pricing cards */}
           <div className="w-full max-w-4xl mx-auto px-6 mb-12 grid md:grid-cols-2 gap-6">
-            {/* Plan Agencia */}
-            <div className="rounded-3xl p-8 text-left relative overflow-hidden" style={{ background: "#121212", color: "#fff" }}>
-              <div className="absolute top-0 right-0 w-32 h-32 rounded-full opacity-10 blur-[60px]" style={{ background: "#6b8f71" }} />
+
+            {/* Plan Personal */}
+            <div className="rounded-3xl p-8 text-left border border-white/10 relative overflow-hidden" style={{ background: "#1a1a1a", color: "#fff" }}>
               <div className="relative z-10">
-                <div className="text-xs uppercase tracking-widest opacity-50 mb-2">Agencia / Broker</div>
-                <div className="flex items-baseline gap-2 mb-2">
+                <div className="text-xs uppercase tracking-widest opacity-50 mb-2">Personal / Agente</div>
+                <div className="flex items-baseline gap-2 mb-1">
                   <span className="text-5xl font-bold" style={{ fontFamily: "'Syncopate', sans-serif" }}>$30</span>
                   <span className="text-sm opacity-50">/mes</span>
                 </div>
-                <p className="text-xs opacity-40 mb-6">Cuenta principal con reportes y gestion completa</p>
+                <p className="text-xs opacity-40 mb-6">Un usuario. Todo incluido, sin limites.</p>
                 <div className="h-px bg-white/10 mb-6" />
                 <ul className="space-y-2.5 text-sm">
                   {[
-                    "Todo lo del plan Vendedor incluido",
-                    "Reportes PDF profesionales (5 paginas)",
-                    "Reportes de rendimiento por vendedor",
-                    "Comparables de mercado automaticos",
-                    "Marca de empresa personalizable (logo + nombre)",
-                    "Ficha de propiedad PDF con branding",
-                    "Compartir metricas con broker",
-                    "Gestion de equipo y visibilidad completa",
-                    "Soporte prioritario por WhatsApp",
+                    "Contactos y leads ilimitados",
+                    "Pipeline Kanban con drag & drop",
+                    "Propiedades ilimitadas",
+                    "Propi Magic: inteligencia de mercado con IA",
+                    "Valuacion automatica con datos de MercadoLibre",
+                    "Matching inteligente propiedades ↔ clientes",
+                    "Publicacion rapida en portales (ML, Wasi, FB)",
+                    "Calendario, tareas y recordatorios automaticos",
+                    "Documentos y contratos en la nube",
+                    "Importacion de contactos (CSV, vCard)",
+                    "Reportes PDF y fichas de propiedad con branding",
+                    "App movil PWA (funciona sin internet)",
+                    "Soporte por WhatsApp",
                   ].map((item) => (
                     <li key={item} className="flex items-start gap-2">
                       <span className="text-green-400 mt-0.5">&#10003;</span>
@@ -537,7 +545,7 @@ export default function LandingPage() {
                 </ul>
                 <div className="h-px bg-white/10 my-6" />
                 <a
-                  href={`https://wa.me/?text=${encodeURIComponent("Hola, quiero contratar Propi CRM plan Agencia ($30/mes). Mi nombre es: ")}`}
+                  href={`https://wa.me/?text=${encodeURIComponent("Hola, quiero contratar Propi CRM plan Personal ($30/mes). Mi nombre es: ")}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="block w-full text-center py-4 rounded-full text-xs font-semibold uppercase tracking-widest transition-all hover:opacity-90"
@@ -548,48 +556,54 @@ export default function LandingPage() {
               </div>
             </div>
 
-            {/* Plan Vendedor */}
-            <div className="rounded-3xl p-8 text-left border border-white/10" style={{ background: "#1a1a1a", color: "#fff" }}>
-              <div className="text-xs uppercase tracking-widest opacity-50 mb-2">Vendedor / Asesor</div>
-              <div className="flex items-baseline gap-2 mb-2">
-                <span className="text-5xl font-bold" style={{ fontFamily: "'Syncopate', sans-serif" }}>$15</span>
-                <span className="text-sm opacity-50">/mes por vendedor</span>
+            {/* Plan Agencia */}
+            <div className="rounded-3xl p-8 text-left relative overflow-hidden" style={{ background: "#121212", color: "#fff" }}>
+              <div className="absolute top-0 right-0 w-32 h-32 rounded-full opacity-10 blur-[60px]" style={{ background: "#6b8f71" }} />
+              <div className="relative z-10">
+                <div className="text-xs uppercase tracking-widest opacity-50 mb-2">Agencia / Equipo</div>
+                {/* First seat */}
+                <div className="flex items-baseline gap-2 mb-1">
+                  <span className="text-5xl font-bold" style={{ fontFamily: "'Syncopate', sans-serif" }}>$30</span>
+                  <span className="text-sm opacity-50">/mes primer usuario</span>
+                </div>
+                {/* Additional seats */}
+                <div className="flex items-baseline gap-2 mb-1">
+                  <span className="text-2xl font-bold opacity-70" style={{ fontFamily: "'Syncopate', sans-serif" }}>+$15</span>
+                  <span className="text-sm opacity-40">/mes por asesor adicional</span>
+                </div>
+                <p className="text-xs opacity-40 mb-6">Equipo completo al mejor precio. Sin limite de asesores.</p>
+                <div className="h-px bg-white/10 mb-6" />
+                <ul className="space-y-2.5 text-sm">
+                  {[
+                    "Todo lo del plan Personal incluido",
+                    "Reportes PDF profesionales (5 paginas)",
+                    "Comparables de mercado automaticos",
+                    "Marca de empresa personalizable (logo + nombre)",
+                    "Ficha de propiedad PDF con branding de agencia",
+                    "Compartir metricas con broker",
+                    "Gestion de equipo y visibilidad completa",
+                    "Asesores adicionales a $15/mes c/u",
+                    "Soporte prioritario por WhatsApp",
+                  ].map((item) => (
+                    <li key={item} className="flex items-start gap-2">
+                      <span className="text-green-400 mt-0.5">&#10003;</span>
+                      <span className="opacity-80">{item}</span>
+                    </li>
+                  ))}
+                </ul>
+                <div className="h-px bg-white/10 my-6" />
+                <a
+                  href={`https://wa.me/?text=${encodeURIComponent("Hola, quiero contratar Propi CRM para mi agencia ($30 primer usuario + $15 por asesor adicional). Mi nombre es: ")}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block w-full text-center py-4 rounded-full text-xs font-semibold uppercase tracking-widest transition-all hover:opacity-90"
+                  style={{ background: "#25D366", color: "#fff" }}
+                >
+                  Contratar por WhatsApp
+                </a>
               </div>
-              <p className="text-xs opacity-40 mb-6">Para cada asesor adicional del equipo</p>
-              <div className="h-px bg-white/10 mb-6" />
-              <ul className="space-y-2.5 text-sm">
-                {[
-                  "Contactos y leads ilimitados",
-                  "Pipeline Kanban con drag & drop",
-                  "Propiedades ilimitadas (4 fotos c/u)",
-                  "Propi Magic: inteligencia de mercado con IA",
-                  "Publicacion rapida en portales (ML, Wasi, FB)",
-                  "Calendario y citas vinculadas",
-                  "Tareas y recordatorios",
-                  "Documentos y contratos en la nube",
-                  "Importacion de contactos (CSV, vCard)",
-                  "Pagina publica para compartir propiedades",
-                  "App movil PWA (funciona sin internet)",
-                  "Notificaciones de leads inactivos",
-                  "Soporte por WhatsApp",
-                ].map((item) => (
-                  <li key={item} className="flex items-start gap-2">
-                    <span className="text-green-400 mt-0.5">&#10003;</span>
-                    <span className="opacity-80">{item}</span>
-                  </li>
-                ))}
-              </ul>
-              <div className="h-px bg-white/10 my-6" />
-              <a
-                href={`https://wa.me/?text=${encodeURIComponent("Hola, quiero agregar un vendedor a Propi CRM ($15/mes). Mi nombre es: ")}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block w-full text-center py-4 rounded-full text-xs font-semibold uppercase tracking-widest transition-all hover:opacity-90 border border-white/20"
-                style={{ color: "#fff" }}
-              >
-                Agregar Vendedor
-              </a>
             </div>
+
           </div>
 
           <p className="text-xs text-gray-500 mb-8 px-6 max-w-lg mx-auto text-center">
