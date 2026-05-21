@@ -13,6 +13,14 @@ import { cn } from "@/lib/utils";
  *
  * Only React state is used for the "refreshing" spinner (which is a single
  * boolean toggle, not a continuous value).
+ *
+ * Timer management
+ * ────────────────
+ * The 1-second reset timer started after a pull-to-refresh gesture is stored
+ * in `refreshTimerRef`.  The effect cleanup cancels it if the component
+ * unmounts before the timer fires, preventing a `setState` call on an
+ * unmounted component (React 18 no longer throws for this, but it is still
+ * wasteful and can mask logic bugs).
  */
 
 const THRESHOLD = 80;
@@ -30,6 +38,10 @@ export function PullToRefresh({ children }: { children: React.ReactNode }) {
   const pulling = useRef(false);
   const startY = useRef(0);
   const currentPull = useRef(0);
+
+  // Holds the ID of the post-refresh reset timer so it can be cancelled on
+  // unmount or if a new refresh cycle starts before the previous one ends.
+  const refreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const router = useRouter();
 
@@ -105,11 +117,19 @@ export function PullToRefresh({ children }: { children: React.ReactNode }) {
         updateDOM(THRESHOLD / 2);
         router.refresh();
 
-        setTimeout(() => {
+        // Cancel any previous reset timer before scheduling a new one.
+        // This is defensive but ensures correctness if handleTouchEnd fires
+        // multiple times in quick succession.
+        if (refreshTimerRef.current !== null) {
+          clearTimeout(refreshTimerRef.current);
+        }
+
+        refreshTimerRef.current = setTimeout(() => {
           setRefreshing(false);
           currentPull.current = 0;
           pulling.current = false;
           resetDOM();
+          refreshTimerRef.current = null;
         }, 1000);
       } else {
         currentPull.current = 0;
@@ -126,6 +146,13 @@ export function PullToRefresh({ children }: { children: React.ReactNode }) {
       container.removeEventListener("touchstart", handleTouchStart);
       container.removeEventListener("touchmove", handleTouchMove);
       container.removeEventListener("touchend", handleTouchEnd);
+
+      // Cancel a pending reset timer so we don't call setState after the
+      // component unmounts (e.g., if the user navigates away during refresh).
+      if (refreshTimerRef.current !== null) {
+        clearTimeout(refreshTimerRef.current);
+        refreshTimerRef.current = null;
+      }
     };
   }, [refreshing, router, updateDOM, resetDOM]);
 
