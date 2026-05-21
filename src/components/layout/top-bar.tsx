@@ -107,18 +107,26 @@ export function TopBar({ sidebarCollapsed, onMenuToggle }: TopBarProps) {
       {/*
        * Search form
        *
-       * Visibility classes:
-       *   - "hidden md:flex"  →  only on desktop when NOT on /search
-       *   - "flex"            →  always (desktop + mobile) when ON /search
+       * Layout:
+       *   Mobile on /search  → full remaining width (no max-w cap) so the
+       *                         input stretches between the hamburger and the
+       *                         action icons, feeling as wide as a native app.
+       *   Mobile elsewhere   → hidden; the icon button below handles entry.
+       *   Desktop (≥ md)     → always visible, capped at 320px.
        *
-       * The `isSearchPage` condition removes the `hidden` breakpoint on
-       * mobile so the bar is reachable without a duplicate input.
+       * Font size:
+       *   text-base (16px) on mobile prevents iOS Safari from auto-zooming
+       *   the viewport when the input is focused — iOS zooms any <input>
+       *   with font-size < 16px, which is jarring in a PWA.  Desktop uses
+       *   md:text-sm to keep the smaller, denser look of the desktop nav.
        */}
       <form
         onSubmit={handleSearch}
         className={cn(
-          "relative flex-1 max-w-[320px]",
-          isSearchPage ? "flex" : "hidden md:flex",
+          "relative flex-1",
+          isSearchPage
+            ? "flex md:max-w-[320px]"
+            : "hidden md:flex md:max-w-[320px]",
         )}
       >
         <Search
@@ -131,14 +139,14 @@ export function TopBar({ sidebarCollapsed, onMenuToggle }: TopBarProps) {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Buscar propiedades, contactos..."
-          className="w-full rounded-full border border-border bg-muted py-2.5 pl-11 pr-4 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-white/20 transition-colors shadow-inner"
+          className="w-full rounded-full border border-border bg-muted py-3 pl-11 pr-4 text-base md:text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-white/20 transition-colors shadow-inner"
         />
       </form>
 
       {/*
-       * Mobile search icon — visible on every mobile page EXCEPT /search.
-       * Tapping it navigates to /search where the full input is revealed.
-       * Hidden on desktop (md:hidden) since the form above is always shown.
+       * Mobile search icon — visible on every page except /search.
+       * Tapping navigates to /search where the full input appears.
+       * Hidden on desktop since the form above covers that role.
        */}
       {!isSearchPage && (
         <button
@@ -150,8 +158,12 @@ export function TopBar({ sidebarCollapsed, onMenuToggle }: TopBarProps) {
         </button>
       )}
 
-      {/* Spacer — pushes action icons to the right */}
-      <div className="flex-1" />
+      {/*
+       * Spacer — pushes action icons to the right.
+       * On mobile and on /search the form's flex-1 already fills all space,
+       * so the spacer is hidden there to avoid splitting the width 50/50.
+       */}
+      <div className={cn("flex-1", isSearchPage && "hidden md:block")} />
 
       {/* Action icons */}
       <div className="flex items-center gap-3">
