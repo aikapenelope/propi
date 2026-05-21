@@ -107,18 +107,24 @@ export function TopBar({ sidebarCollapsed, onMenuToggle }: TopBarProps) {
       {/*
        * Search form
        *
-       * Visibility classes:
-       *   - "hidden md:flex"  →  only on desktop when NOT on /search
-       *   - "flex"            →  always (desktop + mobile) when ON /search
+       * Width strategy:
+       *   - Desktop:              max-w-[320px] cap (unchanged, looks clean in the nav).
+       *   - Mobile, /search:      no max-w cap — the form gets the full remaining
+       *                           width between the hamburger and the action icons so
+       *                           the input feels spacious and native-app-like.
+       *   - Mobile, other pages:  hidden entirely; the icon below handles entry.
        *
-       * The `isSearchPage` condition removes the `hidden` breakpoint on
-       * mobile so the bar is reachable without a duplicate input.
+       * The spacer below is hidden on mobile when on /search because the form's
+       * flex-1 already fills all available space; keeping the spacer would split
+       * the width 50/50 and make the input half as wide.
        */}
       <form
         onSubmit={handleSearch}
         className={cn(
-          "relative flex-1 max-w-[320px]",
-          isSearchPage ? "flex" : "hidden md:flex",
+          "relative flex-1",
+          isSearchPage
+            ? "flex md:max-w-[320px]"      // mobile: full width; desktop: capped
+            : "hidden md:flex md:max-w-[320px]",  // mobile: hidden; desktop: normal
         )}
       >
         <Search
@@ -150,8 +156,14 @@ export function TopBar({ sidebarCollapsed, onMenuToggle }: TopBarProps) {
         </button>
       )}
 
-      {/* Spacer — pushes action icons to the right */}
-      <div className="flex-1" />
+      {/*
+       * Spacer — pushes action icons to the right.
+       * Hidden on mobile when on /search: the form's flex-1 already fills
+       * all available space, so a second flex-1 would cut the input width
+       * in half.  On desktop the form is capped at 320px so the spacer is
+       * always needed to right-align the action icons.
+       */}
+      <div className={cn("flex-1", isSearchPage && "hidden md:block")} />
 
       {/* Action icons */}
       <div className="flex items-center gap-3">

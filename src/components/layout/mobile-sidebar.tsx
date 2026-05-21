@@ -6,7 +6,6 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   FileText,
-  Search,
   Sparkles,
   CheckSquare,
   Instagram,
@@ -53,12 +52,14 @@ import { SharePortalButton } from "./share-portal-button";
  * will never cause an unnecessary re-run in practice.
  */
 
+// Search is intentionally omitted from this list.
+// It is now accessible via the search icon in the TopBar, which is
+// visible on every mobile page and expands to the full input when on /search.
 const quickItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/tasks", label: "Tareas", icon: CheckSquare },
   { href: "/documents", label: "Documentos", icon: FileText },
   { href: "/matches", label: "Matches", icon: Handshake },
-  { href: "/search", label: "Busqueda", icon: Search },
 ];
 
 const intelligenceItems = [
