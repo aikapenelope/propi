@@ -16,6 +16,19 @@ RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-cert
 
 WORKDIR /app
 
+# Cap Node.js V8 heap during the build stage.
+#
+# Without this, `npm install` (native-module compilation) and `next build`
+# (webpack/RSC bundling) can exhaust the default heap — especially on
+# memory-constrained CI/build runners.  When the heap runs out the Linux
+# OOM killer sends SIGKILL, which terminates the process with no output and
+# causes the Docker layer to fail with exit code 255.
+#
+# The cap is intentionally set to the same value used at runtime (1536MB)
+# so that if a build step is about to OOM it fails loudly with a V8 heap
+# error rather than being silently killed by the OS.
+ENV NODE_OPTIONS="--max-old-space-size=1536"
+
 # Copy package files
 COPY package.json package-lock.json ./
 

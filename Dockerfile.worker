@@ -15,6 +15,16 @@ RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-cert
 WORKDIR /app
 
 COPY package.json package-lock.json ./
+
+# Cap V8 heap during npm install to prevent silent OOM kills on
+# memory-constrained build runners.  See Dockerfile comment for details.
+ENV NODE_OPTIONS="--max-old-space-size=1536"
+
+# Rebuild node_modules for the current platform (linux-x64-gnu).
+# tsx is installed here because it is a devDependency; devDependencies are
+# included by default with `npm install`.  We call the local binary directly
+# in CMD below so the container does NOT need network access at startup.
+# See: https://github.com/npm/cli/issues/4828
 RUN rm -rf node_modules package-lock.json && npm install --no-audit --no-fund
 
 COPY src/workers/ ./src/workers/
@@ -27,4 +37,11 @@ ENV TZ=America/Caracas
 
 USER node
 
-CMD ["npx", "tsx", "src/workers/market-sync-worker.ts"]
+# Use the locally installed tsx binary rather than `npx tsx`.
+#
+# `npx tsx` downloads tsx from the npm registry the first time it runs if tsx
+# is not already present in node_modules.  In a production container on a
+# private network the registry is unreliable or unreachable, causing the
+# process to crash at startup with no useful error.  The local binary is
+# guaranteed to be present after `npm install` above.
+CMD ["./node_modules/.bin/tsx", "src/workers/market-sync-worker.ts"]
