@@ -50,6 +50,20 @@ function fmtDate(iso: string): string {
   });
 }
 
+/**
+ * Format a Date to YYYY-MM-DD using the browser's local timezone components.
+ *
+ * toISOString() always returns UTC, so after 8pm Venezuela time (UTC-4) it
+ * would return tomorrow's date and cause the report range to overshoot by one
+ * day. Using getFullYear/getMonth/getDate reads the device-local date instead.
+ */
+function toLocalDateStr(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${dd}`;
+}
+
 function getPresetDates(preset: PeriodPreset): { start: string; end: string } {
   const now = new Date();
   let start: Date;
@@ -72,8 +86,8 @@ function getPresetDates(preset: PeriodPreset): { start: string; end: string } {
   }
 
   return {
-    start: start.toISOString().slice(0, 10),
-    end: end.toISOString().slice(0, 10),
+    start: toLocalDateStr(start),
+    end: toLocalDateStr(end),
   };
 }
 
