@@ -6,7 +6,6 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   FileText,
-  Search,
   Sparkles,
   CheckSquare,
   Instagram,
@@ -58,7 +57,6 @@ const quickItems = [
   { href: "/tasks", label: "Tareas", icon: CheckSquare },
   { href: "/documents", label: "Documentos", icon: FileText },
   { href: "/matches", label: "Matches", icon: Handshake },
-  { href: "/search", label: "Busqueda", icon: Search },
 ];
 
 const intelligenceItems = [
