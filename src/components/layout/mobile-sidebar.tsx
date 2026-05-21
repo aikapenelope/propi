@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useCallback } from "react";
+import { useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -24,9 +24,33 @@ import { cn } from "@/lib/utils";
 import { SharePortalButton } from "./share-portal-button";
 
 /**
- * Mobile drawer opened by "Mas..." in bottom nav or hamburger in top bar.
- * Uses CSS transitions for smooth slide-in/out animation.
- * Width is capped at 80vw to prevent overflow on small screens.
+ * Mobile drawer opened by the hamburger in TopBar or the FAB in MobileNav.
+ * Slides in from the left with a backdrop overlay.
+ *
+ * Effect design — two separated concerns
+ * ───────────────────────────────────────
+ * 1. Keyboard / overflow effect
+ *    Manages the Escape key listener and the `body.overflow: hidden` scroll
+ *    lock.  Depends only on `open` and `onClose`, so it re-runs only when
+ *    the drawer opens or closes — not on every pathname change.
+ *
+ * 2. Pathname auto-close effect
+ *    Closes the drawer whenever the active route changes.  This catches
+ *    navigation that does NOT go through a link's onClick handler:
+ *    browser back/forward, programmatic router.push(), or deep links.
+ *    Without this, the drawer can remain open with body.overflow: hidden
+ *    active, making the next page non-scrollable ("trabado").
+ *
+ *    The `open` guard inside the effect (not in deps) is intentional: we
+ *    want the effect to fire exclusively on pathname changes, not every time
+ *    `open` toggles.  The eslint-disable comment below suppresses the
+ *    exhaustive-deps warning for this deliberate omission.
+ *
+ * `onClose` stability
+ * ────────────────────
+ * The caller (AppShell) passes `onClose` as a `useCallback`-stabilised
+ * reference, so including it in the keyboard effect's deps is safe — it
+ * will never cause an unnecessary re-run in practice.
  */
 
 const quickItems = [
@@ -60,25 +84,32 @@ interface MobileSidebarProps {
 export function MobileSidebar({ open, onClose }: MobileSidebarProps) {
   const pathname = usePathname();
 
-  // Close on Escape key
-  const handleKeyDown = useCallback(
-    (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    },
-    [onClose],
-  );
-
+  // ── Effect 1: Escape key + body scroll lock ──────────────────────────────
   useEffect(() => {
-    if (open) {
-      document.addEventListener("keydown", handleKeyDown);
-      // Prevent body scroll when drawer is open
-      document.body.style.overflow = "hidden";
+    if (!open) return;
+
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") onClose();
     }
+
+    document.addEventListener("keydown", handleKeyDown);
+    document.body.style.overflow = "hidden";
+
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
+      // Reset overflow in cleanup: runs when `open` goes false OR on unmount,
+      // preventing a stuck scroll lock in either case.
       document.body.style.overflow = "";
     };
-  }, [open, handleKeyDown]);
+  }, [open, onClose]);
+
+  // ── Effect 2: Auto-close on navigation ───────────────────────────────────
+  // Intentionally depends only on `pathname`.  `open` and `onClose` are read
+  // inside the body but omitted from deps — adding them would make the effect
+  // fire on every open/close toggle, not just on route changes.
+  useEffect(() => {
+    if (open) onClose();
+  }, [pathname]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <>

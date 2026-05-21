@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { Sidebar } from "./sidebar";
 import { TopBar } from "./top-bar";
 import { MobileNav } from "./mobile-nav";
@@ -8,9 +8,30 @@ import { MobileSidebar } from "./mobile-sidebar";
 import { PullToRefresh } from "@/components/ui/pull-to-refresh";
 import { cn } from "@/lib/utils";
 
+/**
+ * Root shell for all authenticated app pages.
+ *
+ * Manages two pieces of UI state:
+ *   - sidebarCollapsed: desktop sidebar width (expanded / collapsed).
+ *   - mobileMenuOpen: mobile drawer (open / closed).
+ *
+ * Callback stability
+ * ──────────────────
+ * `handleMobileClose` is wrapped in `useCallback` so that child components
+ * that accept it as a prop (MobileSidebar, MobileNav) receive a stable
+ * reference across renders.  Without this, every re-render of AppShell
+ * would produce a new function reference, causing:
+ *   - MobileSidebar's useEffect deps to see a "new" onClose on every render
+ *     → the effect re-runs unnecessarily, repeatedly toggling event listeners
+ *     and the body overflow lock.
+ *   - Potential missed cleanups on fast re-render sequences.
+ */
 export function AppShell({ children }: { children: React.ReactNode }) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // Stable reference — see JSDoc above
+  const handleMobileClose = useCallback(() => setMobileMenuOpen(false), []);
 
   return (
     <>
@@ -23,7 +44,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       {/* Mobile sidebar overlay */}
       <MobileSidebar
         open={mobileMenuOpen}
-        onClose={() => setMobileMenuOpen(false)}
+        onClose={handleMobileClose}
       />
 
       {/* Top bar */}

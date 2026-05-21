@@ -7,7 +7,38 @@ import { hapticLight } from "@/lib/haptics";
 /**
  * Swipe-to-reveal actions for list items (mobile PWA pattern).
  * Swipe left to reveal action buttons (call, edit, delete, etc.).
- * Tap anywhere else or swipe back to close.
+ * Tap anywhere outside the revealed row to close it.
+ *
+ * Outside-tap detection
+ * ─────────────────────
+ * When a row is in the revealed state, a document-level `pointerdown`
+ * listener is registered to close it when the user taps elsewhere.
+ *
+ * We use `pointerdown` (Pointer Events API) rather than separate
+ * `touchstart` + `mousedown` handlers because Pointer Events unify mouse
+ * and touch input into a single event stream, which simplifies the code
+ * and avoids ordering edge-cases between the two event types.
+ *
+ * iOS Safari click-suppression deferral
+ * ──────────────────────────────────────
+ * Without the `setTimeout`, this component triggers a well-known iOS Safari
+ * bug: when a `touchstart` (or `pointerdown`) listener synchronously
+ * mutates the React component tree (via setState), iOS Safari can suppress
+ * the `click` event on the element that was originally tapped.
+ *
+ * Concretely: the user swipes a contact row open, then taps the FAB button
+ * in the bottom nav.  The document pointerdown fires, React re-renders the
+ * row to its closed state, and iOS drops the subsequent click on the FAB —
+ * the button appears to do nothing ("trabado").
+ *
+ * The fix is to push the setState call to the next macrotask via
+ * `window.setTimeout(fn, 0)`.  The browser's event pipeline for a tap is:
+ *
+ *   pointerdown  →  pointermove? →  pointerup  →  click
+ *
+ * A macrotask scheduled during `pointerdown` is queued AFTER the browser
+ * finishes processing the current event chain, so the `click` on the FAB
+ * fires before the DOM mutation.  iOS never suppresses it.
  */
 
 const SWIPE_THRESHOLD = 60; // px to trigger reveal
@@ -103,22 +134,31 @@ export function SwipeAction({ children, actions, className }: SwipeActionProps) 
     }
   }, [offset, clampedWidth]);
 
-  // Close when tapping outside
+  /**
+   * Close the revealed row when the user taps anywhere outside of it.
+   *
+   * See the module-level JSDoc for why we use `pointerdown` and why the
+   * setState call is deferred with `window.setTimeout(fn, 0)`.
+   */
   useEffect(() => {
     if (!revealed) return;
 
-    function handleClickOutside(e: MouseEvent | TouchEvent) {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        setOffset(0);
-        setRevealed(false);
+    function handlePointerDown(e: PointerEvent) {
+      if (!containerRef.current?.contains(e.target as Node)) {
+        // Defer the DOM mutation to the next macrotask so that the browser
+        // completes its current event chain (pointerdown → pointerup → click)
+        // before React re-renders.  This prevents iOS Safari from suppressing
+        // the click event on the element that was originally tapped.
+        window.setTimeout(() => {
+          setOffset(0);
+          setRevealed(false);
+        }, 0);
       }
     }
 
-    document.addEventListener("touchstart", handleClickOutside, { passive: true });
-    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("pointerdown", handlePointerDown);
     return () => {
-      document.removeEventListener("touchstart", handleClickOutside);
-      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("pointerdown", handlePointerDown);
     };
   }, [revealed]);
 
