@@ -50,7 +50,10 @@ export const db: ReturnType<typeof drizzle<typeof schema>> = connectionString
         // Align the DB session timezone with the app container's TZ env var.
         // This single setting resolves all UTC/Venezuela date drift in SQL
         // date functions without modifying individual queries.
-        connection: { TimeZone: "America/Caracas" },
+        // process.env.TZ is set to "America/Caracas" in the Dockerfile runner
+        // stage; using it here keeps Node.js and PostgreSQL in sync automatically
+        // if the timezone is ever changed in the environment.
+        connection: { TimeZone: process.env.TZ ?? "America/Caracas" },
       }),
       { schema },
     )

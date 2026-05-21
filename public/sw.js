@@ -120,11 +120,11 @@ self.addEventListener("fetch", (event) => {
           // Revalidate in background (even when fresh), so the cache stays
           // up-to-date for the next request.
           const revalidate = fetch(request)
-            .then((fresh) => {
+            .then(async (fresh) => {
               if (fresh && fresh.status === 200) {
                 const headers = new Headers(fresh.headers);
                 headers.set("x-sw-cached-at", String(Date.now()));
-                cache.put(
+                await cache.put(
                   request,
                   new Response(fresh.clone().body, {
                     status: fresh.status,
@@ -136,6 +136,11 @@ self.addEventListener("fetch", (event) => {
               return fresh;
             })
             .catch(() => null);
+
+          // Keep the SW alive until the background update completes.
+          // Without this, the browser can suspend the SW as soon as
+          // respondWith() resolves, silently abandoning the fetch/cache.put.
+          event.waitUntil(revalidate);
 
           // Serve stale copy immediately if still fresh; wait for network if expired.
           if (isFresh) {
