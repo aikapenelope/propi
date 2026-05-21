@@ -11,6 +11,22 @@ export const dynamic = "force-dynamic";
  * Streams files from MinIO (private network) to the browser.
  *
  * GET /api/download?key=userId/documents/filename.pdf
+ *
+ * Design notes
+ * ────────────
+ * • Content-Disposition is set to `attachment` (not `inline`).
+ *   Using `inline` causes the browser to try to render the file in-tab.
+ *   For PDFs this works, but for .docx / .xlsx / images the browser either
+ *   shows a blank page or stalls.  `attachment` consistently triggers the
+ *   "Save File" dialog across all file types and all browsers.
+ *
+ * • Content-Length is only sent when S3 provides it.  Sending an empty
+ *   string ("") is an invalid HTTP header value and can confuse proxies
+ *   and browser download managers into misreporting file size or stalling.
+ *
+ * • The filename is sanitized (control chars, quotes, backslashes removed)
+ *   and encoded with RFC 5987 (`filename*=UTF-8''…`) so non-ASCII names
+ *   (e.g. Spanish accented characters) round-trip correctly across browsers.
  */
 export async function GET(request: Request) {
   const tracker = startTracking(request);
@@ -52,24 +68,40 @@ export async function GET(request: Request) {
     }
 
     const stream = response.Body.transformToWebStream();
-    const rawFilename = key.split("/").pop() || "document";
-    // Sanitize filename: remove control chars, quotes, and backslashes
-    // to prevent header injection. Use RFC 5987 encoding for safety.
-    const safeFilename = rawFilename.replace(/["\\\x00-\x1f\x7f]/g, "_");
+
+    // Derive and sanitize the filename from the S3 key.
+    //
+    // Two-pass sanitization keeps each regex simple and easy to audit:
+    //   Pass 1 — strip ASCII control characters (0–31) and DEL (127).
+    //            These are never valid in HTTP header values.
+    //   Pass 2 — strip characters that break the quoted-string syntax of
+    //            Content-Disposition: double quote (ends the quoted token)
+    //            and backslash (escape character inside a quoted token).
+    //
+    // The RFC 5987 `filename*=UTF-8''…` form is the authoritative value;
+    // the plain `filename=` fallback covers legacy HTTP/1.0 clients.
+    const rawFilename = key.split("/").pop() ?? "document";
+    const safeFilename = rawFilename
+      .replace(/[\x00-\x1f\x7f]/g, "_")
+      .replace(/["\\]/g, "_");
     const encodedFilename = encodeURIComponent(safeFilename);
 
+    // Build response headers.  Content-Length is included only when S3
+    // provides it — sending an empty string would be an invalid header.
+    const headers: Record<string, string> = {
+      "Content-Type": response.ContentType ?? "application/octet-stream",
+      // `attachment` forces a download dialog for every file type.
+      // `inline` is intentionally NOT used here; see module-level docs.
+      "Content-Disposition": `attachment; filename="${safeFilename}"; filename*=UTF-8''${encodedFilename}`,
+      "Cache-Control": "private, max-age=3600",
+    };
+
+    if (response.ContentLength != null) {
+      headers["Content-Length"] = String(response.ContentLength);
+    }
+
     return tracker.end(
-      new Response(stream, {
-        status: 200,
-        headers: {
-          "Content-Type": response.ContentType || "application/octet-stream",
-          "Content-Length": response.ContentLength
-            ? String(response.ContentLength)
-            : "",
-          "Content-Disposition": `inline; filename="${safeFilename}"; filename*=UTF-8''${encodedFilename}`,
-          "Cache-Control": "private, max-age=3600",
-        },
-      }),
+      new Response(stream, { status: 200, headers }),
     );
   } catch (err) {
     tracker.error(err);
