@@ -56,7 +56,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       {/* Main content area - fixed structure, no layout shift */}
       <main
         className={cn(
-          "min-h-screen pt-16 md:pt-24 pb-20 md:pb-0 relative overflow-x-hidden",
+          // pt-topbar replaces the previous pt-16 md:pt-24.  It accounts for
+          // both the TopBar height AND the iOS safe-area-inset-top that is
+          // added when statusBarStyle is "black-translucent" (the TopBar header
+          // grows by the safe area, so the main content must offset by the same
+          // combined amount).  Falls back to 4rem/6rem on non-iOS browsers.
+          "min-h-screen pt-topbar pb-20 md:pb-0 relative overflow-x-hidden",
           "transition-[padding-left] duration-150 ease-out",
           sidebarCollapsed ? "md:pl-16" : "md:pl-[260px]",
         )}

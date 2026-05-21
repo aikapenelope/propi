@@ -83,17 +83,32 @@ export function TopBar({ sidebarCollapsed, onMenuToggle }: TopBarProps) {
   }
 
   function toggleTheme() {
-    document.documentElement.classList.toggle("light");
+    const isLight = document.documentElement.classList.toggle("light");
+    // Persist the user's choice so the correct theme is applied on next load
+    // without a flash.  The no-FOUC inline script in layout.tsx reads this
+    // value synchronously before first paint.
+    // try/catch: localStorage.setItem throws in iOS Safari private browsing.
+    try {
+      localStorage.setItem("propi-theme", isLight ? "light" : "dark");
+    } catch {
+      // Silently ignore — theme still works for the current session
+    }
   }
 
   return (
     <header
       className={cn(
-        "fixed right-0 top-0 z-20 flex h-16 md:h-24 items-center gap-4 border-b border-border px-4 md:px-8 bg-background/80 backdrop-blur-md",
+        // h-16/h-24 is the baseline height. When statusBarStyle is
+        // "black-translucent", iOS extends the content under the status bar.
+        // The paddingTop below pushes content inside the header below the
+        // status bar area. env(safe-area-inset-top) is 0 on desktop and in
+        // Safari browser; ~47-54px in iOS PWA standalone mode.
+        "fixed right-0 top-0 z-20 flex min-h-16 md:min-h-24 items-center gap-4 border-b border-border px-4 md:px-8 bg-background/80 backdrop-blur-md",
         "transition-[left] duration-150 ease-out",
         sidebarCollapsed ? "md:left-16" : "md:left-[260px]",
         "left-0",
       )}
+      style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}
     >
       {/* Mobile hamburger — opens the mobile sidebar drawer */}
       <button
