@@ -9,6 +9,7 @@ import {
 import { getContactOptions } from "@/server/actions/contacts";
 import { getPropertyOptions } from "@/server/actions/properties";
 import { ContactPicker, type ContactPickerItem } from "@/components/ui/contact-picker";
+import { useToast } from "@/components/ui/toast";
 
 type Property = { id: string; title: string };
 
@@ -23,6 +24,8 @@ const typeOptions = [
 ];
 
 export function UploadDocumentButton() {
+  const { toast } = useToast();
+
   const [uploading, setUploading] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [file, setFile] = useState<File | null>(null);
@@ -47,6 +50,21 @@ export function UploadDocumentButton() {
     setShowForm(true);
   }
 
+  /**
+   * Uploads the selected file to MinIO via the /api/upload proxy, then
+   * persists a document record in the database.
+   *
+   * Error handling
+   * ──────────────
+   * The previous implementation silently swallowed errors in the `finally`
+   * block — if the fetch or createDocument call threw, the user received no
+   * feedback and the form stayed open with no indication of failure.
+   *
+   * Now we catch upload/DB errors and surface them through the app's toast
+   * system so the user knows to retry.  The `finally` block only handles
+   * cleanup that must run regardless of success or failure (spinner state,
+   * file input reset).
+   */
   async function handleUpload() {
     if (!file) return;
     setUploading(true);
@@ -64,10 +82,10 @@ export function UploadDocumentButton() {
         body: formData,
       });
 
-      const resBody = await res.json();
+      const resBody = await res.json() as { error?: string; key?: string };
 
       if (!res.ok) {
-        throw new Error(resBody.error || "Upload failed");
+        throw new Error(resBody.error ?? "Error al subir el archivo");
       }
 
       // Use the key returned by the API (may differ from original if processed)
@@ -84,12 +102,21 @@ export function UploadDocumentButton() {
         propertyId: propertyId || undefined,
       });
 
+      toast("Documento subido correctamente", "success");
       setShowForm(false);
       setFile(null);
       setDocType("other");
       setContactId("");
       setPropertyId("");
+    } catch (err) {
+      // Surface the error to the user.  The form remains open so they can
+      // retry or cancel — we intentionally do NOT reset state here.
+      const message =
+        err instanceof Error ? err.message : "Error al subir el documento";
+      toast(message, "error");
     } finally {
+      // Always stop the spinner and clear the native file input value,
+      // regardless of success or failure.
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
     }
