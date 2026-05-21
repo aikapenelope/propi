@@ -13,10 +13,27 @@ export const dynamic = "force-dynamic";
  * Generates:
  * - Appointment reminders (appointments in the next 24 hours)
  * - Overdue task alerts (tasks past due and not completed)
- * - Birthday reminders (contacts with birthday today)
+ * - Birthday reminders (contacts with birthday today, in Venezuela time)
+ * - Inactive lead follow-up (no activity in 7+ days)
  *
- * Deduplication: checks if a notification with the same title + userId
- * already exists today before inserting.
+ * Deduplication strategy
+ * ──────────────────────
+ * Previous implementation called isDuplicateToday() per notification item,
+ * resulting in N individual SELECT queries (one per appointment, task,
+ * birthday contact, and inactive lead).  With 100 active users this easily
+ * produced 400+ sequential round-trips per cron execution.
+ *
+ * New approach: a single SELECT loads every notification created today
+ * into a Set at the start of the run.  All duplicate checks become O(1)
+ * in-memory lookups, regardless of how many users or items are processed.
+ *
+ * Date/timezone note
+ * ──────────────────
+ * The DB session timezone is set to America/Caracas in db.ts so all
+ * SQL date functions (EXTRACT, TO_CHAR) use Venezuela local time,
+ * matching the Node.js TZ=America/Caracas environment variable.
+ * todayStart is midnight Venezuela = the correct start-of-day boundary
+ * for the dedup window.
  *
  * Protected by CRON_SECRET header.
  */
@@ -36,6 +53,7 @@ export async function GET(request: Request) {
   }
 
   const now = new Date();
+  // midnight Venezuela time (Node.js TZ=America/Caracas)
   const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const tomorrow = new Date(todayStart.getTime() + 24 * 60 * 60 * 1000);
 
@@ -45,7 +63,35 @@ export async function GET(request: Request) {
   let inactiveLeadNotifs = 0;
 
   try {
-    // --- Appointment reminders (next 24 hours) ---
+    // ── Batch dedup load ────────────────────────────────────────────────────
+    //
+    // Load all notifications created since midnight Venezuela into a Set.
+    // Key format: "<userId>:<title>" — unique enough for same-day dedup.
+    // One query replaces N isDuplicateToday() calls later in the loop.
+    const todayNotifications = await db
+      .select({
+        userId: notifications.userId,
+        title: notifications.title,
+      })
+      .from(notifications)
+      .where(gte(notifications.createdAt, todayStart));
+
+    const sentToday = new Set(
+      todayNotifications.map((n) => `${n.userId}:${n.title}`),
+    );
+
+    /** Check dedup without a DB round-trip. */
+    function alreadySentToday(userId: string, title: string): boolean {
+      return sentToday.has(`${userId}:${title}`);
+    }
+
+    /** Mark as sent in the local Set so subsequent duplicate checks within
+     *  the same cron run see the notification as already sent. */
+    function markSent(userId: string, title: string): void {
+      sentToday.add(`${userId}:${title}`);
+    }
+
+    // ── Appointment reminders (next 24 hours) ───────────────────────────────
     const upcomingAppointments = await db
       .select({
         id: appointments.id,
@@ -62,8 +108,8 @@ export async function GET(request: Request) {
       );
 
     for (const appt of upcomingAppointments) {
-      const exists = await isDuplicateToday(appt.userId, `Cita: ${appt.title}`, todayStart);
-      if (exists) continue;
+      const title = `Cita: ${appt.title}`;
+      if (alreadySentToday(appt.userId, title)) continue;
 
       const hours = Math.round(
         (new Date(appt.startsAt).getTime() - now.getTime()) / (1000 * 60 * 60),
@@ -72,14 +118,15 @@ export async function GET(request: Request) {
       await db.insert(notifications).values({
         userId: appt.userId,
         type: "appointment_reminder",
-        title: `Cita: ${appt.title}`,
+        title,
         message: `En ${hours <= 1 ? "menos de 1 hora" : `${hours} horas`}`,
         link: "/calendar",
       });
+      markSent(appt.userId, title);
       appointmentNotifs++;
     }
 
-    // --- Overdue tasks ---
+    // ── Overdue tasks ───────────────────────────────────────────────────────
     const overdueTasks = await db
       .select({
         id: tasks.id,
@@ -96,22 +143,27 @@ export async function GET(request: Request) {
       );
 
     for (const task of overdueTasks) {
-      const exists = await isDuplicateToday(task.userId, `Tarea vencida: ${task.title}`, todayStart);
-      if (exists) continue;
+      const title = `Tarea vencida: ${task.title}`;
+      if (alreadySentToday(task.userId, title)) continue;
 
       await db.insert(notifications).values({
         userId: task.userId,
         type: "task_overdue",
-        title: `Tarea vencida: ${task.title}`,
+        title,
         message: "Esta tarea ya paso su fecha limite.",
         link: "/tasks",
       });
+      markSent(task.userId, title);
       taskNotifs++;
     }
 
-    // --- Birthday reminders ---
-    const todayMonth = now.getMonth() + 1;
-    const todayDay = now.getDate();
+    // ── Birthday reminders ──────────────────────────────────────────────────
+    //
+    // EXTRACT uses the DB session timezone (America/Caracas, set in db.ts).
+    // This matches the Venezuela calendar day that the user intended when
+    // they entered the birthday date in the form.
+    const todayMonth = now.getMonth() + 1; // Venezuela local month
+    const todayDay = now.getDate();         // Venezuela local day
 
     const birthdayContacts = await db
       .select({
@@ -128,27 +180,25 @@ export async function GET(request: Request) {
       );
 
     for (const contact of birthdayContacts) {
-      const exists = await isDuplicateToday(
-        contact.userId,
-        `Cumpleanos: ${contact.name}`,
-        todayStart,
-      );
-      if (exists) continue;
+      const title = `Cumpleanos: ${contact.name}`;
+      if (alreadySentToday(contact.userId, title)) continue;
 
       await db.insert(notifications).values({
         userId: contact.userId,
         type: "birthday",
-        title: `Cumpleanos: ${contact.name}`,
+        title,
         message: "Hoy es su cumpleanos. Enviale un mensaje.",
         link: `/contacts/${contact.id}`,
       });
+      markSent(contact.userId, title);
       birthdayNotifs++;
     }
 
-    // --- Inactive leads (no activity in 7+ days) ---
+    // ── Inactive leads (no activity in 7+ days) ────────────────────────────
     const inactivityCutoff = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
-    // Get all active leads (not closed/lost) with their last activity date
+    // Correlated subquery fetches the last activity date per contact without
+    // a separate round-trip or a JOIN that would inflate row counts.
     const activeLeads = await db
       .select({
         id: contacts.id,
@@ -175,24 +225,27 @@ export async function GET(request: Request) {
         continue;
       }
 
-      const exists = await isDuplicateToday(
-        lead.userId,
-        `Seguimiento: ${lead.name}`,
-        todayStart,
-      );
-      if (exists) continue;
+      const title = `Seguimiento: ${lead.name}`;
+      if (alreadySentToday(lead.userId, title)) continue;
 
       const daysSince = lead.lastActivity
-        ? Math.floor((now.getTime() - new Date(lead.lastActivity).getTime()) / (1000 * 60 * 60 * 24))
-        : Math.floor((now.getTime() - inactivityCutoff.getTime()) / (1000 * 60 * 60 * 24)) + 7;
+        ? Math.floor(
+            (now.getTime() - new Date(lead.lastActivity).getTime()) /
+              (1000 * 60 * 60 * 24),
+          )
+        : Math.floor(
+            (now.getTime() - inactivityCutoff.getTime()) /
+              (1000 * 60 * 60 * 24),
+          ) + 7;
 
       await db.insert(notifications).values({
         userId: lead.userId,
         type: "system",
-        title: `Seguimiento: ${lead.name}`,
+        title,
         message: `Sin actividad hace ${daysSince} dias. Considera hacer seguimiento.`,
         link: `/contacts/${lead.id}`,
       });
+      markSent(lead.userId, title);
       inactiveLeadNotifs++;
     }
 
@@ -207,24 +260,10 @@ export async function GET(request: Request) {
       timestamp: now.toISOString(),
     });
   } catch (err) {
-    log.cron.error({ error: err instanceof Error ? err.message : String(err) }, "notification generation failed");
+    log.cron.error(
+      { error: err instanceof Error ? err.message : String(err) },
+      "notification generation failed",
+    );
     return NextResponse.json({ error: "Generation failed" }, { status: 500 });
   }
-}
-
-/** Check if a notification with the same title + userId was already created today. */
-async function isDuplicateToday(
-  userId: string,
-  title: string,
-  todayStart: Date,
-): Promise<boolean> {
-  const existing = await db.query.notifications.findFirst({
-    where: and(
-      eq(notifications.userId, userId),
-      eq(notifications.title, title),
-      gte(notifications.createdAt, todayStart),
-    ),
-    columns: { id: true },
-  });
-  return !!existing;
 }
