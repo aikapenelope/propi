@@ -142,7 +142,7 @@ export function PropertyForm({
   }
 
   const inputClass =
-    "mt-1 h-10 w-full rounded-lg border border-border bg-background px-3 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary";
+    "mt-1 h-10 w-full rounded-lg border border-border bg-background px-3 input-base text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary";
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -157,6 +157,10 @@ export function PropertyForm({
           type="text"
           required
           defaultValue={property?.title}
+          // Property fields are app-domain data, not personal info.
+          // autocomplete="off" prevents the browser from incorrectly
+          // filling these with the user's own name/address/phone.
+          autoComplete="off"
           className={inputClass}
         />
       </div>
@@ -201,7 +205,7 @@ export function PropertyForm({
           <label htmlFor="price" className="block text-sm font-medium text-foreground">
             Precio
           </label>
-          <input id="price" name="price" type="number" step="0.01" defaultValue={property?.price ?? ""} className={inputClass} />
+          <input id="price" name="price" type="number" step="0.01" defaultValue={property?.price ?? ""} autoComplete="off" className={inputClass} />
         </div>
         <div>
           <label htmlFor="currency" className="block text-sm font-medium text-foreground">
@@ -217,7 +221,7 @@ export function PropertyForm({
           <label htmlFor="area" className="block text-sm font-medium text-foreground">
             Area (m²)
           </label>
-          <input id="area" name="area" type="number" step="0.01" defaultValue={property?.area ?? ""} className={inputClass} />
+          <input id="area" name="area" type="number" step="0.01" defaultValue={property?.area ?? ""} autoComplete="off" className={inputClass} />
         </div>
       </div>
 
@@ -227,19 +231,19 @@ export function PropertyForm({
           <label htmlFor="bedrooms" className="block text-sm font-medium text-foreground">
             Habitaciones
           </label>
-          <input id="bedrooms" name="bedrooms" type="number" defaultValue={property?.bedrooms ?? ""} className={inputClass} />
+          <input id="bedrooms" name="bedrooms" type="number" defaultValue={property?.bedrooms ?? ""} autoComplete="off" className={inputClass} />
         </div>
         <div>
           <label htmlFor="bathrooms" className="block text-sm font-medium text-foreground">
             Banos
           </label>
-          <input id="bathrooms" name="bathrooms" type="number" defaultValue={property?.bathrooms ?? ""} className={inputClass} />
+          <input id="bathrooms" name="bathrooms" type="number" defaultValue={property?.bathrooms ?? ""} autoComplete="off" className={inputClass} />
         </div>
         <div>
           <label htmlFor="parkingSpaces" className="block text-sm font-medium text-foreground">
             Parqueaderos
           </label>
-          <input id="parkingSpaces" name="parkingSpaces" type="number" defaultValue={property?.parkingSpaces ?? ""} className={inputClass} />
+          <input id="parkingSpaces" name="parkingSpaces" type="number" defaultValue={property?.parkingSpaces ?? ""} autoComplete="off" className={inputClass} />
         </div>
       </div>
 
@@ -248,26 +252,26 @@ export function PropertyForm({
         <label htmlFor="address" className="block text-sm font-medium text-foreground">
           Direccion
         </label>
-        <input id="address" name="address" type="text" defaultValue={property?.address ?? ""} className={inputClass} />
+        <input id="address" name="address" type="text" defaultValue={property?.address ?? ""} autoComplete="off" className={inputClass} />
       </div>
 
       {/* City, State, Zip, Country */}
       <div className="grid gap-4 sm:grid-cols-4">
         <div>
           <label htmlFor="city" className="block text-sm font-medium text-foreground">Ciudad</label>
-          <input id="city" name="city" type="text" defaultValue={property?.city ?? ""} className={inputClass} />
+          <input id="city" name="city" type="text" defaultValue={property?.city ?? ""} autoComplete="off" className={inputClass} />
         </div>
         <div>
           <label htmlFor="state" className="block text-sm font-medium text-foreground">Departamento</label>
-          <input id="state" name="state" type="text" defaultValue={property?.state ?? ""} className={inputClass} />
+          <input id="state" name="state" type="text" defaultValue={property?.state ?? ""} autoComplete="off" className={inputClass} />
         </div>
         <div>
           <label htmlFor="zipCode" className="block text-sm font-medium text-foreground">Codigo Postal</label>
-          <input id="zipCode" name="zipCode" type="text" defaultValue={property?.zipCode ?? ""} className={inputClass} />
+          <input id="zipCode" name="zipCode" type="text" defaultValue={property?.zipCode ?? ""} autoComplete="off" className={inputClass} />
         </div>
         <div>
           <label htmlFor="country" className="block text-sm font-medium text-foreground">Pais</label>
-          <input id="country" name="country" type="text" defaultValue={property?.country ?? "VE"} className={inputClass} />
+          <input id="country" name="country" type="text" defaultValue={property?.country ?? "VE"} autoComplete="off" className={inputClass} />
         </div>
       </div>
 
@@ -281,7 +285,7 @@ export function PropertyForm({
           name="description"
           rows={4}
           defaultValue={property?.description ?? ""}
-          className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+          className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 input-base text-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
         />
       </div>
 

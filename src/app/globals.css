@@ -17,6 +17,12 @@
   --card-bg: #12131A;
   --sidebar-width: 260px;
   --sidebar-collapsed-width: 64px;
+
+  /* Tells the browser which color scheme this document uses.
+     Without this, native form controls (<select>, <input type="date">,
+     number spinners, scrollbars) render in the OS default scheme, which
+     can be white on our dark background on Android Chrome. */
+  color-scheme: dark;
 }
 
 /* ============================================
@@ -34,6 +40,9 @@
   --destructive: #ef4444;
   --sidebar-bg: #ffffff;
   --card-bg: #ffffff;
+
+  /* Switch native controls to light scheme when user activates light mode. */
+  color-scheme: light;
 }
 
 @theme inline {
@@ -104,10 +113,21 @@ body {
     0 12px 32px rgba(0, 0, 0, 0.12);
   /* Only animate transform and opacity — both are GPU-composited */
   transition: transform 0.2s ease;
-  will-change: transform;
-  /* CSS containment: tells the browser that card internals don't affect
-     external layout. Enables paint/layout isolation for better perf. */
+  /* `will-change` is intentionally NOT set here. Setting it permanently
+     promotes every card to its own GPU compositor layer, exhausting VRAM
+     on Android mid-range devices (Snapdragon 665, Samsung A-series) when
+     pages have many cards.  Instead, we set it only at hover-start on
+     devices that actually animate (cursor-capable hardware). */
   contain: layout style paint;
+}
+
+/* Promote to GPU layer only when a cursor hover is about to animate the
+   card.  @media (hover: hover) targets devices with a true pointing device
+   (mouse, trackpad) and excludes touch-only phones and tablets. */
+@media (hover: hover) {
+  .card-shadow:hover {
+    will-change: transform;
+  }
 }
 /* Hover shadow lives in a pseudo-element so we animate opacity (cheap)
    instead of box-shadow (expensive repaint). */
@@ -261,10 +281,68 @@ html, body {
   }
 }
 
-/* Safe area insets for mobile PWA */
-@supports (padding-bottom: env(safe-area-inset-bottom)) {
-  .pb-safe {
-    padding-bottom: env(safe-area-inset-bottom);
+/* ============================================
+   Safe area insets — mobile PWA
+   ============================================ */
+
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/**
+ * .pt-topbar — main content top offset that accounts for the TopBar height
+ * PLUS the iOS safe-area-inset-top when statusBarStyle is black-translucent.
+ *
+ * With black-translucent status bar, the TopBar header adds
+ * padding-top: env(safe-area-inset-top) to its own height, making it taller
+ * than h-16/h-24.  The main content must offset by the same combined amount
+ * so content does not appear behind the TopBar.
+ *
+ * Breakdown:
+ *   4rem  = h-16  (64px)  → mobile TopBar height
+ *   6rem  = h-24  (96px)  → desktop TopBar height
+ *   env(safe-area-inset-top) → 0 in browser, ~47–54px in iOS PWA standalone
+ */
+.pt-topbar {
+  padding-top: 4rem; /* mobile fallback — no safe-area support */
+}
+@media (min-width: 768px) {
+  .pt-topbar {
+    padding-top: 6rem; /* desktop fallback */
+  }
+}
+@supports (padding: env(safe-area-inset-top)) {
+  .pt-topbar {
+    padding-top: calc(4rem + env(safe-area-inset-top));
+  }
+  @media (min-width: 768px) {
+    .pt-topbar {
+      padding-top: calc(6rem + env(safe-area-inset-top));
+    }
+  }
+}
+
+/* ============================================
+   Input font-size utility
+   ============================================ */
+
+/* iOS Safari auto-zooms any <input>, <select>, or <textarea> with
+   font-size < 16px when the element receives focus.  The zoom is abrupt
+   and jarring in a PWA — the viewport pops in then pops back on blur.
+
+   Apply .input-base to every interactive input element to get:
+     - 16px on mobile  → no auto-zoom
+     - 14px on desktop → denser layout unchanged
+
+   This is a single source of truth: instead of adding
+   "text-base md:text-sm" to every individual input, a single class
+   handles the breakpoint logic in CSS. */
+.input-base {
+  font-size: 1rem; /* 16px — prevents iOS Safari auto-zoom */
+}
+@media (min-width: 768px) {
+  .input-base {
+    font-size: 0.875rem; /* 14px — preserves desktop density */
   }
 }
 

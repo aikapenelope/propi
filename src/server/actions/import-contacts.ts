@@ -150,13 +150,24 @@ const MAX_IMPORT_BATCH = 1000;
 /**
  * Import parsed contacts into the database for the current user.
  *
- * Uses a database transaction to ensure atomicity: either all valid contacts
- * are imported or none are (on unexpected DB errors). Contacts that fail
- * individual validation (name too short, duplicates) are skipped without
- * aborting the transaction — they are reported in the result.
+ * Best-effort batch import: each batch of 100 rows is executed as a
+ * separate INSERT statement.  Batches succeed or fail independently,
+ * so a DB constraint error on one batch does not roll back contacts
+ * that were already saved in earlier batches.
  *
- * Batch inserts are used instead of individual INSERT statements to reduce
- * round-trips to the database (one INSERT per batch of up to 100 rows).
+ * Why NOT a single transaction?
+ * ─────────────────────────────
+ * PostgreSQL transactions are all-or-nothing: a failed statement inside
+ * a transaction aborts the entire transaction.  A try/catch inside the
+ * transaction body does not save the preceding successful statements —
+ * the DB will still roll everything back.  Using independent per-batch
+ * INSERTs is the correct pattern for best-effort partial imports where
+ * the user should still receive whatever contacts succeeded even if a
+ * subset fails.
+ *
+ * Duplicate detection runs before hitting the DB (pre-filtered in
+ * memory by email and phone), so DB constraint violations should be
+ * rare in practice.
  */
 export async function importContacts(
   parsed: ImportedContact[],
@@ -219,29 +230,34 @@ export async function importContacts(
     if (phoneNorm && phoneNorm.length >= 7) existingPhones.add(phoneNorm);
   }
 
-  // Insert in a single transaction with batches of 100 rows.
-  // If the transaction fails, no partial data is left in the DB.
+  // Insert in independent batches of 100 rows.
+  // Each batch is a separate DB call — success or failure does not affect
+  // other batches (see JSDoc above for why a transaction is not used here).
   let imported = 0;
   const errors: string[] = [];
   const BATCH_SIZE = 100;
 
-  await db.transaction(async (tx) => {
-    for (let i = 0; i < toInsert.length; i += BATCH_SIZE) {
-      const batch = toInsert.slice(i, i + BATCH_SIZE);
-      try {
-        const result = await tx.insert(contacts).values(batch).returning({ id: contacts.id });
-        imported += result.length;
-      } catch (err) {
-        // If a batch fails, record the error but continue with remaining batches.
-        // The transaction will still commit the successful batches.
-        const batchStart = i + 1;
-        const batchEnd = Math.min(i + BATCH_SIZE, toInsert.length);
-        errors.push(
-          `Error en lote ${batchStart}-${batchEnd}: ${err instanceof Error ? err.message : "desconocido"}`,
-        );
-      }
+  for (let i = 0; i < toInsert.length; i += BATCH_SIZE) {
+    const batch = toInsert.slice(i, i + BATCH_SIZE);
+    try {
+      const result = await db
+        .insert(contacts)
+        .values(batch)
+        .returning({ id: contacts.id });
+      imported += result.length;
+    } catch (err) {
+      // Record the error and continue with the next batch.
+      // Any contacts in the failed batch are skipped but contacts in
+      // previously successful batches are already committed to the DB.
+      const batchStart = i + 1;
+      const batchEnd = Math.min(i + BATCH_SIZE, toInsert.length);
+      errors.push(
+        `Error en lote ${batchStart}-${batchEnd}: ${
+          err instanceof Error ? err.message : "desconocido"
+        }`,
+      );
     }
-  });
+  }
 
   revalidatePath("/contacts");
   revalidatePath("/pipeline");

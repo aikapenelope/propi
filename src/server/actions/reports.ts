@@ -116,10 +116,20 @@ export async function buildReport(
   userId: string,
   period: ReportPeriod,
 ): Promise<ReportData> {
-  const start = new Date(period.startDate);
-  const end = new Date(period.endDate);
-  // Set end to end-of-day to include the full last day
-  end.setHours(23, 59, 59, 999);
+  // Parse date strings using individual components so the Date constructor
+  // respects the server's TZ=America/Caracas environment variable.
+  //
+  // new Date("YYYY-MM-DD") always parses as UTC midnight — for Venezuela
+  // (UTC-4) that is 8pm the previous day, causing the report to include
+  // 4 hours of the day before the period starts and miss the last 4 hours
+  // of the final day.
+  //
+  // new Date(y, m, d, h, min, s, ms) uses the local timezone, so it produces
+  // midnight / 23:59:59 Venezuela time — the correct boundaries.
+  const [sy, sm, sd] = period.startDate.split("-").map(Number);
+  const [ey, em, ed] = period.endDate.split("-").map(Number);
+  const start = new Date(sy, sm - 1, sd, 0, 0, 0, 0);
+  const end = new Date(ey, em - 1, ed, 23, 59, 59, 999);
 
   // Previous period of same duration for comparison
   const durationMs = end.getTime() - start.getTime();

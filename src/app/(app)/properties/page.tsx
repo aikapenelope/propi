@@ -85,18 +85,19 @@ export default async function PropertiesPage({
       </div>
 
       {/* Filters */}
-      <form className="mb-4 flex flex-wrap gap-2">
+      <form method="get" className="mb-4 flex flex-wrap gap-2">
         <input
           type="search"
           name="q"
           defaultValue={params.q}
           placeholder="Buscar..."
-          className="h-9 w-full max-w-xs rounded-lg border border-border bg-muted px-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+          autoComplete="off"
+          className="h-9 w-full max-w-xs rounded-lg border border-border bg-muted px-3 input-base text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
         />
         <select
           name="type"
           defaultValue={params.type}
-          className="h-9 rounded-lg border border-border bg-muted px-3 text-sm text-foreground"
+          className="h-9 rounded-lg border border-border bg-muted px-3 input-base text-foreground"
         >
           <option value="">Tipo</option>
           {Object.entries(typeLabels).map(([value, label]) => (
@@ -108,7 +109,7 @@ export default async function PropertiesPage({
         <select
           name="operation"
           defaultValue={params.operation}
-          className="h-9 rounded-lg border border-border bg-muted px-3 text-sm text-foreground"
+          className="h-9 rounded-lg border border-border bg-muted px-3 input-base text-foreground"
         >
           <option value="">Operacion</option>
           {Object.entries(operationLabels).map(([value, label]) => (
@@ -120,7 +121,7 @@ export default async function PropertiesPage({
         <select
           name="status"
           defaultValue={params.status}
-          className="h-9 rounded-lg border border-border bg-muted px-3 text-sm text-foreground"
+          className="h-9 rounded-lg border border-border bg-muted px-3 input-base text-foreground"
         >
           <option value="">Estado</option>
           {Object.entries(statusLabels).map(([value, label]) => (
@@ -171,6 +172,12 @@ export default async function PropertiesPage({
                     <img
                       src={`/api/images/${coverImage.key}`}
                       alt={property.title}
+                      // Defer offscreen images to reduce initial network load.
+                      // All property card images are lazy-loaded since they are
+                      // in a grid and the browser handles above-the-fold
+                      // detection natively.
+                      loading="lazy"
+                      decoding="async"
                       className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
                     />
                   ) : (
