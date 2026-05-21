@@ -199,6 +199,14 @@ export function SwipeAction({ children, actions, className }: SwipeActionProps) 
         style={{
           transform: `translateX(${offset}px)`,
           transition: isSwiping ? "none" : "transform 0.25s ease-out",
+          // Declare that horizontal panning is handled by JavaScript so the
+          // browser skips its ~100ms disambiguation timer before deciding
+          // between vertical scroll and horizontal swipe.  Without this,
+          // Android Chrome and Samsung Internet introduce a noticeable lag
+          // at the start of every swipe gesture.
+          // `pan-y` preserves native vertical scroll while letting us own
+          // the horizontal axis.
+          touchAction: "pan-y",
         }}
       >
         {children}

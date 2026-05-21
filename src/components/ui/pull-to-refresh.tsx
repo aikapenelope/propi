@@ -64,10 +64,14 @@ export function PullToRefresh({ children }: { children: React.ReactNode }) {
     if (contentRef.current) {
       contentRef.current.style.transition = "transform 0.3s ease-out";
       contentRef.current.style.transform = "";
-      // Remove transition after animation completes
+      // Remove transition and release the compositor layer after the snap-back
+      // animation completes.  Setting will-change back to "auto" tells the
+      // browser it can demote the layer, freeing the VRAM that was allocated
+      // in handleTouchStart.
       setTimeout(() => {
         if (contentRef.current) {
           contentRef.current.style.transition = "";
+          contentRef.current.style.willChange = "auto";
         }
       }, 300);
     }
@@ -85,9 +89,15 @@ export function PullToRefresh({ children }: { children: React.ReactNode }) {
       if (window.scrollY > 0 || refreshing) return;
       startY.current = e.touches[0].clientY;
       pulling.current = true;
-      // Remove any lingering transition for immediate response
       if (contentRef.current) {
+        // Remove any lingering transition for immediate response.
         contentRef.current.style.transition = "";
+        // Promote the content layer to the GPU compositor now that a pull
+        // gesture has started.  We set will-change here (on gesture start)
+        // rather than statically so the compositor layer only exists during
+        // the animation — not while the page is idle, where it would waste
+        // VRAM on every page in the app.
+        contentRef.current.style.willChange = "transform";
       }
     };
 
@@ -185,8 +195,10 @@ export function PullToRefresh({ children }: { children: React.ReactNode }) {
         </div>
       </div>
 
-      {/* Content — transform applied via ref, not state */}
-      <div ref={contentRef} style={{ willChange: "transform" }}>
+      {/* Content — transform applied via ref, not state.
+          No static will-change here: the GPU layer is allocated on gesture
+          start (handleTouchStart) and released on gesture end (resetDOM). */}
+      <div ref={contentRef}>
         {children}
       </div>
     </div>
