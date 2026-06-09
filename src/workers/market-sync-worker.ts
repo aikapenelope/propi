@@ -17,7 +17,6 @@
  */
 
 import { Worker } from "bullmq";
-import IORedis from "ioredis";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import { eq, sql } from "drizzle-orm";
@@ -276,10 +275,16 @@ async function sendTokenDeathAlert(errorMessage: string) {
   });
 }
 
-const connection = new IORedis(REDIS_URL, {
-  maxRetriesPerRequest: null,
+const parsedUrl = new URL(REDIS_URL);
+const redisOptions = {
+  host: parsedUrl.hostname,
+  port: parseInt(parsedUrl.port || "6379", 10),
+  password: parsedUrl.password || undefined,
+  db: parsedUrl.pathname ? parseInt(parsedUrl.pathname.slice(1) || "0", 10) : 0,
+  maxRetriesPerRequest: null as null,
   enableReadyCheck: false,
-});
+  tls: parsedUrl.protocol === "rediss:" ? {} : undefined,
+};
 
 const worker = new Worker(
   "market-sync",
@@ -371,7 +376,7 @@ const worker = new Worker(
     return { inserted: totalInserted, updated: totalUpdated, skipped: totalSkipped };
   },
   {
-    connection,
+    connection: redisOptions,
     concurrency: 1, // Single sync at a time (one service token)
     limiter: {
       max: 10,
@@ -415,7 +420,6 @@ worker.on("failed", (job, err) => {
 async function shutdown() {
   logger.info("shutting down gracefully");
   await worker.close();
-  await connection.quit();
   process.exit(0);
 }
 
