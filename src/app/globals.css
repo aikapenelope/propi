@@ -238,15 +238,22 @@ body {
   text-shadow: none;
 }
 
-/* Ambient background glows: toggle by theme */
+/* Ambient background glows: toggle by theme.
+   The ambient divs use `hidden md:block` in the markup so they are
+   desktop-only.  We must NOT override that on mobile — the previous
+   `.light .ambient-light { display: block !important }` was forcing
+   the glows to render on phones, adding expensive radial-gradient
+   compositing during scroll and causing jank in light mode. */
 .light .ambient-dark {
   display: none !important;
 }
 .ambient-light {
   display: none !important;
 }
-.light .ambient-light {
-  display: block !important;
+@media (min-width: 768px) {
+  .light .ambient-light {
+    display: block !important;
+  }
 }
 
 /* Smooth scrolling for PWA feel */
@@ -268,10 +275,13 @@ html, body {
 
 /* Touch-optimized scrolling for lists and content areas */
 @media (pointer: coarse) {
-  /* Ensure vertical-only scroll in main content (prevents accidental
-     horizontal swipes from interfering with page scroll) */
+  /* `manipulation` allows natural momentum scroll + pinch-zoom but
+     disables the 300ms double-tap-to-zoom delay.  The previous value
+     `pan-y` was too restrictive — it blocked diagonal swipe gestures
+     and killed scroll inertia on some mobile browsers (notably Chrome
+     Android) causing the "not fluid" feel in light mode. */
   main {
-    touch-action: pan-y;
+    touch-action: manipulation;
   }
 
   /* Disable hover lift effects on touch devices — they cause visual

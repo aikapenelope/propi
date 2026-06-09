@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Upload, FileText, Loader2, Check, AlertTriangle, X, Smartphone } from "lucide-react";
 import {
   parseCSV,
@@ -39,6 +40,7 @@ export function ImportContactsDialog({
   open: boolean;
   onClose: () => void;
 }) {
+  const router = useRouter();
   const [step, setStep] = useState<Step>("upload");
   const [parsed, setParsed] = useState<ImportedContact[]>([]);
   const [result, setResult] = useState<ImportResult | null>(null);
@@ -52,6 +54,18 @@ export function ImportContactsDialog({
     typeof window !== "undefined" &&
     "contacts" in navigator &&
     "ContactsManager" in window;
+
+  // Lock body scroll when the dialog is open to prevent background content
+  // from moving on mobile when the user interacts with the dialog.
+  useEffect(() => {
+    if (open) {
+      const prev = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.body.style.overflow = prev;
+      };
+    }
+  }, [open]);
 
   if (!open) return null;
 
@@ -138,6 +152,8 @@ export function ImportContactsDialog({
       const res = await importContacts(parsed);
       setResult(res);
       setStep("done");
+      // Refresh the router cache so the contacts list updates immediately
+      router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error al importar");
       setStep("preview");
@@ -145,7 +161,10 @@ export function ImportContactsDialog({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+      style={{ touchAction: "none" }}
+    >
       <div className="w-full max-w-lg rounded-2xl border border-border bg-background shadow-xl">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-border px-5 py-4">
@@ -174,7 +193,7 @@ export function ImportContactsDialog({
                     Arrastra un archivo o haz click para seleccionar
                   </p>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    CSV (.csv) o vCard (.vcf)
+                    CSV (.csv) o vCard (.vcf) — máximo 3,000 contactos
                   </p>
                 </div>
               </div>
@@ -194,6 +213,7 @@ export function ImportContactsDialog({
                 <button
                   onClick={handlePickFromDevice}
                   className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-border bg-muted px-4 py-3 text-sm font-medium text-foreground transition-colors hover:bg-muted/80"
+                  style={{ touchAction: "manipulation" }}
                 >
                   <Smartphone className="h-4 w-4 text-primary" />
                   Importar desde contactos del telefono
@@ -228,6 +248,9 @@ export function ImportContactsDialog({
                 </span>
               </div>
 
+              {/* Preview table: show only the first 10 contacts to reduce DOM
+                  nodes and memory usage.  The full array stays in state for
+                  the actual import but the preview is just a sample. */}
               <div className="max-h-64 overflow-y-auto rounded-lg border border-border">
                 <table className="w-full text-xs">
                   <thead className="sticky top-0 bg-muted">
@@ -239,7 +262,7 @@ export function ImportContactsDialog({
                     </tr>
                   </thead>
                   <tbody>
-                    {parsed.slice(0, 50).map((c, i) => (
+                    {parsed.slice(0, 10).map((c, i) => (
                       <tr key={i} className="border-t border-border">
                         <td className="px-3 py-1.5 text-foreground">{c.name}</td>
                         <td className="px-3 py-1.5 text-muted-foreground">{c.email || "—"}</td>
@@ -249,9 +272,9 @@ export function ImportContactsDialog({
                     ))}
                   </tbody>
                 </table>
-                {parsed.length > 50 && (
+                {parsed.length > 10 && (
                   <p className="px-3 py-2 text-xs text-muted-foreground text-center">
-                    ...y {parsed.length - 50} mas
+                    ...y {parsed.length - 10} mas
                   </p>
                 )}
               </div>
@@ -267,12 +290,14 @@ export function ImportContactsDialog({
                 <button
                   onClick={reset}
                   className="rounded-lg border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-muted transition-colors"
+                  style={{ touchAction: "manipulation" }}
                 >
                   Cancelar
                 </button>
                 <button
                   onClick={handleImport}
                   className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+                  style={{ touchAction: "manipulation" }}
                 >
                   Importar {parsed.length} contacto{parsed.length !== 1 ? "s" : ""}
                 </button>
@@ -287,6 +312,9 @@ export function ImportContactsDialog({
               <p className="text-sm text-foreground">
                 Importando {parsed.length} contactos...
               </p>
+              <p className="text-xs text-muted-foreground">
+                Esto puede tomar un momento para archivos grandes.
+              </p>
             </div>
           )}
 
@@ -294,13 +322,17 @@ export function ImportContactsDialog({
           {step === "done" && result && (
             <div>
               <div className="flex flex-col items-center gap-3 py-6">
-                <Check className="h-10 w-10 text-green-500" />
+                {result.errors.length === 0 || result.imported > 0 ? (
+                  <Check className="h-10 w-10 text-green-500" />
+                ) : (
+                  <AlertTriangle className="h-10 w-10 text-red-400" />
+                )}
                 <p className="text-lg font-bold text-foreground">
                   {result.imported} contacto{result.imported !== 1 ? "s" : ""} importado{result.imported !== 1 ? "s" : ""}
                 </p>
                 {result.skipped > 0 && (
                   <p className="text-xs text-muted-foreground">
-                    {result.skipped} omitido{result.skipped !== 1 ? "s" : ""} (sin nombre)
+                    {result.skipped} omitido{result.skipped !== 1 ? "s" : ""} (duplicados o sin nombre)
                   </p>
                 )}
               </div>
@@ -316,6 +348,7 @@ export function ImportContactsDialog({
               <button
                 onClick={handleClose}
                 className="w-full rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+                style={{ touchAction: "manipulation" }}
               >
                 Cerrar
               </button>
