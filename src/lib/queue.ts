@@ -1,5 +1,4 @@
 import { Queue } from "bullmq";
-import IORedis from "ioredis";
 
 /**
  * Redis connection for BullMQ job queues.
@@ -21,20 +20,30 @@ if (!REDIS_URL) {
   );
 }
 
-/** Shared Redis connection for queue producers (adding jobs from Next.js) */
-export const redisConnection = new IORedis(REDIS_URL, {
-  maxRetriesPerRequest: null, // Required by BullMQ workers
-  enableReadyCheck: false,
-  lazyConnect: true,
-});
-
 // ---------------------------------------------------------------------------
 // Queues (producers - used in Next.js API routes)
 // ---------------------------------------------------------------------------
 
+/**
+ * BullMQ connection config.
+ *
+ * Passing a RedisOptions object instead of an IORedis instance avoids a
+ * type-conflict between the project's top-level ioredis and the version
+ * vendored inside bullmq/node_modules/ioredis.  The two copies can drift
+ * across npm installs (especially in Docker builds where the lockfile is
+ * regenerated for linux-x64).  A plain object keeps both sides happy.
+ */
+const connection = {
+  host: new URL(REDIS_URL).hostname,
+  port: Number(new URL(REDIS_URL).port) || 6379,
+  password: new URL(REDIS_URL).password || undefined,
+  maxRetriesPerRequest: null,
+  enableReadyCheck: false,
+};
+
 /** Queue for MercadoLibre market sync jobs */
 export const marketSyncQueue = new Queue("market-sync", {
-  connection: redisConnection,
+  connection,
   defaultJobOptions: {
     attempts: 3,
     backoff: { type: "exponential", delay: 5000 },
