@@ -58,8 +58,9 @@ export async function getContacts(
   const items = await getCached();
   const hasMore = items.length > CONTACTS_PAGE_SIZE;
   const trimmed = hasMore ? items.slice(0, CONTACTS_PAGE_SIZE) : items;
-  const nextCursor = hasMore
-    ? trimmed[trimmed.length - 1].updatedAt.toISOString()
+  const lastDate = trimmed[trimmed.length - 1]?.updatedAt;
+  const nextCursor = hasMore && lastDate
+    ? (lastDate instanceof Date ? lastDate : new Date(lastDate)).toISOString()
     : null;
 
   return { items: trimmed, nextCursor, hasMore };
