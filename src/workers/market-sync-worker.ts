@@ -17,7 +17,6 @@
  */
 
 import { Worker } from "bullmq";
-import IORedis from "ioredis";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import { eq, sql } from "drizzle-orm";
@@ -276,10 +275,20 @@ async function sendTokenDeathAlert(errorMessage: string) {
   });
 }
 
-const connection = new IORedis(REDIS_URL, {
+/**
+ * BullMQ connection config as a plain object.
+ *
+ * Passing RedisOptions instead of an IORedis instance avoids the same
+ * type-conflict described in src/lib/queue.ts — the project's ioredis
+ * and the copy vendored inside bullmq are different versions.
+ */
+const connection = {
+  host: new URL(REDIS_URL).hostname,
+  port: Number(new URL(REDIS_URL).port) || 6379,
+  password: new URL(REDIS_URL).password || undefined,
   maxRetriesPerRequest: null,
   enableReadyCheck: false,
-});
+};
 
 const worker = new Worker(
   "market-sync",
@@ -415,7 +424,6 @@ worker.on("failed", (job, err) => {
 async function shutdown() {
   logger.info("shutting down gracefully");
   await worker.close();
-  await connection.quit();
   process.exit(0);
 }
 
