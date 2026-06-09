@@ -4,7 +4,7 @@ import { db } from "@/lib/db";
 import { contacts } from "@/server/schema";
 import { eq } from "drizzle-orm";
 import { requireUserId } from "@/lib/auth-helper";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -145,7 +145,7 @@ export async function parseVCard(vcfText: string): Promise<ImportedContact[]> {
 // ---------------------------------------------------------------------------
 
 /** Maximum contacts per import to prevent abuse and memory exhaustion. */
-const MAX_IMPORT_BATCH = 1000;
+const MAX_IMPORT_BATCH = 3000;
 
 /**
  * Import parsed contacts into the database for the current user.
@@ -175,9 +175,13 @@ export async function importContacts(
   const userId = await requireUserId();
 
   if (parsed.length > MAX_IMPORT_BATCH) {
-    throw new Error(
-      `Maximo ${MAX_IMPORT_BATCH} contactos por importacion. Tu archivo tiene ${parsed.length}.`,
-    );
+    return {
+      imported: 0,
+      skipped: 0,
+      errors: [
+        `Máximo ${MAX_IMPORT_BATCH} contactos por importación. Tu archivo tiene ${parsed.length}. Divide el archivo en partes más pequeñas.`,
+      ],
+    };
   }
 
   // Load existing contacts for duplicate detection (by email or phone)
@@ -261,6 +265,8 @@ export async function importContacts(
 
   revalidatePath("/contacts");
   revalidatePath("/pipeline");
+  revalidateTag(`contacts-${userId}`, "max");
+  revalidateTag(`dashboard-${userId}`, "max");
 
   return { imported, skipped, errors };
 }

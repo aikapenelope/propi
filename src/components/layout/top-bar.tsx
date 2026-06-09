@@ -103,7 +103,11 @@ export function TopBar({ sidebarCollapsed, onMenuToggle }: TopBarProps) {
         // The paddingTop below pushes content inside the header below the
         // status bar area. env(safe-area-inset-top) is 0 on desktop and in
         // Safari browser; ~47-54px in iOS PWA standalone mode.
-        "fixed right-0 top-0 z-20 flex min-h-16 md:min-h-24 items-center gap-4 border-b border-border px-4 md:px-8 bg-background/80 backdrop-blur-md",
+        "fixed right-0 top-0 z-20 flex min-h-16 md:min-h-24 items-center gap-4 border-b border-border px-4 md:px-8",
+        // Glass background: semi-transparent + blur on desktop is fine.
+        // On mobile in light mode the blur causes per-frame GPU compositing
+        // during scroll → jank.  Use solid bg on mobile, glass on desktop.
+        "bg-background md:bg-background/80 md:backdrop-blur-md",
         "transition-[left] duration-150 ease-out",
         sidebarCollapsed ? "md:left-16" : "md:left-[260px]",
         "left-0",
