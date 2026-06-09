@@ -33,6 +33,12 @@ declare global {
 
 type Step = "upload" | "preview" | "importing" | "done";
 
+/**
+ * Dialog component for importing contacts from CSV or vCard files.
+ * Handles file parsing, duplicate detection, and batch uploading.
+ * @param props.open Controls the visibility of the dialog.
+ * @param props.onClose Callback invoked when the dialog should be closed.
+ */
 export function ImportContactsDialog({
   open,
   onClose,
@@ -55,8 +61,6 @@ export function ImportContactsDialog({
     "contacts" in navigator &&
     "ContactsManager" in window;
 
-  // Lock body scroll when the dialog is open to prevent background content
-  // from moving on mobile when the user interacts with the dialog.
   useEffect(() => {
     if (open) {
       const prev = document.body.style.overflow;
@@ -65,6 +69,7 @@ export function ImportContactsDialog({
         document.body.style.overflow = prev;
       };
     }
+    return undefined;
   }, [open]);
 
   if (!open) return null;
@@ -263,7 +268,7 @@ export function ImportContactsDialog({
                   </thead>
                   <tbody>
                     {parsed.slice(0, 10).map((c, i) => (
-                      <tr key={i} className="border-t border-border">
+                      <tr key={`${c.name}-${c.email || 'no-email'}-${i}`} className="border-t border-border">
                         <td className="px-3 py-1.5 text-foreground">{c.name}</td>
                         <td className="px-3 py-1.5 text-muted-foreground">{c.email || "—"}</td>
                         <td className="px-3 py-1.5 text-muted-foreground">{c.phone || "—"}</td>
