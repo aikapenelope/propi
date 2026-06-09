@@ -33,6 +33,12 @@ declare global {
 
 type Step = "upload" | "preview" | "importing" | "done";
 
+/**
+ * Dialog component for importing contacts from CSV or vCard files.
+ * Handles file parsing, duplicate detection, and batch uploading.
+ * @param props.open Controls the visibility of the dialog.
+ * @param props.onClose Callback invoked when the dialog should be closed.
+ */
 export function ImportContactsDialog({
   open,
   onClose,

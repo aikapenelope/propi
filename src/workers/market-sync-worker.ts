@@ -417,6 +417,10 @@ worker.on("failed", (job, err) => {
 // Graceful shutdown
 // ---------------------------------------------------------------------------
 
+/**
+ * Gracefully shuts down the background worker.
+ * Closes the BullMQ connection and exits the Node.js process cleanly.
+ */
 const shutdown = async () => {
   logger.info("shutting down gracefully");
   await worker.close();
