@@ -421,13 +421,13 @@ worker.on("failed", (job, err) => {
 // Graceful shutdown
 // ---------------------------------------------------------------------------
 
-async function shutdown() {
+const gracefulShutdown = async () => {
   logger.info("shutting down gracefully");
   await worker.close();
   process.exit(0);
-}
+};
 
-process.on("SIGINT", shutdown);
-process.on("SIGTERM", shutdown);
+process.on("SIGINT", gracefulShutdown);
+process.on("SIGTERM", gracefulShutdown);
 
 logger.info({ pid: process.pid }, "worker started");
