@@ -2,7 +2,7 @@
 
 import { db } from "@/lib/db";
 import { contacts, contactTags, tags } from "@/server/schema";
-import { eq, and, ilike, or, desc, lt, sql } from "drizzle-orm";
+import { eq, and, ilike, or, desc, lt, sql, count } from "drizzle-orm";
 import { revalidatePath, revalidateTag } from "next/cache";
 import { unstable_cache } from "next/cache";
 import { requireUserId } from "@/lib/auth-helper";
@@ -59,12 +59,49 @@ export async function getContacts(
   const hasMore = items.length > CONTACTS_PAGE_SIZE;
   const trimmed = hasMore ? items.slice(0, CONTACTS_PAGE_SIZE) : items;
   const lastDate = trimmed[trimmed.length - 1]?.updatedAt;
-  const nextCursor = hasMore && lastDate
-    ? (lastDate instanceof Date ? lastDate : new Date(lastDate)).toISOString()
+  const dateObj = lastDate ? (lastDate instanceof Date ? lastDate : new Date(lastDate as string)) : null;
+  const nextCursor = hasMore && dateObj && !isNaN(dateObj.getTime())
+    ? dateObj.toISOString()
     : null;
 
   return { items: trimmed, nextCursor, hasMore };
 }
+
+/**
+ * Returns the total count of contacts for the authenticated user.
+ * Used to display accurate totals in headers without loading all rows.
+ */
+export async function getContactsCount(search?: string): Promise<number> {
+  const userId = await requireUserId();
+
+  const getCachedCount = unstable_cache(
+    async () => {
+      const conditions = search
+        ? [
+            eq(contacts.userId, userId),
+            or(
+              ilike(contacts.name, `%${sanitizeLike(search)}%`),
+              ilike(contacts.email, `%${sanitizeLike(search)}%`),
+              ilike(contacts.phone, `%${sanitizeLike(search)}%`),
+              ilike(contacts.company, `%${sanitizeLike(search)}%`),
+            ),
+          ]
+        : [eq(contacts.userId, userId)];
+
+      const [row] = await db
+        .select({ total: count() })
+        .from(contacts)
+        .where(and(...conditions));
+      return row?.total ?? 0;
+    },
+    [`contacts-count-${userId}-${search || "all"}`],
+    { revalidate: 30, tags: [`contacts-${userId}`] },
+  );
+
+  return getCachedCount();
+}
+
+export type ContactItem = Awaited<ReturnType<typeof fetchContacts>>[number];
 
 async function fetchContacts(
   userId: string,

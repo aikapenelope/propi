@@ -1,9 +1,6 @@
-import Link from "next/link";
-import { Mail, Phone, Building } from "lucide-react";
-import { getContacts } from "@/server/actions/contacts";
-import { formatDate } from "@/lib/utils";
+import { getContacts, getContactsCount } from "@/server/actions/contacts";
 import { ContactsHeader } from "@/components/contacts/contacts-header";
-import { ContactSwipeRow } from "@/components/contacts/contact-swipe-row";
+import { ContactsListClient } from "@/components/contacts/contacts-list-client";
 
 export const dynamic = "force-dynamic";
 
@@ -15,12 +12,17 @@ export default async function ContactsPage({
   searchParams,
 }: ContactsPageProps) {
   const { q } = await searchParams;
-  const { items: contactList } = await getContacts(q);
+
+  // Fetch first page and total count in parallel
+  const [{ items, nextCursor, hasMore }, totalCount] = await Promise.all([
+    getContacts(q),
+    getContactsCount(q),
+  ]);
 
   return (
     <div className="p-4 md:p-6">
       {/* Header with import button */}
-      <ContactsHeader count={contactList.length} />
+      <ContactsHeader count={totalCount} isSearchActive={!!q} />
 
       {/* Search */}
       <form method="get" className="mb-4">
@@ -29,17 +31,13 @@ export default async function ContactsPage({
           name="q"
           defaultValue={q}
           placeholder="Buscar por nombre, email, telefono..."
-          // autocomplete="off" prevents the browser from filling the search
-          // field with saved personal data (names, emails) from autofill.
           autoComplete="off"
-          // input-base: 16px on mobile to prevent iOS Safari auto-zoom,
-          // 14px on desktop to preserve layout density.
+          // input-base: 16px on mobile to prevent iOS Safari auto-zoom
           className="h-10 w-full max-w-md rounded-lg border border-border bg-muted px-4 input-base text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
         />
       </form>
 
-      {/* Contact list */}
-      {contactList.length === 0 ? (
+      {items.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-center">
           <p className="text-lg font-medium text-foreground">
             No hay contactos
@@ -51,79 +49,12 @@ export default async function ContactsPage({
           </p>
         </div>
       ) : (
-        <div className="space-y-2">
-          {contactList.map((contact) => (
-            <ContactSwipeRow
-              key={contact.id}
-              contactId={contact.id}
-              phone={contact.phone}
-            >
-              <Link
-                href={`/contacts/${contact.id}`}
-                className="flex items-center gap-4 rounded-lg border border-border p-4 transition-colors hover:bg-muted"
-                style={{ viewTransitionName: `contact-${contact.id}` }}
-              >
-              {/* Avatar placeholder */}
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">
-                {contact.name
-                  .split(" ")
-                  .map((n) => n[0])
-                  .join("")
-                  .slice(0, 2)
-                  .toUpperCase()}
-              </div>
-
-              {/* Info */}
-              <div className="min-w-0 flex-1">
-                <p className="truncate font-medium text-foreground">
-                  {contact.name}
-                </p>
-                <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
-                  {contact.email && (
-                    <span className="flex items-center gap-1">
-                      <Mail className="h-3 w-3" />
-                      {contact.email}
-                    </span>
-                  )}
-                  {contact.phone && (
-                    <span className="flex items-center gap-1">
-                      <Phone className="h-3 w-3" />
-                      {contact.phone}
-                    </span>
-                  )}
-                  {contact.company && (
-                    <span className="flex items-center gap-1">
-                      <Building className="h-3 w-3" />
-                      {contact.company}
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              {/* Tags */}
-              <div className="hidden gap-1 sm:flex">
-                {contact.contactTags.slice(0, 3).map((ct) => (
-                  <span
-                    key={ct.tag.id}
-                    className="rounded-full px-2 py-0.5 text-xs font-medium"
-                    style={{
-                      backgroundColor: `${ct.tag.color}20`,
-                      color: ct.tag.color ?? "#6366f1",
-                    }}
-                  >
-                    {ct.tag.name}
-                  </span>
-                ))}
-              </div>
-
-              {/* Date */}
-              <span className="hidden text-xs text-muted-foreground md:block">
-                {formatDate(contact.updatedAt)}
-              </span>
-              </Link>
-            </ContactSwipeRow>
-          ))}
-        </div>
+        <ContactsListClient
+          initialItems={items}
+          initialNextCursor={nextCursor}
+          initialHasMore={hasMore}
+          search={q}
+        />
       )}
     </div>
   );

@@ -53,6 +53,7 @@ export function ImportContactsDialog({
   const [error, setError] = useState<string | null>(null);
   const [fileName, setFileName] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
 
   // Detect Contact Picker API (Chrome Android 80+).
   // Computed once per render — no effect needed since navigator doesn't change.
@@ -61,10 +62,13 @@ export function ImportContactsDialog({
     "contacts" in navigator &&
     "ContactsManager" in window;
 
+  // Lock body scroll when the dialog is open to prevent background content
+  // from moving on mobile when the user interacts with the dialog.
   useEffect(() => {
     if (open) {
       const prev = document.body.style.overflow;
       document.body.style.overflow = "hidden";
+      if (dialogRef.current) dialogRef.current.focus();
       return () => {
         document.body.style.overflow = prev;
       };
@@ -80,6 +84,8 @@ export function ImportContactsDialog({
     setResult(null);
     setError(null);
     setFileName("");
+    // Reset the file input so the same file can be re-selected
+    if (fileRef.current) fileRef.current.value = "";
   }
 
   function handleClose() {
@@ -157,7 +163,6 @@ export function ImportContactsDialog({
       const res = await importContacts(parsed);
       setResult(res);
       setStep("done");
-      // Refresh the router cache so the contacts list updates immediately
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error al importar");
@@ -167,46 +172,66 @@ export function ImportContactsDialog({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-      style={{ touchAction: "none" }}
+      ref={dialogRef}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="import-dialog-title"
+      tabIndex={-1}
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 outline-none"
+      onKeyDown={(e) => {
+        if (e.key === "Escape") handleClose();
+      }}
+      // Dismiss on backdrop tap (mobile UX pattern)
+      onPointerDown={(e) => {
+        if (e.target === e.currentTarget) handleClose();
+      }}
     >
-      <div className="w-full max-w-lg rounded-2xl border border-border bg-background shadow-xl">
+      <div className="w-full sm:max-w-lg rounded-t-2xl sm:rounded-2xl border border-border bg-background shadow-xl max-h-[90dvh] flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-border px-5 py-4">
-          <h2 className="text-lg font-bold text-foreground">
+        <div className="flex items-center justify-between border-b border-border px-5 py-4 shrink-0">
+          <h2 id="import-dialog-title" className="text-lg font-bold text-foreground">
             Importar Contactos
           </h2>
           <button
             onClick={handleClose}
-            className="text-muted-foreground hover:text-foreground"
+            className="text-muted-foreground hover:text-foreground p-1"
+            aria-label="Cerrar"
           >
             <X className="h-5 w-5" />
           </button>
         </div>
 
-        <div className="p-5">
+        <div className="p-5 overflow-y-auto flex-1">
           {/* Step: Upload */}
           {step === "upload" && (
             <div>
-              <div
-                onClick={() => fileRef.current?.click()}
-                className="flex cursor-pointer flex-col items-center gap-3 rounded-xl border-2 border-dashed border-border p-8 text-center transition-colors hover:border-primary hover:bg-primary/5"
+              {/*
+               * On iOS Safari, programmatically calling .click() on a file
+               * input from inside a React event handler is blocked as a
+               * security measure unless triggered by a *direct* user gesture.
+               * The fix: render the <input> as a visible label-connected
+               * element so the tap goes straight to the native file picker.
+               */}
+              <label
+                htmlFor="contact-file-input"
+                className="flex cursor-pointer flex-col items-center gap-3 rounded-xl border-2 border-dashed border-border p-8 text-center transition-colors hover:border-primary hover:bg-primary/5 active:bg-primary/10"
               >
                 <Upload className="h-8 w-8 text-muted-foreground" />
                 <div>
                   <p className="text-sm font-medium text-foreground">
-                    Arrastra un archivo o haz click para seleccionar
+                    Toca aquí para seleccionar un archivo
                   </p>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    CSV (.csv) o vCard (.vcf) — máximo 3,000 contactos
+                    CSV (.csv) o vCard (.vcf)
                   </p>
                 </div>
-              </div>
+              </label>
               <input
+                id="contact-file-input"
                 ref={fileRef}
                 type="file"
                 accept=".csv,.vcf,.vcard,.txt"
-                className="hidden"
+                className="sr-only"
                 onChange={(e) => {
                   const file = e.target.files?.[0];
                   if (file) handleFile(file);
@@ -217,8 +242,7 @@ export function ImportContactsDialog({
               {hasContactPicker && (
                 <button
                   onClick={handlePickFromDevice}
-                  className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-border bg-muted px-4 py-3 text-sm font-medium text-foreground transition-colors hover:bg-muted/80"
-                  style={{ touchAction: "manipulation" }}
+                  className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-border bg-muted px-4 py-3 text-sm font-medium text-foreground transition-colors hover:bg-muted/80 active:bg-muted/60"
                 >
                   <Smartphone className="h-4 w-4 text-primary" />
                   Importar desde contactos del telefono
@@ -253,9 +277,6 @@ export function ImportContactsDialog({
                 </span>
               </div>
 
-              {/* Preview table: show only the first 10 contacts to reduce DOM
-                  nodes and memory usage.  The full array stays in state for
-                  the actual import but the preview is just a sample. */}
               <div className="max-h-64 overflow-y-auto rounded-lg border border-border">
                 <table className="w-full text-xs">
                   <thead className="sticky top-0 bg-muted">
@@ -268,7 +289,10 @@ export function ImportContactsDialog({
                   </thead>
                   <tbody>
                     {parsed.slice(0, 10).map((c, i) => (
-                      <tr key={`${c.name}-${c.email || 'no-email'}-${i}`} className="border-t border-border">
+                      <tr
+                        key={`${c.name ?? ""}-${c.email ?? "no-email"}-${i}`}
+                        className="border-t border-border"
+                      >
                         <td className="px-3 py-1.5 text-foreground">{c.name}</td>
                         <td className="px-3 py-1.5 text-muted-foreground">{c.email || "—"}</td>
                         <td className="px-3 py-1.5 text-muted-foreground">{c.phone || "—"}</td>
@@ -295,14 +319,12 @@ export function ImportContactsDialog({
                 <button
                   onClick={reset}
                   className="rounded-lg border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-muted transition-colors"
-                  style={{ touchAction: "manipulation" }}
                 >
                   Cancelar
                 </button>
                 <button
                   onClick={handleImport}
                   className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
-                  style={{ touchAction: "manipulation" }}
                 >
                   Importar {parsed.length} contacto{parsed.length !== 1 ? "s" : ""}
                 </button>
@@ -317,9 +339,6 @@ export function ImportContactsDialog({
               <p className="text-sm text-foreground">
                 Importando {parsed.length} contactos...
               </p>
-              <p className="text-xs text-muted-foreground">
-                Esto puede tomar un momento para archivos grandes.
-              </p>
             </div>
           )}
 
@@ -327,11 +346,7 @@ export function ImportContactsDialog({
           {step === "done" && result && (
             <div>
               <div className="flex flex-col items-center gap-3 py-6">
-                {result.errors.length === 0 || result.imported > 0 ? (
-                  <Check className="h-10 w-10 text-green-500" />
-                ) : (
-                  <AlertTriangle className="h-10 w-10 text-red-400" />
-                )}
+                <Check className="h-10 w-10 text-green-500" />
                 <p className="text-lg font-bold text-foreground">
                   {result.imported} contacto{result.imported !== 1 ? "s" : ""} importado{result.imported !== 1 ? "s" : ""}
                 </p>
@@ -353,7 +368,6 @@ export function ImportContactsDialog({
               <button
                 onClick={handleClose}
                 className="w-full rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
-                style={{ touchAction: "manipulation" }}
               >
                 Cerrar
               </button>
