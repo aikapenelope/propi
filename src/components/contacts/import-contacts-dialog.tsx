@@ -186,7 +186,7 @@ export function ImportContactsDialog({
         if (e.target === e.currentTarget) handleClose();
       }}
     >
-      <div className="w-full sm:max-w-lg rounded-t-2xl sm:rounded-2xl border border-border bg-background shadow-xl max-h-[90dvh] flex flex-col">
+      <div className="w-full sm:max-w-lg rounded-t-2xl sm:rounded-2xl border border-border bg-background shadow-xl max-h-[85vh] flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-border px-5 py-4 shrink-0">
           <h2 id="import-dialog-title" className="text-lg font-bold text-foreground">
@@ -201,7 +201,7 @@ export function ImportContactsDialog({
           </button>
         </div>
 
-        <div className="p-5 overflow-y-auto flex-1">
+        <div className="p-5 overflow-y-auto flex-1 flex flex-col">
           {/* Step: Upload */}
           {step === "upload" && (
             <div>
@@ -268,7 +268,7 @@ export function ImportContactsDialog({
 
           {/* Step: Preview */}
           {step === "preview" && (
-            <div>
+            <div className="flex flex-col flex-1">
               <div className="mb-3 flex items-center gap-2 text-sm">
                 <FileText className="h-4 w-4 text-primary" />
                 <span className="font-medium text-foreground">{fileName}</span>
@@ -315,7 +315,7 @@ export function ImportContactsDialog({
                 </div>
               )}
 
-              <div className="mt-4 flex gap-2">
+              <div className="mt-auto pt-4 flex gap-2 sticky bottom-0 bg-background border-t border-border/50">
                 <button
                   onClick={reset}
                   className="rounded-lg border border-border px-4 py-2 text-sm font-medium text-foreground hover:bg-muted transition-colors"
@@ -344,7 +344,7 @@ export function ImportContactsDialog({
 
           {/* Step: Done */}
           {step === "done" && result && (
-            <div>
+            <div className="flex flex-col flex-1">
               <div className="flex flex-col items-center gap-3 py-6">
                 <Check className="h-10 w-10 text-green-500" />
                 <p className="text-lg font-bold text-foreground">
@@ -365,12 +365,14 @@ export function ImportContactsDialog({
                 </div>
               )}
 
-              <button
+              <div className="mt-auto pt-4 sticky bottom-0 bg-background border-t border-border/50">
+                <button
                 onClick={handleClose}
                 className="w-full rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
               >
                 Cerrar
               </button>
+            </div>
             </div>
           )}
         </div>

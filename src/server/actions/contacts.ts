@@ -58,10 +58,9 @@ export async function getContacts(
   const items = await getCached();
   const hasMore = items.length > CONTACTS_PAGE_SIZE;
   const trimmed = hasMore ? items.slice(0, CONTACTS_PAGE_SIZE) : items;
-  const lastDate = trimmed[trimmed.length - 1]?.updatedAt;
-  const dateObj = lastDate ? (lastDate instanceof Date ? lastDate : new Date(lastDate as string)) : null;
-  const nextCursor = hasMore && dateObj && !isNaN(dateObj.getTime())
-    ? dateObj.toISOString()
+  const lastItem = trimmed[trimmed.length - 1];
+  const nextCursor = hasMore && lastItem
+    ? JSON.stringify({ d: lastItem.updatedAt.toISOString(), i: lastItem.id })
     : null;
 
   return { items: trimmed, nextCursor, hasMore };
@@ -121,7 +120,30 @@ async function fetchContacts(
     : [eq(contacts.userId, userId)];
 
   if (cursor) {
-    conditions.push(lt(contacts.updatedAt, new Date(cursor)));
+    let cursorDate: Date;
+    let cursorId: string | null = null;
+    try {
+      if (cursor.startsWith("{")) {
+        const parsed = JSON.parse(cursor);
+        cursorDate = new Date(parsed.d);
+        cursorId = parsed.i;
+      } else {
+        cursorDate = new Date(cursor);
+      }
+    } catch {
+      cursorDate = new Date(cursor);
+    }
+
+    if (cursorId) {
+      conditions.push(
+        or(
+          lt(contacts.updatedAt, cursorDate),
+          and(eq(contacts.updatedAt, cursorDate), lt(contacts.id, cursorId))
+        )
+      );
+    } else {
+      conditions.push(lt(contacts.updatedAt, cursorDate));
+    }
   }
 
   return db.query.contacts.findMany({
@@ -131,7 +153,7 @@ async function fetchContacts(
         with: { tag: true },
       },
     },
-    orderBy: [desc(contacts.updatedAt)],
+    orderBy: [desc(contacts.updatedAt), desc(contacts.id)],
     limit: CONTACTS_PAGE_SIZE + 1,
   });
 }

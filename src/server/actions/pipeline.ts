@@ -14,7 +14,7 @@ import { logActivity } from "./activity-log";
 // ---------------------------------------------------------------------------
 
 /** Max contacts per pipeline column. Prevents loading 10K+ contacts at once. */
-const PIPELINE_COLUMN_LIMIT = 100;
+const PIPELINE_COLUMN_LIMIT = 300;
 
 export async function getPipelineContacts() {
   const userId = await requireUserId();
