@@ -6,7 +6,7 @@ import { Plus, Upload } from "lucide-react";
 import { ImportContactsDialog } from "./import-contacts-dialog";
 import { InfoTooltip } from "@/components/ui/info-tooltip";
 
-export function ContactsHeader({ count }: { count: number }) {
+export function ContactsHeader({ count, isSearchActive }: { count: number; isSearchActive?: boolean }) {
   const [importOpen, setImportOpen] = useState(false);
 
   return (
@@ -15,7 +15,7 @@ export function ContactsHeader({ count }: { count: number }) {
         <div>
           <h1 className="text-2xl font-bold text-foreground">Contactos</h1>
           <p className="text-sm text-muted-foreground">
-            {count} contacto{count !== 1 ? "s" : ""}
+            {count} {isSearchActive ? `resultado${count !== 1 ? "s" : ""}` : `contacto${count !== 1 ? "s" : ""}`}
           </p>
         </div>
         <div className="flex items-center gap-2">

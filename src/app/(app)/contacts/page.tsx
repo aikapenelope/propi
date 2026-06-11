@@ -1,8 +1,5 @@
-import { Mail, Phone, Building } from "lucide-react";
 import { getContacts, getContactsCount } from "@/server/actions/contacts";
-import { formatDate } from "@/lib/utils";
 import { ContactsHeader } from "@/components/contacts/contacts-header";
-import { ContactSwipeRow } from "@/components/contacts/contact-swipe-row";
 import { ContactsListClient } from "@/components/contacts/contacts-list-client";
 
 export const dynamic = "force-dynamic";
@@ -19,15 +16,13 @@ export default async function ContactsPage({
   // Fetch first page and total count in parallel
   const [{ items, nextCursor, hasMore }, totalCount] = await Promise.all([
     getContacts(q),
-    // Only run the count query when there's no search active (count is shown
-    // in the header and is always the total, not the filtered total).
-    q ? Promise.resolve(0) : getContactsCount(),
+    getContactsCount(q),
   ]);
 
   return (
     <div className="p-4 md:p-6">
-      {/* Header with import button — shows real DB count, not page count */}
-      <ContactsHeader count={totalCount} />
+      {/* Header with import button */}
+      <ContactsHeader count={totalCount} isSearchActive={!!q} />
 
       {/* Search */}
       <form method="get" className="mb-4">

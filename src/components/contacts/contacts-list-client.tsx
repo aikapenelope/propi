@@ -31,14 +31,20 @@ export function ContactsListClient({
   const [nextCursor, setNextCursor] = useState<string | null>(initialNextCursor);
   const [hasMore, setHasMore] = useState(initialHasMore);
   const [isPending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
 
   function loadMore() {
     if (!nextCursor || isPending) return;
+    setError(null);
     startTransition(async () => {
-      const result = await getContacts(search, nextCursor);
-      setItems((prev) => [...prev, ...result.items]);
-      setNextCursor(result.nextCursor);
-      setHasMore(result.hasMore);
+      try {
+        const result = await getContacts(search, nextCursor);
+        setItems((prev) => [...prev, ...result.items]);
+        setNextCursor(result.nextCursor);
+        setHasMore(result.hasMore);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Error al cargar más contactos.");
+      }
     });
   }
 
@@ -118,7 +124,12 @@ export function ContactsListClient({
 
       {/* Load more */}
       {hasMore && (
-        <div className="flex justify-center pt-4 pb-6">
+        <div className="flex flex-col items-center pt-4 pb-6 space-y-3">
+          {error && (
+            <div className="w-full max-w-sm rounded-lg bg-red-500/10 p-3 text-xs text-red-400 text-center">
+              {error}
+            </div>
+          )}
           <button
             onClick={loadMore}
             disabled={isPending}

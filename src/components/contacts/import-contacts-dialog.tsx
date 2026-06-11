@@ -51,6 +51,7 @@ export function ImportContactsDialog({
   const [error, setError] = useState<string | null>(null);
   const [fileName, setFileName] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
 
   // Detect Contact Picker API (Chrome Android 80+).
   // Computed once per render — no effect needed since navigator doesn't change.
@@ -63,9 +64,11 @@ export function ImportContactsDialog({
   // from moving on mobile when the user interacts with the dialog.
   useEffect(() => {
     if (open) {
+      const prev = document.body.style.overflow;
       document.body.style.overflow = "hidden";
+      if (dialogRef.current) dialogRef.current.focus();
       return () => {
-        document.body.style.overflow = "";
+        document.body.style.overflow = prev;
       };
     }
     return undefined;
@@ -166,7 +169,15 @@ export function ImportContactsDialog({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50"
+      ref={dialogRef}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="import-dialog-title"
+      tabIndex={-1}
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 outline-none"
+      onKeyDown={(e) => {
+        if (e.key === "Escape") handleClose();
+      }}
       // Dismiss on backdrop tap (mobile UX pattern)
       onPointerDown={(e) => {
         if (e.target === e.currentTarget) handleClose();
@@ -175,7 +186,7 @@ export function ImportContactsDialog({
       <div className="w-full sm:max-w-lg rounded-t-2xl sm:rounded-2xl border border-border bg-background shadow-xl max-h-[90dvh] flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-border px-5 py-4 shrink-0">
-          <h2 className="text-lg font-bold text-foreground">
+          <h2 id="import-dialog-title" className="text-lg font-bold text-foreground">
             Importar Contactos
           </h2>
           <button
