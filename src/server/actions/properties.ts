@@ -85,8 +85,9 @@ export async function getProperties(
   const items = await getCached();
   const hasMore = items.length > pageSize;
   const trimmed = hasMore ? items.slice(0, pageSize) : items;
-  const nextCursor = hasMore
-    ? trimmed[trimmed.length - 1].updatedAt.toISOString()
+  const lastDate = trimmed[trimmed.length - 1]?.updatedAt;
+  const nextCursor = hasMore && lastDate
+    ? (lastDate instanceof Date ? lastDate : new Date(lastDate)).toISOString()
     : null;
 
   return { items: trimmed, nextCursor, hasMore };

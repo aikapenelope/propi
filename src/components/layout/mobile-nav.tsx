@@ -38,10 +38,11 @@ export function MobileNav({ onMorePress }: MobileNavProps) {
       className="fixed bottom-0 left-0 right-0 z-30 md:hidden"
       style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
     >
-      {/* Glass background — use backdrop-blur-md (12px) instead of xl (24px)
-          to reduce per-frame compositing cost during scroll. The visual
-          difference is negligible but the GPU savings are significant. */}
-      <div className="absolute inset-0 bg-background/90 backdrop-blur-md border-t border-border/50" />
+      {/* Glass background — use backdrop-blur-md (12px) only on desktop.
+          On mobile the blur causes per-frame GPU compositing during scroll,
+          especially in light mode where bg-background/90 is semi-transparent.
+          Solid background on mobile eliminates the jank. */}
+      <div className="absolute inset-0 bg-background md:bg-background/90 md:backdrop-blur-md border-t border-border/50" />
 
       <div className="relative flex items-center justify-around px-2 py-1.5">
         {/* Left items */}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Upload, FileText, Loader2, Check, AlertTriangle, X, Smartphone } from "lucide-react";
 import {
   parseCSV,
@@ -45,6 +46,7 @@ export function ImportContactsDialog({
   open: boolean;
   onClose: () => void;
 }) {
+  const router = useRouter();
   const [step, setStep] = useState<Step>("upload");
   const [parsed, setParsed] = useState<ImportedContact[]>([]);
   const [result, setResult] = useState<ImportResult | null>(null);
@@ -161,6 +163,7 @@ export function ImportContactsDialog({
       const res = await importContacts(parsed);
       setResult(res);
       setStep("done");
+      router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error al importar");
       setStep("preview");
