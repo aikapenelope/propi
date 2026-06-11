@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Upload, FileText, Loader2, Check, AlertTriangle, X, Smartphone } from "lucide-react";
 import {
   parseCSV,
@@ -32,6 +32,12 @@ declare global {
 
 type Step = "upload" | "preview" | "importing" | "done";
 
+/**
+ * Dialog component for importing contacts from CSV or vCard files.
+ * Handles file parsing, duplicate detection, and batch uploading.
+ * @param props.open Controls the visibility of the dialog.
+ * @param props.onClose Callback invoked when the dialog should be closed.
+ */
 export function ImportContactsDialog({
   open,
   onClose,
@@ -53,6 +59,18 @@ export function ImportContactsDialog({
     "contacts" in navigator &&
     "ContactsManager" in window;
 
+  // Lock body scroll when the dialog is open to prevent background content
+  // from moving on mobile when the user interacts with the dialog.
+  useEffect(() => {
+    if (open) {
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.body.style.overflow = "";
+      };
+    }
+    return undefined;
+  }, [open]);
+
   if (!open) return null;
 
   function reset() {
@@ -61,6 +79,8 @@ export function ImportContactsDialog({
     setResult(null);
     setError(null);
     setFileName("");
+    // Reset the file input so the same file can be re-selected
+    if (fileRef.current) fileRef.current.value = "";
   }
 
   function handleClose() {
@@ -145,44 +165,59 @@ export function ImportContactsDialog({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="w-full max-w-lg rounded-2xl border border-border bg-background shadow-xl">
+    <div
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50"
+      // Dismiss on backdrop tap (mobile UX pattern)
+      onPointerDown={(e) => {
+        if (e.target === e.currentTarget) handleClose();
+      }}
+    >
+      <div className="w-full sm:max-w-lg rounded-t-2xl sm:rounded-2xl border border-border bg-background shadow-xl max-h-[90dvh] flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-border px-5 py-4">
+        <div className="flex items-center justify-between border-b border-border px-5 py-4 shrink-0">
           <h2 className="text-lg font-bold text-foreground">
             Importar Contactos
           </h2>
           <button
             onClick={handleClose}
-            className="text-muted-foreground hover:text-foreground"
+            className="text-muted-foreground hover:text-foreground p-1"
+            aria-label="Cerrar"
           >
             <X className="h-5 w-5" />
           </button>
         </div>
 
-        <div className="p-5">
+        <div className="p-5 overflow-y-auto flex-1">
           {/* Step: Upload */}
           {step === "upload" && (
             <div>
-              <div
-                onClick={() => fileRef.current?.click()}
-                className="flex cursor-pointer flex-col items-center gap-3 rounded-xl border-2 border-dashed border-border p-8 text-center transition-colors hover:border-primary hover:bg-primary/5"
+              {/*
+               * On iOS Safari, programmatically calling .click() on a file
+               * input from inside a React event handler is blocked as a
+               * security measure unless triggered by a *direct* user gesture.
+               * The fix: render the <input> as a visible label-connected
+               * element so the tap goes straight to the native file picker.
+               */}
+              <label
+                htmlFor="contact-file-input"
+                className="flex cursor-pointer flex-col items-center gap-3 rounded-xl border-2 border-dashed border-border p-8 text-center transition-colors hover:border-primary hover:bg-primary/5 active:bg-primary/10"
               >
                 <Upload className="h-8 w-8 text-muted-foreground" />
                 <div>
                   <p className="text-sm font-medium text-foreground">
-                    Arrastra un archivo o haz click para seleccionar
+                    Toca aquí para seleccionar un archivo
                   </p>
                   <p className="mt-1 text-xs text-muted-foreground">
                     CSV (.csv) o vCard (.vcf)
                   </p>
                 </div>
-              </div>
+              </label>
               <input
+                id="contact-file-input"
                 ref={fileRef}
                 type="file"
                 accept=".csv,.vcf,.vcard,.txt"
-                className="hidden"
+                className="sr-only"
                 onChange={(e) => {
                   const file = e.target.files?.[0];
                   if (file) handleFile(file);
@@ -193,7 +228,7 @@ export function ImportContactsDialog({
               {hasContactPicker && (
                 <button
                   onClick={handlePickFromDevice}
-                  className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-border bg-muted px-4 py-3 text-sm font-medium text-foreground transition-colors hover:bg-muted/80"
+                  className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-border bg-muted px-4 py-3 text-sm font-medium text-foreground transition-colors hover:bg-muted/80 active:bg-muted/60"
                 >
                   <Smartphone className="h-4 w-4 text-primary" />
                   Importar desde contactos del telefono
@@ -239,8 +274,11 @@ export function ImportContactsDialog({
                     </tr>
                   </thead>
                   <tbody>
-                    {parsed.slice(0, 50).map((c, i) => (
-                      <tr key={i} className="border-t border-border">
+                    {parsed.slice(0, 10).map((c, i) => (
+                      <tr
+                        key={`${c.name ?? ""}-${c.email ?? "no-email"}-${i}`}
+                        className="border-t border-border"
+                      >
                         <td className="px-3 py-1.5 text-foreground">{c.name}</td>
                         <td className="px-3 py-1.5 text-muted-foreground">{c.email || "—"}</td>
                         <td className="px-3 py-1.5 text-muted-foreground">{c.phone || "—"}</td>
@@ -249,9 +287,9 @@ export function ImportContactsDialog({
                     ))}
                   </tbody>
                 </table>
-                {parsed.length > 50 && (
+                {parsed.length > 10 && (
                   <p className="px-3 py-2 text-xs text-muted-foreground text-center">
-                    ...y {parsed.length - 50} mas
+                    ...y {parsed.length - 10} mas
                   </p>
                 )}
               </div>
@@ -300,7 +338,7 @@ export function ImportContactsDialog({
                 </p>
                 {result.skipped > 0 && (
                   <p className="text-xs text-muted-foreground">
-                    {result.skipped} omitido{result.skipped !== 1 ? "s" : ""} (sin nombre)
+                    {result.skipped} omitido{result.skipped !== 1 ? "s" : ""} (duplicados o sin nombre)
                   </p>
                 )}
               </div>

@@ -2,7 +2,7 @@
 
 import { db } from "@/lib/db";
 import { contacts, contactTags, tags } from "@/server/schema";
-import { eq, and, ilike, or, desc, lt, sql } from "drizzle-orm";
+import { eq, and, ilike, or, desc, lt, sql, count } from "drizzle-orm";
 import { revalidatePath, revalidateTag } from "next/cache";
 import { unstable_cache } from "next/cache";
 import { requireUserId } from "@/lib/auth-helper";
@@ -58,11 +58,25 @@ export async function getContacts(
   const items = await getCached();
   const hasMore = items.length > CONTACTS_PAGE_SIZE;
   const trimmed = hasMore ? items.slice(0, CONTACTS_PAGE_SIZE) : items;
-  const nextCursor = hasMore
-    ? trimmed[trimmed.length - 1].updatedAt.toISOString()
+  const lastDate = trimmed[trimmed.length - 1]?.updatedAt;
+  const nextCursor = hasMore && lastDate
+    ? (lastDate instanceof Date ? lastDate : new Date(lastDate as string)).toISOString()
     : null;
 
   return { items: trimmed, nextCursor, hasMore };
+}
+
+/**
+ * Returns the total count of contacts for the authenticated user.
+ * Used to display accurate totals in headers without loading all rows.
+ */
+export async function getContactsCount(): Promise<number> {
+  const userId = await requireUserId();
+  const [row] = await db
+    .select({ total: count() })
+    .from(contacts)
+    .where(eq(contacts.userId, userId));
+  return row?.total ?? 0;
 }
 
 async function fetchContacts(
